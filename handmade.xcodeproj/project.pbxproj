@@ -7,11 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4FBC234F1A35B21300C661D2 /* HandmadeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4FBC234D1A35B21300C661D2 /* HandmadeView.mm */; };
+		4FBC23511A35B5CE00C661D2 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBC23501A35B5CE00C661D2 /* AudioUnit.framework */; };
+		4FBC23531A35B64700C661D2 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBC23521A35B64700C661D2 /* CoreVideo.framework */; };
 		4FBEB1901A1FEF100001436D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FBEB18F1A1FEF100001436D /* AppDelegate.m */; };
 		4FBEB1921A1FEF100001436D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FBEB1911A1FEF100001436D /* main.m */; };
 		4FBEB1941A1FEF100001436D /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4FBEB1931A1FEF100001436D /* Images.xcassets */; };
 		4FBEB1971A1FEF100001436D /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4FBEB1951A1FEF100001436D /* MainMenu.xib */; };
 		4FBEB1A31A1FEF100001436D /* handmadeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FBEB1A21A1FEF100001436D /* handmadeTests.m */; };
+		4FBEB1B11A1FF3140001436D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBEB1AF1A1FF3140001436D /* OpenGL.framework */; };
+		4FBEB1B21A1FF3140001436D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBEB1B01A1FF3140001436D /* QuartzCore.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,6 +30,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4F95B1411A2BC7BB00E90A1A /* handmade.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = handmade.entitlements; sourceTree = "<group>"; };
+		4FBC234A1A35B21300C661D2 /* handmade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = handmade.cpp; sourceTree = "<group>"; };
+		4FBC234B1A35B21300C661D2 /* handmade.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade.h; sourceTree = "<group>"; };
+		4FBC234C1A35B21300C661D2 /* HandmadeView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HandmadeView.h; sourceTree = "<group>"; };
+		4FBC234D1A35B21300C661D2 /* HandmadeView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HandmadeView.mm; sourceTree = "<group>"; };
+		4FBC23501A35B5CE00C661D2 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		4FBC23521A35B64700C661D2 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		4FBEB1891A1FEF0F0001436D /* handmade.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = handmade.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4FBEB18D1A1FEF100001436D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4FBEB18E1A1FEF100001436D /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -35,6 +47,8 @@
 		4FBEB19C1A1FEF100001436D /* handmadeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = handmadeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4FBEB1A11A1FEF100001436D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4FBEB1A21A1FEF100001436D /* handmadeTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = handmadeTests.m; sourceTree = "<group>"; };
+		4FBEB1AF1A1FF3140001436D /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		4FBEB1B01A1FF3140001436D /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +56,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4FBC23531A35B64700C661D2 /* CoreVideo.framework in Frameworks */,
+				4FBC23511A35B5CE00C661D2 /* AudioUnit.framework in Frameworks */,
+				4FBEB1B11A1FF3140001436D /* OpenGL.framework in Frameworks */,
+				4FBEB1B21A1FF3140001436D /* QuartzCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -58,6 +76,10 @@
 		4FBEB1801A1FEF0F0001436D = {
 			isa = PBXGroup;
 			children = (
+				4FBC23521A35B64700C661D2 /* CoreVideo.framework */,
+				4FBC23501A35B5CE00C661D2 /* AudioUnit.framework */,
+				4FBEB1B01A1FF3140001436D /* QuartzCore.framework */,
+				4FBEB1AF1A1FF3140001436D /* OpenGL.framework */,
 				4FBEB18B1A1FEF0F0001436D /* handmade */,
 				4FBEB19F1A1FEF100001436D /* handmadeTests */,
 				4FBEB18A1A1FEF0F0001436D /* Products */,
@@ -76,6 +98,11 @@
 		4FBEB18B1A1FEF0F0001436D /* handmade */ = {
 			isa = PBXGroup;
 			children = (
+				4FBC234A1A35B21300C661D2 /* handmade.cpp */,
+				4FBC234B1A35B21300C661D2 /* handmade.h */,
+				4FBC234C1A35B21300C661D2 /* HandmadeView.h */,
+				4FBC234D1A35B21300C661D2 /* HandmadeView.mm */,
+				4F95B1411A2BC7BB00E90A1A /* handmade.entitlements */,
 				4FBEB18E1A1FEF100001436D /* AppDelegate.h */,
 				4FBEB18F1A1FEF100001436D /* AppDelegate.m */,
 				4FBEB1931A1FEF100001436D /* Images.xcassets */,
@@ -160,6 +187,11 @@
 				TargetAttributes = {
 					4FBEB1881A1FEF0F0001436D = {
 						CreatedOnToolsVersion = 6.1;
+						SystemCapabilities = {
+							com.apple.Sandbox = {
+								enabled = 0;
+							};
+						};
 					};
 					4FBEB19B1A1FEF100001436D = {
 						CreatedOnToolsVersion = 6.1;
@@ -212,6 +244,7 @@
 			files = (
 				4FBEB1921A1FEF100001436D /* main.m in Sources */,
 				4FBEB1901A1FEF100001436D /* AppDelegate.m in Sources */,
+				4FBC234F1A35B21300C661D2 /* HandmadeView.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -398,6 +431,7 @@
 				4FBEB1A81A1FEF100001436D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		4FBEB1A91A1FEF100001436D /* Build configuration list for PBXNativeTarget "handmadeTests" */ = {
 			isa = XCConfigurationList;
@@ -406,6 +440,7 @@
 				4FBEB1AB1A1FEF100001436D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

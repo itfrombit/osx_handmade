@@ -641,10 +641,11 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	_fullScreenOptions = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
 													 forKey:NSFullScreenModeSetting];
 
+	int BytesPerPixel = 4;
 	RenderBuffer.Width = 800;
 	RenderBuffer.Height = 600;
 	RenderBuffer.Memory = (uint8*)malloc(RenderBuffer.Width * RenderBuffer.Height * 4);
-	RenderBuffer.Pitch = 0;
+	RenderBuffer.Pitch = RenderBuffer.Width * BytesPerPixel;
 
 	//_cols = 800;
 	//_rows = 600;
@@ -672,7 +673,7 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
     glBindTexture(GL_TEXTURE_2D, _textureId);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RenderBuffer.Width, RenderBuffer.Height,
-				 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+				 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -743,35 +744,10 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	NewController->Left.EndedDown = _hidButtons[3];
 	NewController->Right.EndedDown = _hidButtons[4];
 
+
 	GameUpdateAndRender(&GameMemory, NewInput, &RenderBuffer, &SoundBuffer);
 
-#if 1
-	static int redOffset = 0;
-	static int greenOffset = 0;
-	static int blueOffset = 0;
-
-	for (int y = 0; y < RenderBuffer.Height; y++)
-	{
-		for (int x = 0; x < RenderBuffer.Width; x++)
-		{
-			unsigned char* pixel = (uint8*)RenderBuffer.Memory + (y * RenderBuffer.Width + x) * 4;
-
-			pixel[0] = 0;	// a
-			pixel[1] = x + blueOffset;	// b
-			pixel[2] = y + greenOffset;	// g
-			pixel[3] = x + y + redOffset;	// r
-		}
-	}
-
-	++redOffset;
-	//++greenOffset;
-	//++blueOffset;
-
-
-	blueOffset += _hidX;
-	greenOffset -= _hidY;
-#endif
-
+	
 	// TODO(jeff): Move this into the game render code
 	GlobalFrequency = 440.0 + (32 * _hidY);
 
@@ -812,7 +788,7 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     glEnable(GL_TEXTURE_2D);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, RenderBuffer.Width, RenderBuffer.Height,
-					GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, RenderBuffer.Memory);
+					GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, RenderBuffer.Memory);
 	
     GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
     glColor4f(1,1,1,1);

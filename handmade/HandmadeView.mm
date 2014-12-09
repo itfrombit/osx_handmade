@@ -62,6 +62,8 @@ typedef double real64;
 #include <sys/stat.h>	// fstat()
 #include <unistd.h>		// lseek()
 
+#include <mach/mach_time.h>
+
 
 global_variable bool32 GlobalRunning;
 global_variable osx_offscreen_buffer GlobalBackbuffer;
@@ -71,9 +73,34 @@ global_variable game_memory GameMemory = {};
 global_variable game_sound_output_buffer SoundBuffer = {};
 global_variable game_offscreen_buffer RenderBuffer = {};
 
+global_variable real64 MachTimebaseConversionFactor;
+
+
 // NOTE(jeff): I didn't worry about dynamic loading of the
 // various system libraries (like XInput and DirectSound on
 // win32). The chance of disaster isn't as bad on OS X.
+
+
+internal inline uint64
+rdtsc()
+{
+	uint32 eax = 0;
+	uint32 edx;
+	
+	__asm__ __volatile__("cpuid;"
+						 "rdtsc;"
+						 : "+a" (eax), "=d" (edx)
+						 :
+						 : "%rcx", "%rbx", "memory");
+	
+	__asm__ __volatile__("xorl %%eax, %%eax;"
+						 "cpuid;"
+						 :
+						 :
+						 : "%rax", "%rbx", "%rcx", "%rdx", "memory");
+	
+	return (((uint64)edx << 32) | eax);
+}
 
 
 internal debug_read_file_result
@@ -615,7 +642,11 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	GameMemory.TransientStorage = ((uint8*)GameMemory.PermanentStorage
 								   + GameMemory.PermanentStorageSize);
 	
-
+	
+	// Get the conversion factor for doing profile timing with mach_absolute_time()
+	mach_timebase_info_data_t timebase;
+	mach_timebase_info(&timebase);
+	MachTimebaseConversionFactor = (double)timebase.numer / (double)timebase.denom;
 	
 	[self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
@@ -711,8 +742,10 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
 - (void) drawView
 {
-	// TODO(jeff): Fix this for multiple controllers
+	uint64 LastCycleCount = rdtsc();
+	uint64 StartTime = mach_absolute_time();
 
+	// TODO(jeff): Fix this for multiple controllers
 	local_persist game_input Input[2] = {};
 	local_persist game_input* NewInput = &Input[0];
 	local_persist game_input* OldInput = &Input[1];
@@ -800,6 +833,18 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     CGLFlushDrawable([[self openGLContext] CGLContextObj]);
     CGLUnlockContext([[self openGLContext] CGLContextObj]);
+
+	
+	uint64 EndCycleCount = rdtsc();
+	uint64 EndTime = mach_absolute_time();
+	
+	uint64 CyclesElapsed = EndCycleCount - LastCycleCount;
+	
+	real64 MSPerFrame = (real64)(EndTime - StartTime) * MachTimebaseConversionFactor / 1.0E6;
+	real64 SPerFrame = MSPerFrame / 1000.0;
+	real64 FPS = 1.0 / SPerFrame;
+	
+	// NSLog(@"%.02fms/f,  %.02ff/s", MSPerFrame, FPS);
 }
 
 - (void)dealloc
@@ -853,28 +898,4 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
 @end
 
-
-///////////////////////////////////////////////////////////////////////
-// Startup
-
-internal inline uint64
-rdtsc()
-{
-	uint32 eax = 0;
-	uint32 edx;
-
-	__asm__ __volatile__("cpuid;"
-			     "rdtsc;"
-				: "+a" (eax), "=d" (edx)
-				:
-				: "%rcx", "%rbx", "memory");
-
-	__asm__ __volatile__("xorl %%eax, %%eax;"
-			     "cpuid;"
-				:
-				:
-				: "%rax", "%rbx", "%rcx", "%rdx", "memory");
-
-	return (((uint64)edx << 32) | eax);
-}
 

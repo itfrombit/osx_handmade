@@ -755,50 +755,54 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 		glLoadIdentity();
 		glViewport(0, 0, rect.size.width, rect.size.height);
 	}
+	else
+	{
+		// NOTE(jeff): Don't run the game logic during resize events
 
-	// TODO(jeff): Fix this for multiple controllers
-	local_persist game_input Input[2] = {};
-	local_persist game_input* NewInput = &Input[0];
-	local_persist game_input* OldInput = &Input[1];
+		// TODO(jeff): Fix this for multiple controllers
+		local_persist game_input Input[2] = {};
+		local_persist game_input* NewInput = &Input[0];
+		local_persist game_input* OldInput = &Input[1];
 
-	game_controller_input* OldController = &OldInput->Controllers[0];
-	game_controller_input* NewController = &NewInput->Controllers[0];
+		game_controller_input* OldController = &OldInput->Controllers[0];
+		game_controller_input* NewController = &NewInput->Controllers[0];
 
-#if 0
-	OldController->IsAnalog = true;
-	OldController->StartX = OldController->EndX;
-	OldController->StartY = OldController->EndY;
-	OldController->EndX = _hidX;
-	OldController->EndY = _hidY;
+	#if 0
+		OldController->IsAnalog = true;
+		OldController->StartX = OldController->EndX;
+		OldController->StartY = OldController->EndY;
+		OldController->EndX = _hidX;
+		OldController->EndY = _hidY;
 
-	OldController->Down.EndedDown = _hidButtons[1];
-	OldController->Up.EndedDown = _hidButtons[2];
-	OldController->Left.EndedDown = _hidButtons[3];
-	OldController->Right.EndedDown = _hidButtons[4];
-#endif
+		OldController->Down.EndedDown = _hidButtons[1];
+		OldController->Up.EndedDown = _hidButtons[2];
+		OldController->Left.EndedDown = _hidButtons[3];
+		OldController->Right.EndedDown = _hidButtons[4];
+	#endif
 
-	NewController->IsAnalog = true;
-	NewController->StartX = OldController->EndX;
-	NewController->StartY = OldController->EndY;
-	NewController->EndX = _hidX;
-	NewController->EndY = _hidY;
+		NewController->IsAnalog = true;
+		NewController->StartX = OldController->EndX;
+		NewController->StartY = OldController->EndY;
+		NewController->EndX = _hidX;
+		NewController->EndY = _hidY;
 
-	NewController->Down.EndedDown = _hidButtons[1];
-	NewController->Up.EndedDown = _hidButtons[2];
-	NewController->Left.EndedDown = _hidButtons[3];
-	NewController->Right.EndedDown = _hidButtons[4];
+		NewController->Down.EndedDown = _hidButtons[1];
+		NewController->Up.EndedDown = _hidButtons[2];
+		NewController->Left.EndedDown = _hidButtons[3];
+		NewController->Right.EndedDown = _hidButtons[4];
 
 
-	GameUpdateAndRender(&GameMemory, NewInput, &RenderBuffer, &SoundBuffer);
+		GameUpdateAndRender(&GameMemory, NewInput, &RenderBuffer, &SoundBuffer);
 
+		
+		// TODO(jeff): Move this into the game render code
+		GlobalFrequency = 440.0 + (32 * _hidY);
+
+		game_input* Temp = NewInput;
+		NewInput = OldInput;
+		OldInput = Temp;
+	}
 	
-	// TODO(jeff): Move this into the game render code
-	GlobalFrequency = 440.0 + (32 * _hidY);
-
-	game_input* Temp = NewInput;
-	NewInput = OldInput;
-	OldInput = Temp;
-
 	[[self openGLContext] makeCurrentContext];
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

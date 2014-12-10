@@ -315,6 +315,13 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 	IOHIDElementCookie cookie = IOHIDElementGetCookie(element);
 	IOHIDElementType type = IOHIDElementGetType(element);
 	CFStringRef name = IOHIDElementGetName(element);
+	/*
+	if (name == NULL)
+	{
+		name = CFSTR("Unknown");
+		NSLog(@"Detected unknown HID Element Name: %@", name);
+	}
+	*/
 	int usagePage = IOHIDElementGetUsagePage(element);
 	int usage = IOHIDElementGetUsage(element);
 
@@ -422,8 +429,8 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 			} break;
 
 			default:
-				NSLog(@"Gamepad Element: %@  Type: %d  Page: %d  Usage: %d  Name: %@  Cookie: %i  Value: %ld  _hidX: %d",
-					  element, type, usagePage, usage, name, cookie, elementValue, view->_hidX);
+				//NSLog(@"Gamepad Element: %@  Type: %d  Page: %d  Usage: %d  Name: %@  Cookie: %i  Value: %ld  _hidX: %d",
+				//	  element, type, usagePage, usage, name, cookie, elementValue, view->_hidX);
 				break;
 		}
 	}

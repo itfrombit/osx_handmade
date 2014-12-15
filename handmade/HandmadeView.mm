@@ -25,60 +25,22 @@
 #import <AudioUnit/AudioUnit.h>
 #import <IOKit/hid/IOHIDLib.h>
 
-
-// TODO: Implement sine ourselves
-#import <math.h>
-
-
-// NOTE(jeff): These typedefs are the same as in win32
-#define internal static
-#define local_persist static
-#define global_variable static
-
-#define Pi32 3.14159265359f
-
-typedef int8_t int8;
-typedef int16_t int16;
-typedef int32_t int32;
-typedef int64_t int64;
-typedef int32 bool32;
-
-typedef uint8_t uint8;
-typedef uint16_t uint16;
-typedef uint32_t uint32;
-typedef uint64_t uint64;
-
-typedef float real32;
-typedef double real64;
-
-#define HANDMADE_SLOW 1
-#define HANDMADE_INTERNAL 1
-
-#include "handmade.h"
-#include "handmade.cpp"
-
-#include "HandmadeView.h"
-
 #include <sys/stat.h>	// fstat()
-#include <unistd.h>		// lseek()
 
 #include <mach/mach_time.h>
 
-
-global_variable bool32 GlobalRunning;
-global_variable osx_offscreen_buffer GlobalBackbuffer;
-global_variable osx_sound_output GlobalAudioBuffer;
-
-global_variable game_memory GameMemory = {};
-global_variable game_sound_output_buffer SoundBuffer = {};
-global_variable game_offscreen_buffer RenderBuffer = {};
-
-global_variable real64 MachTimebaseConversionFactor;
+#include "osx_handmade.h"
 
 
-// NOTE(jeff): I didn't worry about dynamic loading of the
-// various system libraries (like XInput and DirectSound on
-// win32). The chance of disaster isn't as bad on OS X.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnull-dereference"
+#pragma clang diagnostic ignored "-Wc++11-compat-deprecated-writable-strings"
+#include "handmade.h"
+#include "handmade.cpp"
+#pragma clang diagnostic pop
+
+#include "osx_handmade.cpp"
+#include "HandmadeView.h"
 
 
 internal inline uint64
@@ -86,103 +48,21 @@ rdtsc()
 {
 	uint32 eax = 0;
 	uint32 edx;
-	
+
 	__asm__ __volatile__("cpuid;"
-						 "rdtsc;"
-						 : "+a" (eax), "=d" (edx)
-						 :
-						 : "%rcx", "%rbx", "memory");
-	
+			     "rdtsc;"
+				: "+a" (eax), "=d" (edx)
+				:
+				: "%rcx", "%rbx", "memory");
+
 	__asm__ __volatile__("xorl %%eax, %%eax;"
-						 "cpuid;"
-						 :
-						 :
-						 : "%rax", "%rbx", "%rcx", "%rdx", "memory");
-	
+			     "cpuid;"
+				:
+				:
+				: "%rax", "%rbx", "%rcx", "%rdx", "memory");
+
 	return (((uint64)edx << 32) | eax);
 }
-
-
-internal debug_read_file_result
-DEBUGPlatformReadEntireFile(char* Filename)
-{
-	debug_read_file_result Result = {};
-
-	int fd = open(Filename, O_RDONLY);
-	if (fd != -1)
-	{
-		struct stat fileStat;
-		if (fstat(fd, &fileStat) == 0)
-		{
-			uint64 FileSize32 = fileStat.st_size;
-			Result.Contents = (char*)malloc(FileSize32);
-			if (Result.Contents)
-			{
-				ssize_t BytesRead;
-				BytesRead = read(fd, Result.Contents, FileSize32);
-				if (BytesRead == FileSize32) // should have read until EOF
-				{
-					Result.ContentsSize = FileSize32;
-				}
-				else
-				{
-					DEBUGPlatformFreeFileMemory(Result.Contents);
-					Result.Contents = 0;
-				}
-			}
-			else
-			{
-			}
-		}
-		else
-		{
-		}
-
-		close(fd);
-	}
-	else
-	{
-	}
-
-	return Result;
-}
-
-
-internal void
-DEBUGPlatformFreeFileMemory(void* Memory)
-{
-	if (Memory)
-	{
-		free(Memory);
-	}
-}
-
-
-internal bool32
-DEBUGPlatformWriteEntireFile(char* Filename, uint32 MemorySize, void* Memory)
-{
-	bool32 Result = false;
-
-	int fd = open(Filename, O_WRONLY | O_CREAT, 0644);
-	if (fd != -1)
-	{
-		ssize_t BytesWritten = write(fd, Memory, MemorySize);
-		Result = (BytesWritten == MemorySize);
-
-		if (!Result)
-		{
-			// TODO(jeff): Logging
-		}
-
-		close(fd);
-	}
-	else
-	{
-	}
-
-	return Result;
-}
-
 
 
 
@@ -315,13 +195,6 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 	IOHIDElementCookie cookie = IOHIDElementGetCookie(element);
 	IOHIDElementType type = IOHIDElementGetType(element);
 	CFStringRef name = IOHIDElementGetName(element);
-	/*
-	if (name == NULL)
-	{
-		name = CFSTR("Unknown");
-		NSLog(@"Detected unknown HID Element Name: %@", name);
-	}
-	*/
 	int usagePage = IOHIDElementGetUsagePage(element);
 	int usage = IOHIDElementGetUsage(element);
 
@@ -430,7 +303,7 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 
 			default:
 				//NSLog(@"Gamepad Element: %@  Type: %d  Page: %d  Usage: %d  Name: %@  Cookie: %i  Value: %ld  _hidX: %d",
-				//	  element, type, usagePage, usage, name, cookie, elementValue, view->_hidX);
+				//      element, type, usagePage, usage, name, cookie, elementValue, view->_hidX);
 				break;
 		}
 	}
@@ -537,11 +410,6 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 }
 
 
-
-///////////////////////////////////////////////////////////////////////
-// View
-
-
 @implementation HandmadeView
 
 -(void)setupGamepad
@@ -629,15 +497,20 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 }
 
 
-- (void)awakeFromNib
+- (void)setup
 {
+	if (_setupComplete)
+	{
+		return;
+	}
+
 	// Allocate Memory
-	GameMemory.PermanentStorageSize = Megabytes(64);
-	GameMemory.TransientStorageSize = Gigabytes(4);
+	_gameMemory.PermanentStorageSize = Megabytes(64);
+	_gameMemory.TransientStorageSize = Gigabytes(4);
 	
-	uint64 totalSize = GameMemory.PermanentStorageSize + GameMemory.TransientStorageSize;
+	uint64 totalSize = _gameMemory.PermanentStorageSize + _gameMemory.TransientStorageSize;
 	kern_return_t result = vm_allocate((vm_map_t)mach_task_self(),
-									   (vm_address_t*)&GameMemory.PermanentStorage,
+									   (vm_address_t*)&_gameMemory.PermanentStorage,
 									   totalSize,
 									   VM_FLAGS_ANYWHERE);
 	if (result != KERN_SUCCESS)
@@ -646,14 +519,14 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 		NSLog(@"Error allocating memory");
 	}
 	
-	GameMemory.TransientStorage = ((uint8*)GameMemory.PermanentStorage
-								   + GameMemory.PermanentStorageSize);
+	_gameMemory.TransientStorage = ((uint8*)_gameMemory.PermanentStorage
+								   + _gameMemory.PermanentStorageSize);
 	
 	
 	// Get the conversion factor for doing profile timing with mach_absolute_time()
 	mach_timebase_info_data_t timebase;
 	mach_timebase_info(&timebase);
-	MachTimebaseConversionFactor = (double)timebase.numer / (double)timebase.denom;
+	_machTimebaseConversionFactor = (double)timebase.numer / (double)timebase.denom;
 	
 	[self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
@@ -680,10 +553,10 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 													 forKey:NSFullScreenModeSetting];
 
 	int BytesPerPixel = 4;
-	RenderBuffer.Width = 800;
-	RenderBuffer.Height = 600;
-	RenderBuffer.Memory = (uint8*)malloc(RenderBuffer.Width * RenderBuffer.Height * 4);
-	RenderBuffer.Pitch = RenderBuffer.Width * BytesPerPixel;
+	_renderBuffer.Width = 800;
+	_renderBuffer.Height = 600;
+	_renderBuffer.Memory = (uint8*)malloc(_renderBuffer.Width * _renderBuffer.Height * 4);
+	_renderBuffer.Pitch = _renderBuffer.Width * BytesPerPixel;
 
 	//_cols = 800;
 	//_rows = 600;
@@ -692,6 +565,29 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	[self setupGamepad];
 
 	OSXInitCoreAudio();
+
+	_setupComplete = YES;
+}
+
+
+- (id)init
+{
+	self = [super init];
+
+	if (self == nil)
+	{
+		return nil;
+	}
+
+	[self setup];
+
+	return self;
+}
+
+
+- (void)awakeFromNib
+{
+	[self setup];
 }
 
 
@@ -710,7 +606,7 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
     glGenTextures(1, &_textureId);
     glBindTexture(GL_TEXTURE_2D, _textureId);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RenderBuffer.Width, RenderBuffer.Height,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _renderBuffer.Width, _renderBuffer.Height,
 				 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -792,7 +688,7 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 		NewController->Right.EndedDown = _hidButtons[4];
 
 
-		GameUpdateAndRender(&GameMemory, NewInput, &RenderBuffer, &SoundBuffer);
+		GameUpdateAndRender(&_gameMemory, NewInput, &_renderBuffer, &_soundBuffer);
 
 		
 		// TODO(jeff): Move this into the game render code
@@ -832,8 +728,8 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
     glBindTexture(GL_TEXTURE_2D, _textureId);
 
     glEnable(GL_TEXTURE_2D);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, RenderBuffer.Width, RenderBuffer.Height,
-					GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, RenderBuffer.Memory);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _renderBuffer.Width, _renderBuffer.Height,
+					GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _renderBuffer.Memory);
 	
     GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
     glColor4f(1,1,1,1);
@@ -850,15 +746,17 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	uint64 EndCycleCount = rdtsc();
 	uint64 EndTime = mach_absolute_time();
 	
-	uint64 CyclesElapsed = EndCycleCount - LastCycleCount;
+	//uint64 CyclesElapsed = EndCycleCount - LastCycleCount;
 	
-	real64 MSPerFrame = (real64)(EndTime - StartTime) * MachTimebaseConversionFactor / 1.0E6;
+	real64 MSPerFrame = (real64)(EndTime - StartTime) * _machTimebaseConversionFactor / 1.0E6;
 	real64 SPerFrame = MSPerFrame / 1000.0;
-	real64 FPS = 1.0 / SPerFrame;
+	//real64 FPS = 1.0 / SPerFrame;
 	
 	// NSLog(@"%.02fms/f,  %.02ff/s", MSPerFrame, FPS);
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-missing-super-calls"
 - (void)dealloc
 {
 	OSXStopCoreAudio();
@@ -872,6 +770,7 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     //[super dealloc];
 }
+#pragma clang diagnostic pop
 
 
 - (void)toggleFullScreen:(id)sender

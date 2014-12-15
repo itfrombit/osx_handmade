@@ -1,33 +1,4 @@
-
-
-struct osx_offscreen_buffer
-{
-	// NOTE: Pixels are always 32-bits wide. BB GG RR XX
-	//BITMAPINFO Info;
-	void* Memory;
-	int Width;
-	int Height;
-	int Pitch;
-};
-
-
-struct osx_window_dimension
-{
-	int Width;
-	int Height;
-};
-
-
-struct osx_sound_output
-{
-	int SamplesPerSecond;
-	uint32 RunningSampleIndex;
-	int BytesPerSample;
-	real32 tSine;
-	int LatencySampleCount;
-};
-
-
+#pragma once
 
 #define MAX_HID_BUTTONS 32
 
@@ -35,20 +6,27 @@ struct osx_sound_output
 {
 @public
 	// display
-	CVDisplayLinkRef	_displayLink;
+	CVDisplayLinkRef			_displayLink;
 	
 	// graphics
-	NSDictionary*		_fullScreenOptions;
-	GLuint				_textureId;
-	//unsigned int		_rows;
-	//unsigned int		_cols;
-	//unsigned char*	_renderbuffer;
+	NSDictionary*				_fullScreenOptions;
+	GLuint						_textureId;
+	//unsigned int				_rows;
+	//unsigned int				_cols;
+	//unsigned char*			_renderbuffer;
 	
 	// input
-	IOHIDManagerRef		_hidManager;
-	int					_hidX;
-	int					_hidY;
-	uint8				_hidButtons[MAX_HID_BUTTONS];
+	IOHIDManagerRef				_hidManager;
+	int							_hidX;
+	int							_hidY;
+	uint8						_hidButtons[MAX_HID_BUTTONS];
+
+	game_memory					_gameMemory;
+	game_sound_output_buffer	_soundBuffer;
+	game_offscreen_buffer		_renderBuffer;
+
+
+	real64						_machTimebaseConversionFactor;
+	BOOL						_setupComplete;
 }
 @end
-

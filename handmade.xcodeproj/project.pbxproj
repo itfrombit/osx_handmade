@@ -361,6 +361,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = handmade/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				OTHER_CFLAGS = (
+					"-DHANDMADE_OSX=1",
+					"-DHANDMADE_SLOW=1",
+					"-DHANDMADE_INTERNAL=1",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -372,6 +377,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = handmade/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				OTHER_CFLAGS = (
+					"-DHANDMADE_OSX=1",
+					"-DHANDMADE_SLOW=1",
+					"-DHANDMADE_INTERNAL=1",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

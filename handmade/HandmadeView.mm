@@ -42,7 +42,10 @@
 #include "osx_handmade.cpp"
 #include "HandmadeView.h"
 
-
+#ifndef HANDMADE_USE_ASM_RDTSC
+// NOTE(jeff): Thanks to @visitect for this suggestion
+#define rdtsc __builtin_readcyclecounter
+#else
 internal inline uint64
 rdtsc()
 {
@@ -63,6 +66,7 @@ rdtsc()
 
 	return (((uint64)edx << 32) | eax);
 }
+#endif
 
 
 

@@ -1,5 +1,6 @@
 build/
 handmade.xcodeproj/project.xcworkspace/xcshareddata/
+handmade.xcodeproj/project.xcworkspace/xcuserdata/
 handmade.xcodeproj/xcuserdata/
 handmade/.ycm_extra_conf.py
 handmade/.ycm_extra_conf.pyc

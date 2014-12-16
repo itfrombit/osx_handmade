@@ -172,7 +172,87 @@ void OSXHIDAdded(void* context, IOReturn result, void* sender, IOHIDDeviceRef de
 	#pragma unused(sender)
 	#pragma unused(device)
 
-	NSLog(@"Gamepad was plugged in");
+	HandmadeView* view = (__bridge HandmadeView*)context;
+
+	//IOHIDManagerRef mr = (IOHIDManagerRef)sender;
+
+	CFStringRef manufacturerCFSR = (CFStringRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDManufacturerKey));
+	CFStringRef productCFSR = (CFStringRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey));
+
+	NSLog(@"Gamepad was detected: %@ %@", (__bridge NSString*)manufacturerCFSR, (__bridge NSString*)productCFSR);
+
+	NSArray *elements = (__bridge_transfer NSArray *)IOHIDDeviceCopyMatchingElements(device, NULL, kIOHIDOptionsTypeNone);
+
+	for (id element in elements)
+	{
+		IOHIDElementRef tIOHIDElementRef = (__bridge IOHIDElementRef)element;
+
+		IOHIDElementType tIOHIDElementType = IOHIDElementGetType(tIOHIDElementRef);
+
+		switch(tIOHIDElementType)
+		{
+			case kIOHIDElementTypeInput_Misc:
+			{
+				printf("[misc] ");
+				break;
+			}
+
+			case kIOHIDElementTypeInput_Button:
+			{
+				printf("[button] ");
+				break;
+			}
+
+			case kIOHIDElementTypeInput_Axis:
+			{
+				printf("[axis] ");
+				break;
+			}
+
+			case kIOHIDElementTypeInput_ScanCodes:
+			{
+				printf("[scancode] ");
+				break;
+			}
+			default:
+				continue;
+		}
+
+		uint32_t reportSize = IOHIDElementGetReportSize(tIOHIDElementRef);
+		uint32_t reportCount = IOHIDElementGetReportCount(tIOHIDElementRef);
+		if ((reportSize * reportCount) > 64)
+		{
+			continue;
+		}
+
+		uint32_t usagePage = IOHIDElementGetUsagePage(tIOHIDElementRef);
+		uint32_t usage = IOHIDElementGetUsage(tIOHIDElementRef);
+		if (!usagePage || !usage)
+		{
+			continue;
+		}
+		if (-1 == usage)
+		{
+			continue;
+		}
+
+		CFIndex logicalMin = IOHIDElementGetLogicalMin(tIOHIDElementRef);
+		CFIndex logicalMax = IOHIDElementGetLogicalMax(tIOHIDElementRef);
+
+		printf("page/usage = %d:%d  min/max = (%ld, %ld)\n", usagePage, usage, logicalMin, logicalMax);
+
+		// TODO(jeff): Change NSDictionary to a simple hash table.
+		// TODO(jeff): Add a hash table for each controller. Use cookies for ID.
+		// TODO(jeff): Change HandmadeHIDElement to a simple struct.
+		HandmadeHIDElement* e = [[HandmadeHIDElement alloc] initWithType:tIOHIDElementType
+															   usagePage:usagePage
+																   usage:usage
+																	 min:logicalMin
+																	 max:logicalMax];
+		long key = (usagePage << 16) | usage;
+
+		[view->_elementDictionary setObject:e forKey:[NSNumber numberWithLong:key]];
+	}
 }
 
 void OSXHIDRemoved(void* context, IOReturn result, void* sender, IOHIDDeviceRef device)
@@ -190,15 +270,24 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 	#pragma unused(result)
 	#pragma unused(sender)
 
+	// NOTE(jeff): Check suggested by Filip to prevent an access violation when
+	// using a PS3 controller.
+	// TODO(jeff): Investigate this further...
+	if (IOHIDValueGetLength(value) > 2)
+	{
+		//NSLog(@"OSXHIDAction: value length > 2: %ld", IOHIDValueGetLength(value));
+		return;
+	}
+
 	IOHIDElementRef element = IOHIDValueGetElement(value);
 	if (CFGetTypeID(element) != IOHIDElementGetTypeID())
 	{
 		return;
 	}
 
-	IOHIDElementCookie cookie = IOHIDElementGetCookie(element);
-	IOHIDElementType type = IOHIDElementGetType(element);
-	CFStringRef name = IOHIDElementGetName(element);
+	//IOHIDElementCookie cookie = IOHIDElementGetCookie(element);
+	//IOHIDElementType type = IOHIDElementGetType(element);
+	//CFStringRef name = IOHIDElementGetName(element);
 	int usagePage = IOHIDElementGetUsagePage(element);
 	int usage = IOHIDElementGetUsage(element);
 
@@ -226,80 +315,103 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 	//  14 - Alphanumeric Display
 	//  40 - Medical Instrument
 
-	// TODO(jeff): Fix this hardcoded scaling!
-	int hatDelta = 16;
-	int xyRange = 256;
-	int xyHalfRange = xyRange / 2;
-	int xyScalingShiftFactor = 3;
-
 	if (usagePage == 1) // Generic Desktop Page
 	{
+		int hatDelta = 16;
+
+		NSNumber* key = [NSNumber numberWithLong:((usagePage << 16) | usage)];
+		HandmadeHIDElement* e = [view->_elementDictionary objectForKey:key];
+
+		float normalizedValue = 0.0;
+		if (e->max != e->min)
+		{
+			normalizedValue = (float)(elementValue - e->min) / (float)(e->max - e->min);
+		}
+		float scaledMin = -25.0;
+		float scaledMax = 25.0;
+
+		int scaledValue = scaledMin + normalizedValue * (scaledMax - scaledMin);
+
+		//printf("page:usage = %d:%d  value = %ld  ", usagePage, usage, elementValue);
 		switch(usage)
 		{
 			case 0x30: // x
-				view->_hidX = (int)(elementValue - xyHalfRange) >> xyScalingShiftFactor;
+				view->_hidX = scaledValue;
+				//printf("[x] scaled = %d\n", view->_hidX);
 				break;
 
-
 			case 0x31: // y
-				view->_hidY = (int)(elementValue - xyHalfRange) >> xyScalingShiftFactor;
+				view->_hidY = scaledValue;
+				//printf("[y] scaled = %d\n", view->_hidY);
 				break;
 
 			case 0x32: // z
-				view->_hidX = (int)(elementValue - xyHalfRange) >> xyScalingShiftFactor;
+				//view->_hidX = scaledValue;
+				//printf("[z] scaled = %d\n", view->_hidX);
 				break;
 
 			case 0x35: // rz
-				view->_hidY = (int)(elementValue - xyHalfRange) >> xyScalingShiftFactor;
+				//view->_hidY = scaledValue;
+				//printf("[rz] scaled = %d\n", view->_hidY);
 				break;
 
 			case 0x39: // Hat 0 = up, 2 = right, 4 = down, 6 = left, 8 = centered
 			{
+				printf("[hat] ");
 				switch(elementValue)
 				{
 					case 0:
 						view->_hidX = 0;
 						view->_hidY = -hatDelta;
+						printf("n\n");
 						break;
 
 					case 1:
 						view->_hidX = hatDelta;
 						view->_hidY = -hatDelta;
+						printf("ne\n");
 						break;
 
 					case 2:
 						view->_hidX = hatDelta;
 						view->_hidY = 0;
+						printf("e\n");
 						break;
 
 					case 3:
 						view->_hidX = hatDelta;
 						view->_hidY = hatDelta;
+						printf("se\n");
 						break;
 
 					case 4:
 						view->_hidX = 0;
 						view->_hidY = hatDelta;
+						printf("s\n");
 						break;
 
 					case 5:
 						view->_hidX = -hatDelta;
 						view->_hidY = hatDelta;
+						printf("sw\n");
 						break;
 
 					case 6:
 						view->_hidX = -hatDelta;
 						view->_hidY = 0;
+						printf("w\n");
 						break;
 
 					case 7:
 						view->_hidX = -hatDelta;
 						view->_hidY = -hatDelta;
+						printf("nw\n");
 						break;
 
 					case 8:
 						view->_hidX = 0;
 						view->_hidY = 0;
+						printf("up\n");
 						break;
 				}
 
@@ -402,16 +514,37 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 		}
 		else
 		{
-			NSLog(@"Gamepad Element: %@  Type: %d  Page: %d  Usage: %d  Name: %@  Cookie: %i  Value: %ld  _hidX: %d",
-				  element, type, usagePage, usage, name, cookie, elementValue, view->_hidX);
+			//NSLog(@"Gamepad Element: %@  Type: %d  Page: %d  Usage: %d  Name: %@  Cookie: %i  Value: %ld  _hidX: %d",
+			//	  element, type, usagePage, usage, name, cookie, elementValue, view->_hidX);
 		}
 	}
 	else
 	{
-		NSLog(@"Gamepad Element: %@  Type: %d  Page: %d  Usage: %d  Name: %@  Cookie: %i  Value: %ld  _hidX: %d",
-			  element, type, usagePage, usage, name, cookie, elementValue, view->_hidX);
+		//NSLog(@"Gamepad Element: %@  Type: %d  Page: %d  Usage: %d  Name: %@  Cookie: %i  Value: %ld  _hidX: %d",
+		//	  element, type, usagePage, usage, name, cookie, elementValue, view->_hidX);
 	}
 }
+
+
+@implementation HandmadeHIDElement
+
+- (id)initWithType:(long)t usagePage:(long)p usage:(long)u min:(long)n max:(long)x
+{
+	self = [super init];
+
+	if (!self) return nil;
+
+	type = t;
+	page = p;
+	usage = u;
+	min = n;
+	max = x;
+
+	return self;
+}
+
+@end
+
 
 
 @implementation HandmadeView
@@ -438,12 +571,15 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 									[NSNumber numberWithInt:kHIDPage_GenericDesktop],
 								(NSString*)CFSTR(kIOHIDDeviceUsageKey):
 									[NSNumber numberWithInt:kHIDUsage_GD_MultiAxisController]
-								},
+							   }
+#if 1
+							   ,
 							@{ (NSString*)CFSTR(kIOHIDDeviceUsagePageKey):
 									[NSNumber numberWithInt:kHIDPage_GenericDesktop],
 								(NSString*)CFSTR(kIOHIDDeviceUsageKey):
 									[NSNumber numberWithInt:kHIDUsage_GD_Keyboard]
-								}
+							   }
+#endif
 							];
 
 		// NOTE(jeff): These all return void, so no error checking...
@@ -507,6 +643,8 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	{
 		return;
 	}
+
+	_elementDictionary = [[NSMutableDictionary alloc] init];
 
 	// Allocate Memory
 	_gameMemory.PermanentStorageSize = Megabytes(64);
@@ -696,7 +834,7 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
 		
 		// TODO(jeff): Move this into the game render code
-		GlobalFrequency = 440.0 + (32 * _hidY);
+		GlobalFrequency = 440.0 + (15 * _hidY);
 
 		game_input* Temp = NewInput;
 		NewInput = OldInput;

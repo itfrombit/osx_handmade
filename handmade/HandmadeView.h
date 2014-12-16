@@ -2,6 +2,24 @@
 
 #define MAX_HID_BUTTONS 32
 
+
+// TODO(jeff): Temporary NSObject for testing.
+// Replace with simple struct in a set of hash tables.
+@interface HandmadeHIDElement : NSObject
+{
+@public
+	long	type;
+	long	page;
+	long	usage;
+	long	min;
+	long	max;
+};
+
+- (id)initWithType:(long)type usagePage:(long)p usage:(long)u min:(long)n max:(long)x;
+
+@end
+
+
 @interface HandmadeView : NSOpenGLView
 {
 @public
@@ -28,5 +46,8 @@
 
 	real64						_machTimebaseConversionFactor;
 	BOOL						_setupComplete;
+
+	// TODO(jeff): Replace with set of simple hash tables of structs
+	NSMutableDictionary*		_elementDictionary;
 }
 @end

@@ -25,7 +25,7 @@
 #include <mach/mach_init.h>
 #include <mach/vm_map.h>
 
-#include "handmade.h"
+#include "../handmade/handmade.h"
 #include "osx_handmade.h"
 
 internal void

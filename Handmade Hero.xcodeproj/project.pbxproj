@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4F387A341A495BBA0097212D /* osx_handmade.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F387A331A495BBA0097212D /* osx_handmade.cpp */; };
+		4F387A3B1A4964CF0097212D /* osx_handmade.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F387A3A1A4964CF0097212D /* osx_handmade.cpp */; };
 		4F99B1941A49537100A1DCB8 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F99B18E1A49537100A1DCB8 /* AppDelegate.m */; };
 		4F99B1951A49537100A1DCB8 /* HandmadeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4F99B1901A49537100A1DCB8 /* HandmadeView.mm */; };
 		4F99B1961A49537100A1DCB8 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4F99B1911A49537100A1DCB8 /* Images.xcassets */; };
@@ -52,7 +52,7 @@
 
 /* Begin PBXFileReference section */
 		4F387A251A4958140097212D /* handmade.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = handmade.xcodeproj; path = handmade/handmade.xcodeproj; sourceTree = "<group>"; };
-		4F387A331A495BBA0097212D /* osx_handmade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = osx_handmade.cpp; sourceTree = "<group>"; };
+		4F387A3A1A4964CF0097212D /* osx_handmade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = osx_handmade.cpp; sourceTree = "<group>"; };
 		4F99B18D1A49537100A1DCB8 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = "Handmade Hero/AppDelegate.h"; sourceTree = SOURCE_ROOT; };
 		4F99B18E1A49537100A1DCB8 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = "Handmade Hero/AppDelegate.m"; sourceTree = SOURCE_ROOT; };
 		4F99B18F1A49537100A1DCB8 /* HandmadeView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HandmadeView.h; path = "Handmade Hero/HandmadeView.h"; sourceTree = SOURCE_ROOT; };
@@ -114,7 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				4F99B1931A49537100A1DCB8 /* osx_handmade.h */,
-				4F387A331A495BBA0097212D /* osx_handmade.cpp */,
+				4F387A3A1A4964CF0097212D /* osx_handmade.cpp */,
 				4F99B18D1A49537100A1DCB8 /* AppDelegate.h */,
 				4F99B18E1A49537100A1DCB8 /* AppDelegate.m */,
 				4F99B18F1A49537100A1DCB8 /* HandmadeView.h */,
@@ -128,9 +128,8 @@
 				4FBEB1B01A1FF3140001436D /* QuartzCore.framework */,
 				4FBEB1AF1A1FF3140001436D /* OpenGL.framework */,
 			);
-			name = "Handmade Hero";
-			path = handmade;
-			sourceTree = "<group>";
+			path = "Handmade Hero";
+			sourceTree = SOURCE_ROOT;
 		};
 		4FBEB18C1A1FEF100001436D /* Supporting Files */ = {
 			isa = PBXGroup;
@@ -235,7 +234,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4F387A341A495BBA0097212D /* osx_handmade.cpp in Sources */,
+				4F387A3B1A4964CF0097212D /* osx_handmade.cpp in Sources */,
 				4F99B1941A49537100A1DCB8 /* AppDelegate.m in Sources */,
 				4F99B1951A49537100A1DCB8 /* HandmadeView.mm in Sources */,
 				4F99B1A21A4953D800A1DCB8 /* main.m in Sources */,

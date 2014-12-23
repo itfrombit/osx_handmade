@@ -29,7 +29,12 @@
 
 #include <mach/mach_time.h>
 
+#ifdef HANDMADE_MIN_OSX
+#include "handmade.h"
+#else
 #include "../handmade/handmade.h"
+#endif
+
 #include "osx_handmade.h"
 #include "HandmadeView.h"
 
@@ -459,6 +464,12 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 		//   3 - ErrorUndefined
 		// Ignore them for now...
 		if (usage < 4) return;
+
+		if (![[view window] isKeyWindow])
+		{
+			// NOTE(jeff): Don't process keystrokes meant for other windows...
+			return;
+		}
 
 		NSString* keyName = @"";
 
@@ -1026,21 +1037,32 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 		// NSPoint PointInWindow = [[self window] convertScreenToBase:[NSEvent mouseLocation]];
 
 		NSPoint PointInScreen = [NSEvent mouseLocation];
-		NSRect RectInWindow = [[self window] convertRectFromScreen:NSMakeRect(PointInScreen.x, PointInScreen.y, 1, 1)];
-		NSPoint PointInWindow = RectInWindow.origin;
-		NSPoint PointInView = [self convertPoint:PointInWindow fromView:nil];
 
-		_newInput->MouseX = PointInView.x;
-		_newInput->MouseY = PointInView.y;
-		_newInput->MouseZ = 0; // TODO(casey): Support mousewheel?
+		BOOL mouseInWindow = NSPointInRect(PointInScreen, self.window.frame);
 
-		NSUInteger ButtonMask = [NSEvent pressedMouseButtons];
-		_newInput->MouseButtons[0].EndedDown = ButtonMask & 0x0001;
-		_newInput->MouseButtons[1].EndedDown = (ButtonMask >> 1) & 0x0001;
-		_newInput->MouseButtons[2].EndedDown = (ButtonMask >> 2) & 0x0001;
-		_newInput->MouseButtons[3].EndedDown = (ButtonMask >> 3) & 0x0001;
-		_newInput->MouseButtons[4].EndedDown = (ButtonMask >> 4) & 0x0001;
+		if (mouseInWindow)
+		{
+			NSRect RectInWindow = [[self window] convertRectFromScreen:NSMakeRect(PointInScreen.x, PointInScreen.y, 1, 1)];
+			NSPoint PointInWindow = RectInWindow.origin;
+			NSPoint PointInView = [self convertPoint:PointInWindow fromView:nil];
 
+			_newInput->MouseX = PointInView.x;
+			_newInput->MouseY = PointInView.y;
+			_newInput->MouseZ = 0; // TODO(casey): Support mousewheel?
+
+			NSUInteger ButtonMask = [NSEvent pressedMouseButtons];
+			_newInput->MouseButtons[0].EndedDown = ButtonMask & 0x0001;
+			_newInput->MouseButtons[1].EndedDown = (ButtonMask >> 1) & 0x0001;
+			_newInput->MouseButtons[2].EndedDown = (ButtonMask >> 2) & 0x0001;
+			_newInput->MouseButtons[3].EndedDown = (ButtonMask >> 3) & 0x0001;
+			_newInput->MouseButtons[4].EndedDown = (ButtonMask >> 4) & 0x0001;
+		}
+		else
+		{
+			_newInput->MouseX = _oldInput->MouseX;
+			_newInput->MouseY = _oldInput->MouseY;
+			_newInput->MouseZ = _oldInput->MouseZ;
+		}
 
 		if (_osxState.InputRecordingIndex)
 		{

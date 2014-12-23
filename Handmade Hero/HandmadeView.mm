@@ -29,7 +29,7 @@
 
 #include <mach/mach_time.h>
 
-#include "handmade.h"
+#include "../handmade/handmade.h"
 #include "osx_handmade.h"
 #include "HandmadeView.h"
 

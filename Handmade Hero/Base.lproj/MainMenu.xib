@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6250" systemVersion="14B25" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6250" systemVersion="14A388a" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6250"/>
     </dependencies>
@@ -169,22 +169,22 @@
         <window title="Handmade Hero" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" animationBehavior="default" id="QvC-M9-y7g" userLabel="Handmade Hero">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="335" y="390" width="800" height="600"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1577"/>
+            <rect key="contentRect" x="335" y="390" width="960" height="540"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="877"/>
             <value key="minSize" type="size" width="100" height="100"/>
             <view key="contentView" id="EiT-Mj-1SZ">
-                <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
+                <rect key="frame" x="0.0" y="0.0" width="960" height="540"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="wER-w1-w9N" customClass="HandmadeView">
-                        <rect key="frame" x="0.0" y="0.0" width="800" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="960" height="540"/>
                     </customView>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="bottom" secondItem="wER-w1-w9N" secondAttribute="bottom" id="RXT-gX-gAR"/>
-                    <constraint firstAttribute="trailing" secondItem="wER-w1-w9N" secondAttribute="trailing" id="bbb-px-s0v"/>
-                    <constraint firstItem="wER-w1-w9N" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" id="dvW-Lo-6XT"/>
-                    <constraint firstItem="wER-w1-w9N" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" id="fZL-Ko-Q2U"/>
+                    <constraint firstItem="wER-w1-w9N" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" id="7Zp-kr-RVK"/>
+                    <constraint firstAttribute="trailing" secondItem="wER-w1-w9N" secondAttribute="trailing" id="Obv-sD-9Se"/>
+                    <constraint firstAttribute="bottom" secondItem="wER-w1-w9N" secondAttribute="bottom" id="sN6-gS-mJD"/>
+                    <constraint firstItem="wER-w1-w9N" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" id="u9S-kl-Cse"/>
                 </constraints>
             </view>
         </window>

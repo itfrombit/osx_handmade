@@ -140,6 +140,37 @@ OSStatus SineWaveRenderCallback(void * inRefCon,
 	return noErr;
 }
 
+OSStatus SilentCallback(void* inRefCon,
+                        AudioUnitRenderActionFlags* ioActionFlags,
+                        const AudioTimeStamp* inTimeStamp,
+                        UInt32 inBusNumber,
+                        UInt32 inNumberFrames,
+                        AudioBufferList* ioData)
+{
+	#pragma unused(inRefCon)
+	#pragma unused(ioActionFlags)
+	#pragma unused(inTimeStamp)
+	#pragma unused(inBusNumber)
+
+	//double currentPhase = *((double*)inRefCon);
+	//osx_sound_output* SoundOutput = ((osx_sound_output*)inRefCon);
+
+	Float32* outputBuffer = (Float32 *)ioData->mBuffers[0].mData;
+
+	for (UInt32 i = 0; i < inNumberFrames; i++)
+	{
+		outputBuffer[i] = 0.0;
+	}
+
+	// Copy to the stereo (or the additional X.1 channels)
+	for(UInt32 i = 1; i < ioData->mNumberBuffers; i++)
+	{
+		memcpy(ioData->mBuffers[i].mData, outputBuffer,
+		       ioData->mBuffers[i].mDataByteSize);
+	}
+
+	return noErr;
+}
 
 void OSXInitCoreAudio(osx_sound_output* SoundOutput)
 {
@@ -173,7 +204,7 @@ void OSXInitCoreAudio(osx_sound_output* SoundOutput)
                          sizeof(asbd));
 
 	AURenderCallbackStruct cb;
-	cb.inputProc       = SineWaveRenderCallback;
+	cb.inputProc       = SilentCallback; //SineWaveRenderCallback;
 	cb.inputProcRefCon = SoundOutput;
 
 	AudioUnitSetProperty(SoundOutput->AudioUnit,
@@ -900,8 +931,8 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 													 forKey:NSFullScreenModeSetting];
 
 	int BytesPerPixel = 4;
-	_renderBuffer.Width = 800;
-	_renderBuffer.Height = 600;
+	_renderBuffer.Width = 960;
+	_renderBuffer.Height = 540;
 	_renderBuffer.Memory = (uint8*)malloc(_renderBuffer.Width * _renderBuffer.Height * 4);
 	_renderBuffer.Pitch = _renderBuffer.Width * BytesPerPixel;
 	_renderBuffer.BytesPerPixel = BytesPerPixel;
@@ -1098,10 +1129,10 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
 	GLfloat vertices[] =
 	{
-		-1, 1, 0,
 		-1, -1, 0,
+		-1, 1, 0,
+		1, 1, 0,
 		1, -1, 0,
-		1, 1, 0
 	};
 
 	GLfloat tex_coords[] =

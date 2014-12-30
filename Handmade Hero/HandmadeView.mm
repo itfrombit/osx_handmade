@@ -72,11 +72,11 @@
 @public
 	// display
 	CVDisplayLinkRef			_displayLink;
-	
+
 	// graphics
 	NSDictionary*				_fullScreenOptions;
 	GLuint						_textureId;
-	
+
 	// input
 	IOHIDManagerRef				_hidManager;
 	int							_hidX;
@@ -92,12 +92,14 @@
 	game_input					_input[2];
 	game_input*					_newInput;
 	game_input*					_oldInput;
+	game_input					_currentInput;
 
 	osx_state					_osxState;
 	osx_game_code				_game;
 	osx_sound_output			_soundOutput;
 	thread_context				_thread;
 
+	real32						_targetSecondsPerFrame;
 	real64						_machTimebaseConversionFactor;
 	BOOL						_setupComplete;
 
@@ -318,6 +320,16 @@ void OSXHIDAdded(void* context, IOReturn result, void* sender, IOHIDDeviceRef de
 	}
 }
 
+internal void
+OSXProcessKeyboardMessage(game_button_state *NewState, bool32 IsDown)
+{
+	if(NewState->EndedDown != IsDown)
+	{
+		NewState->EndedDown = IsDown;
+		++NewState->HalfTransitionCount;
+	}
+}
+
 void OSXHIDRemoved(void* context, IOReturn result, void* sender, IOHIDDeviceRef device)
 {
 	#pragma unused(context)
@@ -507,55 +519,68 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 		// TODO(jeff): Store the keyboard events somewhere...
 
 		bool isDown = elementValue;
+		game_controller_input* controller = GetController(&view->_currentInput, 0);
 
 		switch(usage)
 		{
 			case kHIDUsage_KeyboardW:
 				keyName = @"w";
+				OSXProcessKeyboardMessage(&controller->MoveUp, isDown);
 				break;
 
 			case kHIDUsage_KeyboardA:
 				keyName = @"a";
+				OSXProcessKeyboardMessage(&controller->MoveLeft, isDown);
 				break;
 
 			case kHIDUsage_KeyboardS:
 				keyName = @"s";
+				OSXProcessKeyboardMessage(&controller->MoveDown, isDown);
 				break;
 
 			case kHIDUsage_KeyboardD:
 				keyName = @"d";
+				OSXProcessKeyboardMessage(&controller->MoveRight, isDown);
 				break;
 
 			case kHIDUsage_KeyboardQ:
 				keyName = @"q";
+				OSXProcessKeyboardMessage(&controller->LeftShoulder, isDown);
 				break;
 
 			case kHIDUsage_KeyboardE:
 				keyName = @"e";
+				OSXProcessKeyboardMessage(&controller->RightShoulder, isDown);
 				break;
 
 			case kHIDUsage_KeyboardSpacebar:
 				keyName = @"Space";
+				OSXProcessKeyboardMessage(&controller->Back, isDown);
 				break;
 
 			case kHIDUsage_KeyboardEscape:
 				keyName = @"ESC";
+				OSXProcessKeyboardMessage(&controller->Start, isDown);
 				break;
 
 			case kHIDUsage_KeyboardUpArrow:
 				keyName = @"Up";
+				OSXProcessKeyboardMessage(&controller->ActionUp, isDown);
 				break;
 
 			case kHIDUsage_KeyboardLeftArrow:
 				keyName = @"Left";
+				OSXProcessKeyboardMessage(&controller->ActionLeft, isDown);
 				break;
 
 			case kHIDUsage_KeyboardDownArrow:
 				keyName = @"Down";
+				OSXProcessKeyboardMessage(&controller->ActionDown, isDown);
 				break;
 
 			case kHIDUsage_KeyboardRightArrow:
 				keyName = @"Right";
+				OSXProcessKeyboardMessage(&controller->ActionRight, isDown);
 				break;
 
 			case kHIDUsage_KeyboardP:
@@ -1001,7 +1026,11 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	CGLContextObj cglContext = [[self openGLContext] CGLContextObj];
 	CGLPixelFormatObj cglPixelFormat = [[self pixelFormat] CGLPixelFormatObj];
 	CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(_displayLink, cglContext, cglPixelFormat);
+	
+	CVTime cvtime = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(_displayLink);
+	_targetSecondsPerFrame = (double)cvtime.timeValue / (double)cvtime.timeScale;
 
+	printf("targetSecondsPerFrame: %f\n", _targetSecondsPerFrame);
 	CVDisplayLinkStart(_displayLink);
 }
 
@@ -1024,16 +1053,6 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	CGLLockContext([[self openGLContext] CGLContextObj]);
 
 
-	///////////////////////////////////////////////////////////////////
-	// Check for updated game code
-
-	time_t NewDLWriteTime = OSXGetLastWriteTime(_sourceGameCodeDLFullPath);
-	if (NewDLWriteTime != _game.DLLastWriteTime)
-	{
-		OSXUnloadGameCode(&_game);
-		_game = OSXLoadGameCode(_sourceGameCodeDLFullPath);
-	}
-
 	//uint64 LastCycleCount = rdtsc();
 	//uint64 StartTime = mach_absolute_time();
 
@@ -1050,12 +1069,36 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	{
 		// NOTE(jeff): Not a resize, so run game logic and render the next frame
 
+		_newInput->dtForFrame = _targetSecondsPerFrame;
+
+		///////////////////////////////////////////////////////////////////
+		// Check for updated game code
+
+		time_t NewDLWriteTime = OSXGetLastWriteTime(_sourceGameCodeDLFullPath);
+		if (NewDLWriteTime != _game.DLLastWriteTime)
+		{
+			OSXUnloadGameCode(&_game);
+			_game = OSXLoadGameCode(_sourceGameCodeDLFullPath);
+		}
+
+		game_controller_input* OldKeyboardController = GetController(_oldInput, 0);
+		game_controller_input* NewKeyboardController = GetController(_newInput, 0);
+		memset(NewKeyboardController, 0, sizeof(game_controller_input));
+		NewKeyboardController->IsConnected = true;
+		for (int ButtonIndex = 0;
+		     ButtonIndex < ArrayCount(NewKeyboardController->Buttons);
+		     ++ButtonIndex)
+		{
+			NewKeyboardController->Buttons[ButtonIndex].EndedDown = 
+				OldKeyboardController->Buttons[ButtonIndex].EndedDown;
+		}
+
 		// TODO(jeff): Fix this for multiple controllers
 
 		//game_controller_input* OldController = &_oldInput->Controllers[0];
 		game_controller_input* NewController = &_newInput->Controllers[0];
 
-		NewController->IsAnalog = true;
+		NewController->IsConnected = true;
 		NewController->StickAverageX = _hidX;
 		NewController->StickAverageY = _hidY;
 
@@ -1064,8 +1107,12 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 		NewController->ActionLeft.EndedDown = _hidButtons[3];
 		NewController->ActionRight.EndedDown = _hidButtons[4];
 
-		// NOTE(jeff): Use this instead of convertRectFromScreen: if you want to support Snow Leopard
-		// NSPoint PointInWindow = [[self window] convertScreenToBase:[NSEvent mouseLocation]];
+		NewController->MoveUp.EndedDown = _currentInput.Controllers[0].MoveUp.EndedDown;
+		NewController->MoveDown.EndedDown = _currentInput.Controllers[0].MoveDown.EndedDown;
+		NewController->MoveLeft.EndedDown = _currentInput.Controllers[0].MoveLeft.EndedDown;
+		NewController->MoveRight.EndedDown = _currentInput.Controllers[0].MoveRight.EndedDown;
+
+		_newInput->dtForFrame = _targetSecondsPerFrame;
 
 		NSPoint PointInScreen = [NSEvent mouseLocation];
 
@@ -1073,6 +1120,9 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
 		if (mouseInWindow)
 		{
+			// NOTE(jeff): Use this instead of convertRectFromScreen: if you want to support Snow Leopard
+			// NSPoint PointInWindow = [[self window] convertScreenToBase:[NSEvent mouseLocation]];
+
 			NSRect RectInWindow = [[self window] convertRectFromScreen:NSMakeRect(PointInScreen.x, PointInScreen.y, 1, 1)];
 			NSPoint PointInWindow = RectInWindow.origin;
 			NSPoint PointInView = [self convertPoint:PointInWindow fromView:nil];
@@ -1217,21 +1267,30 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 }
 
 
-- (BOOL) acceptsFirstResponder
+- (BOOL)acceptsFirstResponder
 {
 	return YES;
 }
 
 
-- (BOOL) becomeFirstResponder
+- (BOOL)becomeFirstResponder
 {
 	return  YES;
 }
 
 
-- (BOOL) resignFirstResponder
+- (BOOL)resignFirstResponder
 {
 	return YES;
+}
+
+
+- (void)keyDown:(NSEvent*)event
+{
+	// NOTE(jeff): Eat the key event for now.
+	// We're currently processing the key via HID.
+	// We'll probably move it here to avoid needing
+	// a hypothetical keyboard entitlement.
 }
 
 @end

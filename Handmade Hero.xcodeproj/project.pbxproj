@@ -351,6 +351,7 @@
 					"-DHANDMADE_OSX=1",
 					"-DHANDMADE_SLOW=1",
 					"-DHANDMADE_INTERNAL=1",
+					"-Wno-null-dereference",
 				);
 				PRODUCT_NAME = "Handmade Hero";
 			};
@@ -368,6 +369,7 @@
 					"-DHANDMADE_OSX=1",
 					"-DHANDMADE_SLOW=1",
 					"-DHANDMADE_INTERNAL=1",
+					"-Wno-null-dereference",
 				);
 				PRODUCT_NAME = "Handmade Hero";
 			};

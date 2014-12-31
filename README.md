@@ -25,13 +25,15 @@ repository.
 Once you clone or update from this repository, copy over the
 following files from Casey's source code to the handmade
 subdirectory:
+  handmade_intrinsics.h
   handmade_platform.h
   handmade.h
   handmade.cpp
 
 
-This repository works with Casey's handmade.cpp/.h files from
-handmade_hero_029_source.
+This repository works with Casey's source code from
+handmade_hero_029_source through (at least)
+handmade_hero_032_source.
 
 
 

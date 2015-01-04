@@ -26,14 +26,35 @@
 #include <mach/vm_map.h>
 
 #ifdef HANDMADE_MIN_OSX
-#include "handmade.h"
+#include "handmade_platform.h"
 #else
-#include "../handmade/handmade.h"
+#include "../handmade/handmade_platform.h"
 #endif
 
 #include "osx_handmade.h"
 
-internal void
+
+// NOTE(jeff): vvvv Workaround hacks to avoid including handmade.h here.
+// If we include it, we will get duplicate symbol linker errors
+// for PushSize_().
+#ifndef ArrayCount
+#define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
+#endif
+
+#ifndef Assert
+
+#if HANDMADE_SLOW
+// TODO(casey): Complete assertion macro - don't worry everyone!
+#define Assert(Expression) if(!(Expression)) {*(int *)0 = 0;}
+#else
+#define Assert(Expression)
+#endif
+
+#endif
+// NOTE(jeff): ^^^^ End of workaround hacks.
+
+
+static void
 CatStrings(size_t SourceACount, char *SourceA,
            size_t SourceBCount, char *SourceB,
            size_t DestCount, char *Dest)
@@ -87,7 +108,7 @@ OSXGetAppFilename(osx_state *State)
     }
 }
 
-internal int
+static int
 StringLength(char *String)
 {
     int Count = 0;
@@ -285,7 +306,7 @@ void OSXGetInputFileLocation(osx_state* State, bool32 InputStream, int SlotIndex
 }
 
 
-internal osx_replay_buffer*
+static osx_replay_buffer*
 OSXGetReplayBuffer(osx_state* State, int unsigned Index)
 {
 	Assert(Index < ArrayCount(State->ReplayBuffers));

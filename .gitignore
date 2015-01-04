@@ -6,3 +6,11 @@ handmade/handmade.xcodeproj/xcuserdata/
 .ycm_extra_conf.py
 .ycm_extra_conf.pyc
 temp.out
+handmade/handmade.cpp
+handmade/handmade.h
+handmade/handmade_intrinsics.h
+handmade/handmade_platform.h
+handmade/handmade_random.h
+handmade/handmade_tile.cpp
+handmade/handmade_tile.h
+

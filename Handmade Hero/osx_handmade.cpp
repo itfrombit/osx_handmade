@@ -151,15 +151,27 @@ DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile)
 		{
 			uint32 FileSize32 = fileStat.st_size;
 
+			int result = -1;
+
 #if 1
 			Result.Contents = (char*)malloc(FileSize32);
+			if (Result.Contents)
+			{
+				result = 0;
+			}
 #else	
-			kern_return_t result = vm_allocate((vm_map_t)mach_task_self(),
-									           (vm_address_t*)&Result.Contents,
-									           FileSize32,
-									           VM_FLAGS_ANYWHERE);
+			kern_return_t kresult = vm_allocate((vm_map_t)mach_task_self(),
+									            (vm_address_t*)&Result.Contents,
+									            FileSize32,
+									            VM_FLAGS_ANYWHERE);
 
 			if ((result == KERN_SUCCESS) && Result.Contents)
+			{
+				result = 0;
+			}
+#endif
+
+			if (result == 0)
 			{
 				ssize_t BytesRead;
 				BytesRead = read(fd, Result.Contents, FileSize32);
@@ -178,7 +190,6 @@ DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile)
 				printf("DEBUGPlatformReadEntireFile %s:  vm_allocate error: %d: %s\n",
 				       Filename, errno, strerror(errno));
 			}
-#endif
 		}
 		else
 		{

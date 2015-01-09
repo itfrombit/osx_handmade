@@ -33,9 +33,11 @@ subdirectory:
 - handmade_tile.cpp
 - handmade_tile.h
 
+Also, copy over the test bitmap image asset folder to the
+root directory of this repository.
 
 This repository works with Casey's source code from
-handmade_hero_035_source.
+handmade_hero_038_source.
 
 
 Author

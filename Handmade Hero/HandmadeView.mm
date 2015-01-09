@@ -30,8 +30,9 @@
 #include <mach/mach_time.h>
 
 #ifdef HANDMADE_MIN_OSX
-#include "handmade.h"
+#include "handmade_platform.h"
 #else
+#include "../handmade/handmade_platform.h"
 #include "../handmade/handmade.h"
 #endif
 
@@ -320,7 +321,7 @@ void OSXHIDAdded(void* context, IOReturn result, void* sender, IOHIDDeviceRef de
 	}
 }
 
-internal void
+static void
 OSXProcessKeyboardMessage(game_button_state *NewState, bool32 IsDown)
 {
 	if(NewState->EndedDown != IsDown)
@@ -774,6 +775,14 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 		return;
 	}
 
+	NSFileManager* FileManager = [NSFileManager defaultManager];
+	NSString* AppPath = [NSString stringWithFormat:@"%@/Contents/Resources",
+		[[NSBundle mainBundle] bundlePath]];
+	if ([FileManager changeCurrentDirectoryPath:AppPath] == NO)
+	{
+		Assert(0);
+	}
+
 	// Get the conversion factor for doing profile timing with mach_absolute_time()
 	mach_timebase_info_data_t timebase;
 	mach_timebase_info(&timebase);
@@ -954,6 +963,12 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
 	_fullScreenOptions = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
 													 forKey:NSFullScreenModeSetting];
+
+	/* NOTE(casey): 1080p display mode is 1920x1080 -> Half of that is 960x540
+	                1920 -> 2048 = 2048-1920 -> 128 pixels
+	                1080 -> 2048 = 2048-1080 -> pixels 968
+	                1024 + 128 = 1152
+	*/
 
 	int BytesPerPixel = 4;
 	_renderBuffer.Width = 960;

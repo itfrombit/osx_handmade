@@ -13,4 +13,4 @@ handmade/handmade_platform.h
 handmade/handmade_random.h
 handmade/handmade_tile.cpp
 handmade/handmade_tile.h
-
+test/test*.bmp

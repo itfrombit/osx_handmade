@@ -222,7 +222,6 @@
 					"-DHANDMADE_SLOW=1",
 					"-DHANDMADE_INTERNAL=1",
 					"-Wno-null-dereference",
-					"-Dsize_t=__darwin_size_t",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -239,7 +238,6 @@
 					"-DHANDMADE_SLOW=1",
 					"-DHANDMADE_INTERNAL=1",
 					"-Wno-null-dereference",
-					"-Dsize_t=__darwin_size_t",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

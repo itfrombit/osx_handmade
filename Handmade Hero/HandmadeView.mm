@@ -33,7 +33,6 @@
 #include "handmade_platform.h"
 #else
 #include "../handmade/handmade_platform.h"
-#include "../handmade/handmade.h"
 #endif
 
 #include "osx_handmade.h"

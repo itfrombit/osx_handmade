@@ -555,12 +555,12 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 
 			case kHIDUsage_KeyboardSpacebar:
 				keyName = @"Space";
-				OSXProcessKeyboardMessage(&controller->Back, isDown);
+				OSXProcessKeyboardMessage(&controller->Start, isDown);
 				break;
 
 			case kHIDUsage_KeyboardEscape:
 				keyName = @"ESC";
-				OSXProcessKeyboardMessage(&controller->Start, isDown);
+				OSXProcessKeyboardMessage(&controller->Back, isDown);
 				break;
 
 			case kHIDUsage_KeyboardUpArrow:
@@ -1095,7 +1095,9 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 			_game = OSXLoadGameCode(_sourceGameCodeDLFullPath);
 		}
 
-		game_controller_input* OldKeyboardController = GetController(_oldInput, 0);
+		//game_controller_input* OldKeyboardController = GetController(_oldInput, 0);
+		game_controller_input* OldKeyboardController = GetController(&_currentInput, 0);
+
 		game_controller_input* NewKeyboardController = GetController(_newInput, 0);
 		memset(NewKeyboardController, 0, sizeof(game_controller_input));
 		NewKeyboardController->IsConnected = true;
@@ -1107,7 +1109,9 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 				OldKeyboardController->Buttons[ButtonIndex].EndedDown;
 		}
 
+
 		// TODO(jeff): Fix this for multiple controllers
+		//Win32ProcessPendingMessages(&Win32State, NewKeyboardController);
 
 		//game_controller_input* OldController = &_oldInput->Controllers[0];
 		game_controller_input* NewController = &_newInput->Controllers[0];
@@ -1158,6 +1162,27 @@ static CVReturn GLXViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 			_newInput->MouseY = _oldInput->MouseY;
 			_newInput->MouseZ = _oldInput->MouseZ;
 		}
+
+#if 0
+		// NOTE(jeff): Support for multiple controllers here...
+
+		#define HID_MAX_COUNT 5
+
+		uint32 MaxControllerCount = HID_MAX_COUNT;
+		if (MaxControllerCount > (ArrayCount(_newInput->Controllers) - 1))
+		{
+			MaxControllerCount = (ArrayCount(_newInput->Controllers) - 1);
+		}
+
+		for (uint32 ControllerIndex = 0; ControllerIndex < MaxControllerCount; ++ControllerIndex)
+		{
+			// NOTE(jeff): index 0 is the keyboard
+			uint32 OurControllerIndex = ControllerIndex + 1;
+			game_controller_input* OldController = GetController(_oldInput, OurControllerIndex);
+			game_controller_input* NewController = GetController(_newInput, OurControllerIndex);
+		}
+#endif
+
 
 		if (_osxState.InputRecordingIndex)
 		{

@@ -19,8 +19,6 @@ product directory of the application bundle.
 
 IMPORTANT
 ---------
-I removed Casey's platform-independent game code from this
-repository. 
 
 Once you clone or update from this repository, copy over the
 following files from Casey's source code to the handmade
@@ -28,6 +26,7 @@ subdirectory:
 - handmade.cpp
 - handmade.h
 - handmade_intrinsics.h
+- handmade_math.h
 - handmade_platform.h
 - handmade_random.h
 - handmade_tile.cpp
@@ -37,7 +36,7 @@ Also, copy over the test bitmap image asset folder to the
 root directory of this repository.
 
 This repository works with Casey's source code from
-handmade_hero_040.
+handmade_hero_051.
 
 
 Author

@@ -8,23 +8,23 @@
 
 /* Begin PBXBuildFile section */
 		4F1EDBF71A54573800329140 /* handmade_platform.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F1EDBF61A54573800329140 /* handmade_platform.h */; };
+		4F2A43BF1A85E936001C8550 /* handmade_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F2A43BD1A85E936001C8550 /* handmade_world.h */; };
 		4F3306C81A545B2C0072E589 /* handmade_intrinsics.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3306C71A545B2C0072E589 /* handmade_intrinsics.h */; };
 		4F387A311A49588D0097212D /* handmade.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F387A2F1A49588D0097212D /* handmade.cpp */; };
 		4F387A321A49588D0097212D /* handmade.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F387A301A49588D0097212D /* handmade.h */; };
 		4F8EB0841A59FEDB0039143E /* handmade_random.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F8EB0811A59FEDB0039143E /* handmade_random.h */; };
-		4F8EB0861A59FEDB0039143E /* handmade_tile.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F8EB0831A59FEDB0039143E /* handmade_tile.h */; };
 		4FD1F0C21A77783D009C4849 /* handmade_math.h in Headers */ = {isa = PBXBuildFile; fileRef = 4FD1F0C11A77783D009C4849 /* handmade_math.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		4F1EDBF61A54573800329140 /* handmade_platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_platform.h; sourceTree = "<group>"; };
+		4F2A43BC1A85E936001C8550 /* handmade_world.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = handmade_world.cpp; sourceTree = "<group>"; };
+		4F2A43BD1A85E936001C8550 /* handmade_world.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_world.h; sourceTree = "<group>"; };
 		4F3306C71A545B2C0072E589 /* handmade_intrinsics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_intrinsics.h; sourceTree = "<group>"; };
 		4F387A1E1A4958140097212D /* libhandmade.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libhandmade.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		4F387A2F1A49588D0097212D /* handmade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = handmade.cpp; sourceTree = "<group>"; };
 		4F387A301A49588D0097212D /* handmade.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade.h; sourceTree = "<group>"; };
 		4F8EB0811A59FEDB0039143E /* handmade_random.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_random.h; sourceTree = "<group>"; };
-		4F8EB0821A59FEDB0039143E /* handmade_tile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = handmade_tile.cpp; sourceTree = "<group>"; };
-		4F8EB0831A59FEDB0039143E /* handmade_tile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_tile.h; sourceTree = "<group>"; };
 		4FD1F0C11A77783D009C4849 /* handmade_math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_math.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -42,10 +42,10 @@
 		4F387A151A4958140097212D = {
 			isa = PBXGroup;
 			children = (
+				4F2A43BC1A85E936001C8550 /* handmade_world.cpp */,
+				4F2A43BD1A85E936001C8550 /* handmade_world.h */,
 				4FD1F0C11A77783D009C4849 /* handmade_math.h */,
 				4F8EB0811A59FEDB0039143E /* handmade_random.h */,
-				4F8EB0821A59FEDB0039143E /* handmade_tile.cpp */,
-				4F8EB0831A59FEDB0039143E /* handmade_tile.h */,
 				4F3306C71A545B2C0072E589 /* handmade_intrinsics.h */,
 				4F1EDBF61A54573800329140 /* handmade_platform.h */,
 				4F387A2F1A49588D0097212D /* handmade.cpp */,
@@ -70,9 +70,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				4FD1F0C21A77783D009C4849 /* handmade_math.h in Headers */,
-				4F8EB0861A59FEDB0039143E /* handmade_tile.h in Headers */,
 				4F3306C81A545B2C0072E589 /* handmade_intrinsics.h in Headers */,
 				4F8EB0841A59FEDB0039143E /* handmade_random.h in Headers */,
+				4F2A43BF1A85E936001C8550 /* handmade_world.h in Headers */,
 				4F387A321A49588D0097212D /* handmade.h in Headers */,
 				4F1EDBF71A54573800329140 /* handmade_platform.h in Headers */,
 			);

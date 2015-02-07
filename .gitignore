@@ -9,8 +9,12 @@ temp.out
 handmade/handmade.cpp
 handmade/handmade.h
 handmade/handmade_intrinsics.h
+handmade/handmade_math.h
 handmade/handmade_platform.h
 handmade/handmade_random.h
 handmade/handmade_tile.cpp
 handmade/handmade_tile.h
+handmade/handmade_world.cpp
+handmade/handmade_world.h
 test/test*.bmp
+test2/*.bmp

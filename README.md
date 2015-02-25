@@ -25,10 +25,14 @@ following files from Casey's source code to the handmade
 subdirectory:
 - handmade.cpp
 - handmade.h
+- handmade_entity.cpp
+- handmade_entity.h
 - handmade_intrinsics.h
 - handmade_math.h
 - handmade_platform.h
 - handmade_random.h
+- handmade_sim_region.cpp
+- handmade_sim_region.h
 - handmade_world.cpp
 - handmade_world.h
 
@@ -36,7 +40,7 @@ Also, copy over the test and test2 bitmap image asset folders to the
 root directory of this repository.
 
 This repository works with Casey's source code from
-handmade_hero_060.
+handmade_hero_072.
 
 
 Author

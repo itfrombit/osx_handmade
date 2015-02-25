@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4F0607E41A9E515C0061EAE2 /* handmade_entity.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F0607E01A9E515C0061EAE2 /* handmade_entity.h */; };
+		4F0607E61A9E515C0061EAE2 /* handmade_sim_region.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F0607E21A9E515C0061EAE2 /* handmade_sim_region.h */; };
 		4F1EDBF71A54573800329140 /* handmade_platform.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F1EDBF61A54573800329140 /* handmade_platform.h */; };
 		4F2A43BF1A85E936001C8550 /* handmade_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F2A43BD1A85E936001C8550 /* handmade_world.h */; };
 		4F3306C81A545B2C0072E589 /* handmade_intrinsics.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3306C71A545B2C0072E589 /* handmade_intrinsics.h */; };
@@ -17,6 +19,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4F0607DF1A9E515C0061EAE2 /* handmade_entity.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = handmade_entity.cpp; sourceTree = "<group>"; };
+		4F0607E01A9E515C0061EAE2 /* handmade_entity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_entity.h; sourceTree = "<group>"; };
+		4F0607E11A9E515C0061EAE2 /* handmade_sim_region.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = handmade_sim_region.cpp; sourceTree = "<group>"; };
+		4F0607E21A9E515C0061EAE2 /* handmade_sim_region.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_sim_region.h; sourceTree = "<group>"; };
 		4F1EDBF61A54573800329140 /* handmade_platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_platform.h; sourceTree = "<group>"; };
 		4F2A43BC1A85E936001C8550 /* handmade_world.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = handmade_world.cpp; sourceTree = "<group>"; };
 		4F2A43BD1A85E936001C8550 /* handmade_world.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_world.h; sourceTree = "<group>"; };
@@ -42,6 +48,10 @@
 		4F387A151A4958140097212D = {
 			isa = PBXGroup;
 			children = (
+				4F0607DF1A9E515C0061EAE2 /* handmade_entity.cpp */,
+				4F0607E01A9E515C0061EAE2 /* handmade_entity.h */,
+				4F0607E11A9E515C0061EAE2 /* handmade_sim_region.cpp */,
+				4F0607E21A9E515C0061EAE2 /* handmade_sim_region.h */,
 				4F2A43BC1A85E936001C8550 /* handmade_world.cpp */,
 				4F2A43BD1A85E936001C8550 /* handmade_world.h */,
 				4FD1F0C11A77783D009C4849 /* handmade_math.h */,
@@ -69,11 +79,13 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4F0607E61A9E515C0061EAE2 /* handmade_sim_region.h in Headers */,
 				4FD1F0C21A77783D009C4849 /* handmade_math.h in Headers */,
 				4F3306C81A545B2C0072E589 /* handmade_intrinsics.h in Headers */,
 				4F8EB0841A59FEDB0039143E /* handmade_random.h in Headers */,
 				4F2A43BF1A85E936001C8550 /* handmade_world.h in Headers */,
 				4F387A321A49588D0097212D /* handmade.h in Headers */,
+				4F0607E41A9E515C0061EAE2 /* handmade_entity.h in Headers */,
 				4F1EDBF71A54573800329140 /* handmade_platform.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -231,6 +243,7 @@
 					"-Wno-unused-variable",
 					"-Wno-tautological-compare",
 					"-Wno-c++11-compat-deprecated-writable-strings",
+					"-Wno-writable-strings",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -252,6 +265,7 @@
 					"-Wno-unused-variable",
 					"-Wno-tautological-compare",
 					"-Wno-c++11-compat-deprecated-writable-strings",
+					"-Wno-writable-strings",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

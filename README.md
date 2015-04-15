@@ -31,6 +31,8 @@ subdirectory:
 - handmade_math.h
 - handmade_platform.h
 - handmade_random.h
+- handmade_render_group.cpp
+- handmade_render_group.h
 - handmade_sim_region.cpp
 - handmade_sim_region.h
 - handmade_world.cpp
@@ -40,8 +42,12 @@ Also, copy over the test and test2 bitmap image asset folders to the
 root directory of this repository.
 
 This repository works with Casey's source code from
-handmade_hero_072.
+handmade_hero_092.
 
+For better rendering performance, build the project in Release mode.
+You can also temporarily set the renderAtHalfSpeed flag in HandmadeView.mm to
+reduce the effective rendering rate to 30fps instead of the default
+60fps.
 
 Author
 ------

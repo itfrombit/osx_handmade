@@ -18,6 +18,10 @@ handmade/handmade_sim_region.cpp
 handmade/handmade_sim_region.h
 handmade/handmade_world.cpp
 handmade/handmade_world.h
+handmade_render_group.cpp                                                                                                                                                                            
+handmade_render_group.h
+handmade_tile.cpp
+handmade_tile.h
 handmade/win32_handmade.cpp
 handmade/win32_handmade.h
 test/test*.bmp

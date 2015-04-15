@@ -1229,11 +1229,14 @@ static void internalLogOpenGLErrors(const char* label)
 		///////////////////////////////////////////////////////////////////
 		// Check for updated game code
 
+		_newInput->ExecutableReloaded = false;
+
 		time_t NewDLWriteTime = OSXGetLastWriteTime(_sourceGameCodeDLFullPath);
 		if (NewDLWriteTime != _game.DLLastWriteTime)
 		{
 			OSXUnloadGameCode(&_game);
 			_game = OSXLoadGameCode(_sourceGameCodeDLFullPath);
+			_newInput->ExecutableReloaded = true;
 		}
 
 		//game_controller_input* OldKeyboardController = GetController(_oldInput, 0);

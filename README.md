@@ -42,12 +42,13 @@ Also, copy over the test and test2 bitmap image asset folders to the
 root directory of this repository.
 
 This repository works with Casey's source code from
-handmade_hero_092.
+handmade_hero_111.
 
-For better rendering performance, build the project in Release mode.
+EXTRA IMPORTANT: For better rendering performance, build the project in Release mode.
+
 You can also temporarily set the renderAtHalfSpeed flag in HandmadeView.mm to
 reduce the effective rendering rate to 30fps instead of the default
-60fps.
+60fps. This is temporarily now the default until the renderer is optimized.
 
 Author
 ------

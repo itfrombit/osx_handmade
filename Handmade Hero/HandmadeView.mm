@@ -854,7 +854,7 @@ static void internalLogOpenGLErrors(const char* label)
 		return;
 	}
 
-	_renderAtHalfSpeed = false;
+	_renderAtHalfSpeed = true;
 
 	NSFileManager* FileManager = [NSFileManager defaultManager];
 	NSString* AppPath = [NSString stringWithFormat:@"%@/Contents/Resources",
@@ -897,8 +897,8 @@ static void internalLogOpenGLErrors(const char* label)
 	uint32 AllocationFlags = MAP_PRIVATE|MAP_ANON;
 #endif
 
-	_gameMemory.PermanentStorageSize = Megabytes(64);
-	_gameMemory.TransientStorageSize = Megabytes(64); //Gigabytes(1);
+	_gameMemory.PermanentStorageSize = Megabytes(256);
+	_gameMemory.TransientStorageSize = Gigabytes(1); //Gigabytes(1);
 	_gameMemory.DEBUGPlatformFreeFileMemory = DEBUGPlatformFreeFileMemory;
 	_gameMemory.DEBUGPlatformReadEntireFile = DEBUGPlatformReadEntireFile;
 	_gameMemory.DEBUGPlatformWriteEntireFile = DEBUGPlatformWriteEntireFile;
@@ -1374,12 +1374,23 @@ static void internalLogOpenGLErrors(const char* label)
 		1, -1, 0,
 	};
 
+	/*
 	GLfloat tex_coords[] =
 	{
 		0, 1,
 		0, 0,
 		1, 0,
 		1, 1,
+	};
+	*/
+
+	// Casey's renderer flips the Y-coords back around to "normal"
+	GLfloat tex_coords[] =
+	{
+		0, 0,
+		0, 1,
+		1, 1,
+		1, 0,
 	};
 
     glVertexPointer(3, GL_FLOAT, 0, vertices);

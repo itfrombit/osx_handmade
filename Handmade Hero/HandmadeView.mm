@@ -1190,6 +1190,34 @@ static void internalLogOpenGLErrors(const char* label)
 }
 
 
+internal void
+HandleDebugCycleCounters(game_memory *Memory)
+{
+#if HANDMADE_INTERNAL
+    printf("DEBUG CYCLE COUNTS:\n");
+    for(int CounterIndex = 0;
+        CounterIndex < ArrayCount(Memory->Counters);
+        ++CounterIndex)
+    {
+        debug_cycle_counter *Counter = Memory->Counters + CounterIndex;
+
+        if(Counter->HitCount)
+        {
+            char TextBuffer[256];
+            snprintf(TextBuffer, sizeof(TextBuffer),
+                     "  %d: %llucy %uh %llucy/h\n",
+                     CounterIndex,
+                     Counter->CycleCount,
+                     Counter->HitCount,
+                     Counter->CycleCount / Counter->HitCount);
+            printf("%s", TextBuffer);
+            Counter->HitCount = 0;
+            Counter->CycleCount = 0;
+        }
+    }
+#endif
+}
+
 - (void)reshape
 {
 	[super reshape];
@@ -1347,6 +1375,7 @@ static void internalLogOpenGLErrors(const char* label)
 		if (_game.UpdateAndRender)
 		{
 			_game.UpdateAndRender(&_thread, &_gameMemory, _newInput, &_renderBuffer);
+			HandleDebugCycleCounters(&_gameMemory);
 		}
 
 

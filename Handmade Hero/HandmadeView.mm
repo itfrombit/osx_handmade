@@ -1165,8 +1165,20 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	int BytesPerPixel = 4;
 	_renderBuffer.Width = 960; // 1920;
 	_renderBuffer.Height = 540; // 1080;
-	_renderBuffer.Memory = (uint8*)malloc(_renderBuffer.Width * _renderBuffer.Height * 4);
-	_renderBuffer.Pitch = _renderBuffer.Width * BytesPerPixel;
+
+	_renderBuffer.Pitch = Align16(_renderBuffer.Width * BytesPerPixel);
+	int BitmapMemorySize = (_renderBuffer.Pitch * _renderBuffer.Height);
+	_renderBuffer.Memory = mmap(0,
+								BitmapMemorySize,
+	                            PROT_READ | PROT_WRITE,
+	                            MAP_PRIVATE | MAP_ANON,
+	                            -1,
+	                            0);
+
+	if (_renderBuffer.Memory == MAP_FAILED)
+	{
+		printf("Render Buffer Memory mmap error: %d  %s", errno, strerror(errno));
+	}
 
 	[self setupGamepad];
 

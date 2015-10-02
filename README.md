@@ -16,10 +16,10 @@ called libhandmade.dylib and includes it in the Handmade Hero
 product directory of the application bundle.
 
 
-Note 2015-10-01:
+Note 2015-10-02:
 ----------------
 I'm currently bringing the Mac port up-to-date after a summer hiatus.
-This version is compatible with Day 126.
+This version is compatible with Day 127.
 
 
 IMPORTANT
@@ -47,7 +47,7 @@ Also, copy over the test and test2 bitmap image asset folders to the
 root directory of this repository.
 
 This repository works with Casey's source code from
-handmade_hero_126.
+handmade_hero_127.
 
 EXTRA IMPORTANT: For better rendering performance, build the project in Release mode.
 
@@ -58,7 +58,7 @@ reduce the effective rendering rate to 30fps instead of the default
 
 I've implemented the necessary calls to output the Debug Cycle Counters.
 To enable this, just replace the three empty stub #defines in handmade_platform.h
-at lines 170-172 with the ones just above inside the _MSC_VER check.
+at lines 172-174 with the ones just above inside the _MSC_VER check.
 
 
 Author

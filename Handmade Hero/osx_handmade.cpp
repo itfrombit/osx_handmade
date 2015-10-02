@@ -470,7 +470,7 @@ void OSXAddEntry(platform_work_queue* Queue, platform_work_queue_callback* Callb
     Entry->Data = Data;
     ++Queue->CompletionGoal;
     OSMemoryBarrier();
-    _mm_sfence();
+    // Not needed: _mm_sfence();
     Queue->NextEntryToWrite = NewNextEntryToWrite;
 	int r = dispatch_semaphore_signal(Queue->SemaphoreHandle);
 #if 0

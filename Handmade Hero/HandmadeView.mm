@@ -29,6 +29,8 @@
 
 #include <mach/mach_time.h>
 
+#include <pthread.h>
+
 #ifdef HANDMADE_MIN_OSX
 #include "handmade_platform.h"
 #else
@@ -98,6 +100,9 @@
 	osx_game_code				_game;
 	osx_sound_output			_soundOutput;
 	thread_context				_thread;
+
+	osx_thread_info				_threadInfo[7];
+	platform_work_queue			_queue;
 
 	real32						_targetSecondsPerFrame;
 	real64						_machTimebaseConversionFactor;
@@ -847,6 +852,33 @@ static void internalLogOpenGLErrors(const char* label)
 	}
 }
 
+
+void* threadProc(void *data)
+{
+	osx_thread_info *ThreadInfo = (osx_thread_info *)data;
+
+	printf("threadProc for threadIdx %d started...\n", ThreadInfo->LogicalThreadIndex);
+
+	for(;;)
+	{
+		if(OSXDoNextWorkQueueEntry(ThreadInfo->Queue, ThreadInfo->LogicalThreadIndex))
+		{
+			dispatch_semaphore_wait(ThreadInfo->Queue->SemaphoreHandle, DISPATCH_TIME_FOREVER);
+		}
+	}
+
+	return(0);
+}
+
+
+internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
+{
+    char Buffer[256];
+    snprintf(Buffer, sizeof(Buffer), "Thread %lu: ------> %s\n", (long)pthread_self(), (char *)Data);
+    printf("%s\n", Buffer);
+}
+
+
 - (void)setup
 {
 	if (_setupComplete)
@@ -854,7 +886,54 @@ static void internalLogOpenGLErrors(const char* label)
 		return;
 	}
 
-	_renderAtHalfSpeed = true;
+	uint32 ThreadCount = ArrayCount(_threadInfo);
+
+	_queue.SemaphoreHandle = dispatch_semaphore_create(0);
+
+	for (uint32 ThreadIndex = 0;
+		 ThreadIndex < ThreadCount;
+		 ++ThreadIndex)
+	{
+		osx_thread_info* Info = _threadInfo + ThreadIndex;
+
+		Info->Queue = &_queue;
+		Info->LogicalThreadIndex = ThreadIndex;
+
+		pthread_t		ThreadId;
+
+		int r = pthread_create(&ThreadId, NULL, threadProc, Info);
+		if (r != 0)
+		{
+			printf("Error creating thread %d\n", ThreadIndex);
+		}
+	}
+
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A0");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A1");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A2");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A3");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A4");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A5");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A6");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A7");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A8");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A9");
+
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B0");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B1");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B2");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B3");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B4");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B5");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B6");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B7");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B8");
+	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B9");
+
+	OSXCompleteAllWork(&_queue);
+
+
+	_renderAtHalfSpeed = false;
 
 	NSFileManager* FileManager = [NSFileManager defaultManager];
 	NSString* AppPath = [NSString stringWithFormat:@"%@/Contents/Resources",
@@ -934,6 +1013,10 @@ static void internalLogOpenGLErrors(const char* label)
 	_gameMemory.PermanentStorage = _osxState.GameMemoryBlock;
 	_gameMemory.TransientStorage = ((uint8*)_gameMemory.PermanentStorage
 								   + _gameMemory.PermanentStorageSize);
+
+	_gameMemory.HighPriorityQueue = &_queue;
+	_gameMemory.PlatformAddEntry = OSXAddEntry;
+	_gameMemory.PlatformCompleteAllWork = OSXCompleteAllWork;
 
 
 	///////////////////////////////////////////////////////////////////
@@ -1080,8 +1163,8 @@ static void internalLogOpenGLErrors(const char* label)
 	*/
 
 	int BytesPerPixel = 4;
-	_renderBuffer.Width = 960;
-	_renderBuffer.Height = 540;
+	_renderBuffer.Width = 960; // 1920;
+	_renderBuffer.Height = 540; // 1080;
 	_renderBuffer.Memory = (uint8*)malloc(_renderBuffer.Width * _renderBuffer.Height * 4);
 	_renderBuffer.Pitch = _renderBuffer.Width * BytesPerPixel;
 
@@ -1374,6 +1457,11 @@ HandleDebugCycleCounters(game_memory *Memory)
 
 		if (_game.UpdateAndRender)
 		{
+#if 0
+			printf("Queue:  Read: %d  Write: %d\n",
+				   _gameMemory.HighPriorityQueue->NextEntryToRead,
+				   _gameMemory.HighPriorityQueue->NextEntryToWrite);
+#endif
 			_game.UpdateAndRender(&_thread, &_gameMemory, _newInput, &_renderBuffer);
 			HandleDebugCycleCounters(&_gameMemory);
 		}

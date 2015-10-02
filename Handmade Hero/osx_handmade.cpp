@@ -24,6 +24,8 @@
 #include <dlfcn.h>
 #include <mach/mach_init.h>
 #include <mach/vm_map.h>
+#include <libkern/OSAtomic.h> // for OSMemoryBarrier
+#include <pthread.h>
 
 #ifdef HANDMADE_MIN_OSX
 #include "handmade_platform.h"
@@ -457,6 +459,75 @@ void OSXPlaybackInput(osx_state* State, game_input* NewInput)
 }
 
 
+void OSXAddEntry(platform_work_queue* Queue, platform_work_queue_callback* Callback, void* Data)
+{
+    // TODO(casey): Switch to InterlockedCompareExchange eventually
+    // so that any thread can add?
+    uint32 NewNextEntryToWrite = (Queue->NextEntryToWrite + 1) % ArrayCount(Queue->Entries);
+    Assert(NewNextEntryToWrite != Queue->NextEntryToRead);
+    platform_work_queue_entry *Entry = Queue->Entries + Queue->NextEntryToWrite;
+    Entry->Callback = Callback;
+    Entry->Data = Data;
+    ++Queue->CompletionGoal;
+    OSMemoryBarrier();
+    _mm_sfence();
+    Queue->NextEntryToWrite = NewNextEntryToWrite;
+	int r = dispatch_semaphore_signal(Queue->SemaphoreHandle);
+#if 0
+	if (r > 0)
+	{
+		printf("  jsb: A thread was woken\n");
+	}
+	else
+	{
+		printf("  jsb: No thread was woken\n");
+	}
+#endif
+}
+
+bool32 OSXDoNextWorkQueueEntry(platform_work_queue* Queue, int ThreadIdx)
+{
+	bool32 WeShouldSleep = false;
+
+	uint32 OriginalNextEntryToRead = Queue->NextEntryToRead;
+	uint32 NewNextEntryToRead = (OriginalNextEntryToRead + 1) % ArrayCount(Queue->Entries);
+
+	if(OriginalNextEntryToRead != Queue->NextEntryToWrite)
+	{
+        // NOTE(jeff): OSAtomicCompareAndSwapXXX functions return 1 if the swap took place, 0 otherwise!
+		uint32 SwapOccurred = OSAtomicCompareAndSwapIntBarrier(OriginalNextEntryToRead,
+															   NewNextEntryToRead,
+															   (int volatile*)&Queue->NextEntryToRead);
+
+		if (SwapOccurred)
+		{
+			platform_work_queue_entry Entry = Queue->Entries[OriginalNextEntryToRead];
+			Entry.Callback(Queue, Entry.Data);
+			//InterlockedIncrement((int volatile *)&Queue->CompletionCount);
+			OSAtomicIncrement32Barrier((int volatile *)&Queue->CompletionCount);
+		}
+		else
+		{
+		}
+	}
+	else
+	{
+		WeShouldSleep = true;
+	}
+
+	return(WeShouldSleep);
+}
+
+void OSXCompleteAllWork(platform_work_queue *Queue)
+{
+	while (Queue->CompletionGoal != Queue->CompletionCount)
+	{
+		OSXDoNextWorkQueueEntry(Queue, 999);
+	}
+
+	Queue->CompletionGoal = 0;
+	Queue->CompletionCount = 0;
+}
 
 
 

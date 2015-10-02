@@ -3,7 +3,7 @@
 #include <AudioUnit/AudioUnit.h>
 #include <stdint.h>
 #include <math.h>
-
+#include <dispatch/dispatch.h>
 
 struct osx_offscreen_buffer
 {
@@ -131,5 +131,38 @@ void OSXBeginInputPlayback(osx_state* State, int InputPlayingIndex);
 void OSXEndInputPlayback(osx_state* State);
 void OSXRecordInput(osx_state* State, game_input* NewInput);
 void OSXPlaybackInput(osx_state* State, game_input* NewInput);
+
+
+struct platform_work_queue_entry
+{
+	platform_work_queue_callback* Callback;
+	void* Data;
+};
+
+
+struct platform_work_queue
+{
+	uint32 volatile CompletionGoal;
+	uint32 volatile CompletionCount;
+    
+	uint32 volatile NextEntryToWrite;
+	uint32 volatile NextEntryToRead;
+	dispatch_semaphore_t SemaphoreHandle;
+
+	platform_work_queue_entry Entries[256];
+};
+
+
+struct osx_thread_info
+{
+    int LogicalThreadIndex;
+    platform_work_queue *Queue;
+};
+
+
+void OSXAddEntry(platform_work_queue* Queue, platform_work_queue_callback* Callback, void* Data);
+bool32 OSXDoNextWorkQueueEntry(platform_work_queue* Queue, int ThreadIdx);
+void OSXCompleteAllWork(platform_work_queue *Queue);
+
 
 

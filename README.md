@@ -16,10 +16,10 @@ called libhandmade.dylib and includes it in the Handmade Hero
 product directory of the application bundle.
 
 
-Note 2015-09-26:
+Note 2015-10-01:
 ----------------
 I'm currently bringing the Mac port up-to-date after a summer hiatus.
-This version is compatible with Day 121. Threading is up next.
+This version is compatible with Day 126.
 
 
 IMPORTANT
@@ -47,7 +47,7 @@ Also, copy over the test and test2 bitmap image asset folders to the
 root directory of this repository.
 
 This repository works with Casey's source code from
-handmade_hero_121.
+handmade_hero_126.
 
 EXTRA IMPORTANT: For better rendering performance, build the project in Release mode.
 

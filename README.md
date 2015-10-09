@@ -16,10 +16,10 @@ called libhandmade.dylib and includes it in the Handmade Hero
 product directory of the application bundle.
 
 
-Note 2015-10-02:
+Note 2015-10-09:
 ----------------
 I'm currently bringing the Mac port up-to-date after a summer hiatus.
-This version is compatible with Day 127.
+This version is compatible with Day 143 (after Sound Mixing was added).
 
 
 IMPORTANT
@@ -42,19 +42,23 @@ subdirectory:
 - handmade_sim_region.h
 - handmade_world.cpp
 - handmade_world.h
+- handmade_asset.cpp
+- handmade_asset.h
+- handmade_audio.cpp
+- handmade_audio.h
 
-Also, copy over the test and test2 bitmap image asset folders to the
+Also, copy over the test, test2, and test3 asset folders to the
 root directory of this repository.
 
 This repository works with Casey's source code from
-handmade_hero_127.
+handmade_hero_143.
 
 EXTRA IMPORTANT: For better rendering performance, build the project in Release mode.
+The Debug mode version may drop audio frames.
 
 You can also temporarily set the renderAtHalfSpeed flag in HandmadeView.mm to
 reduce the effective rendering rate to 30fps instead of the default
-60fps. This is temporarily now the default until the renderer is optimized.
-
+60fps. The proper Core Audio sound buffer size is automatically adjusted.
 
 I've implemented the necessary calls to output the Debug Cycle Counters.
 To enable this, just replace the three empty stub #defines in handmade_platform.h

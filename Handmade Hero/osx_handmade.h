@@ -24,21 +24,6 @@ struct osx_window_dimension
 };
 
 
-struct osx_sound_output
-{
-	int SamplesPerSecond;
-	uint32 RunningSampleIndex;
-	int BytesPerSample;
-	uint32 BufferSize;
-	uint32 SafetyBytes;
-	//real32 tSine;
-	AudioUnit AudioUnit;
-
-	Float64	Frequency;
-	double RenderPhase;
-};
-
-
 struct osx_game_code
 {
 	void* GameCodeDL;
@@ -50,6 +35,25 @@ struct osx_game_code
     game_get_sound_samples *GetSoundSamples;
 
     bool32 IsValid;
+};
+
+
+struct osx_sound_output
+{
+	game_sound_output_buffer SoundBuffer;
+	uint32 SoundBufferSize;
+	int16* CoreAudioBuffer;
+	int16* ReadCursor;
+	int16* WriteCursor;
+
+	AudioStreamBasicDescription AudioDescriptor;
+	AudioUnit AudioUnit;
+
+#if 0
+	AudioQueueRef AudioQueue;
+	AudioQueueBufferRef AudioBuffers[2];
+	bool32 RanAFrame;
+#endif
 };
 
 
@@ -160,8 +164,9 @@ struct osx_thread_info
 };
 
 
+void OSXMakeQueue(platform_work_queue* Queue, uint32 ThreadCount);
 void OSXAddEntry(platform_work_queue* Queue, platform_work_queue_callback* Callback, void* Data);
-bool32 OSXDoNextWorkQueueEntry(platform_work_queue* Queue, int ThreadIdx);
+bool32 OSXDoNextWorkQueueEntry(platform_work_queue* Queue);
 void OSXCompleteAllWork(platform_work_queue *Queue);
 
 

@@ -23,6 +23,7 @@
 #import <CoreVideo/CVDisplayLink.h>
 
 #import <AudioUnit/AudioUnit.h>
+#import <AudioToolbox/AudioToolbox.h>
 #import <IOKit/hid/IOHIDLib.h>
 
 #include <sys/stat.h>
@@ -88,7 +89,6 @@
 	char _sourceGameCodeDLFullPath[OSX_STATE_FILENAME_COUNT];
 
 	game_memory					_gameMemory;
-	game_sound_output_buffer	_soundBuffer;
 	game_offscreen_buffer		_renderBuffer;
 
 	game_input					_input[2];
@@ -99,12 +99,13 @@
 	osx_state					_osxState;
 	osx_game_code				_game;
 	osx_sound_output			_soundOutput;
-	thread_context				_thread;
 
-	osx_thread_info				_threadInfo[7];
-	platform_work_queue			_queue;
+	platform_work_queue			_highPriorityQueue;
+	platform_work_queue			_lowPriorityQueue;
 
+	int32						_targetFramesPerSecond;
 	real32						_targetSecondsPerFrame;
+
 	real64						_machTimebaseConversionFactor;
 	BOOL						_setupComplete;
 
@@ -117,6 +118,66 @@
 }
 @end
 
+
+#if 1 // Handmade Hero Sound Buffer
+OSStatus OSXAudioUnitCallback(void * inRefCon,
+                              AudioUnitRenderActionFlags * ioActionFlags,
+                              const AudioTimeStamp * inTimeStamp,
+                              UInt32 inBusNumber,
+                              UInt32 inNumberFrames,
+                              AudioBufferList * ioData)
+{
+	// NOTE(jeff): Don't do anything too time consuming in this function.
+	//             It is a high-priority "real-time" thread.
+	//             Even too many printf calls can throw off the timing.
+	#pragma unused(ioActionFlags)
+	#pragma unused(inTimeStamp)
+	#pragma unused(inBusNumber)
+
+	//double currentPhase = *((double*)inRefCon);
+
+	osx_sound_output* SoundOutput = ((osx_sound_output*)inRefCon);
+
+
+	if (SoundOutput->ReadCursor == SoundOutput->WriteCursor)
+	{
+		SoundOutput->SoundBuffer.SampleCount = 0;
+		//printf("AudioCallback: No Samples Yet!\n");
+	}
+
+	//printf("AudioCallback: SampleCount = %d\n", SoundOutput->SoundBuffer.SampleCount);
+
+	int SampleCount = inNumberFrames;
+	if (SoundOutput->SoundBuffer.SampleCount < inNumberFrames)
+	{
+		SampleCount = SoundOutput->SoundBuffer.SampleCount;
+	}
+
+	int16* outputBufferL = (int16 *)ioData->mBuffers[0].mData;
+	int16* outputBufferR = (int16 *)ioData->mBuffers[1].mData;
+
+	for (UInt32 i = 0; i < SampleCount; ++i)
+	{
+		outputBufferL[i] = *SoundOutput->ReadCursor++;
+		outputBufferR[i] = *SoundOutput->ReadCursor++;
+
+		if ((char*)SoundOutput->ReadCursor >= (char*)((char*)SoundOutput->CoreAudioBuffer + SoundOutput->SoundBufferSize))
+		{
+			//printf("Callback: Read cursor wrapped!\n");
+			SoundOutput->ReadCursor = SoundOutput->CoreAudioBuffer;
+		}
+	}
+
+	for (UInt32 i = SampleCount; i < inNumberFrames; ++i)
+	{
+		outputBufferL[i] = 0.0;
+		outputBufferR[i] = 0.0;
+	}
+
+	return noErr;
+}
+
+#else // Test Sine Wave
 
 OSStatus SineWaveRenderCallback(void * inRefCon,
                                 AudioUnitRenderActionFlags * ioActionFlags,
@@ -133,12 +194,14 @@ OSStatus SineWaveRenderCallback(void * inRefCon,
 
 	osx_sound_output* SoundOutput = ((osx_sound_output*)inRefCon);
 
-	Float32* outputBuffer = (Float32 *)ioData->mBuffers[0].mData;
-	const double phaseStep = (SoundOutput->Frequency / SoundOutput->SamplesPerSecond) * (2.0 * M_PI);
+	int16* outputBuffer = (int16 *)ioData->mBuffers[0].mData;
+	const double phaseStep = (SoundOutput->Frequency
+							   / SoundOutput->SoundBuffer.SamplesPerSecond)
+		                     * (2.0 * M_PI);
 
 	for (UInt32 i = 0; i < inNumberFrames; i++)
 	{
-		outputBuffer[i] = 0.7 * sin(SoundOutput->RenderPhase);
+		outputBuffer[i] = 5000 * sin(SoundOutput->RenderPhase);
 		SoundOutput->RenderPhase += phaseStep;
 	}
 
@@ -182,6 +245,51 @@ OSStatus SilentCallback(void* inRefCon,
 
 	return noErr;
 }
+#endif
+
+
+#if 0 // Use AudioQueues
+void OSXAudioQueueCallback(void* data, AudioQueueRef queue, AudioQueueBufferRef buffer)
+{
+	osx_sound_output* SoundOutput = ((osx_sound_output*)data);
+
+	int16* outputBuffer = (int16 *)ioData->mBuffers[0].mData;
+	const double phaseStep = (SoundOutput->Frequency / SoundOutput->SamplesPerSecond) * (2.0 * M_PI);
+
+	for (UInt32 i = 0; i < inNumberFrames; i++)
+	{
+		outputBuffer[i] = 5000 * sin(SoundOutput->RenderPhase);
+		SoundOutput->RenderPhase += phaseStep;
+	}
+
+	// Copy to the stereo (or the additional X.1 channels)
+	for(UInt32 i = 1; i < ioData->mNumberBuffers; i++)
+	{
+		memcpy(ioData->mBuffers[i].mData, outputBuffer, ioData->mBuffers[i].mDataByteSize);
+	}
+}
+
+
+void OSXInitCoreAudio(osx_sound_output* SoundOutput)
+{
+	SoundOutput->AudioDescriptor.mSampleRate       = SoundOutput->SamplesPerSecond;
+	SoundOutput->AudioDescriptor.mFormatID         = kAudioFormatLinearPCM;
+	SoundOutput->AudioDescriptor.mFormatFlags      = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsNonInterleaved | kAudioFormatFlagIsPacked;
+	SoundOutput->AudioDescriptor.mFramesPerPacket  = 1;
+	SoundOutput->AudioDescriptor.mChannelsPerFrame = 2;
+	SoundOutput->AudioDescriptor.mBitsPerChannel   = sizeof(int16) * 8;
+	SoundOutput->AudioDescriptor.mBytesPerFrame    = sizeof(int16); // don't multiply by channel count with non-interleaved!
+	SoundOutput->AudioDescriptor.mBytesPerPacket   = SoundOutput->AudioDescriptor.mFramesPerPacket * SoundOutput->AudioDescriptor.mBytesPerFrame;
+
+	uint32 err = AudioQueueNewOutput(&SoundOutput->AudioDescriptor, OSXAudioQueueCallback, SoundOutput, NULL, 0, 0, &SoundOutput->AudioQueue);
+	if (err)
+	{
+		printf("Error in AudioQueueNewOutput\n");
+	}
+
+}
+
+#else // Use raw AudioUnits
 
 void OSXInitCoreAudio(osx_sound_output* SoundOutput)
 {
@@ -195,27 +303,39 @@ void OSXInitCoreAudio(osx_sound_output* SoundOutput)
 	AudioComponentInstanceNew(outputComponent, &SoundOutput->AudioUnit);
 	AudioUnitInitialize(SoundOutput->AudioUnit);
 
-	// NOTE(jeff): Make this stereo
+#if 1 // uint16
+	//AudioStreamBasicDescription asbd;
+	SoundOutput->AudioDescriptor.mSampleRate       = SoundOutput->SoundBuffer.SamplesPerSecond;
+	SoundOutput->AudioDescriptor.mFormatID         = kAudioFormatLinearPCM;
+	SoundOutput->AudioDescriptor.mFormatFlags      = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsNonInterleaved | kAudioFormatFlagIsPacked;
+	SoundOutput->AudioDescriptor.mFramesPerPacket  = 1;
+	SoundOutput->AudioDescriptor.mChannelsPerFrame = 2; // Stereo
+	SoundOutput->AudioDescriptor.mBitsPerChannel   = sizeof(int16) * 8;
+	SoundOutput->AudioDescriptor.mBytesPerFrame    = sizeof(int16); // don't multiply by channel count with non-interleaved!
+	SoundOutput->AudioDescriptor.mBytesPerPacket   = SoundOutput->AudioDescriptor.mFramesPerPacket * SoundOutput->AudioDescriptor.mBytesPerFrame;
+#else // floating point - this is the "native" format on the Mac
 	AudioStreamBasicDescription asbd;
-	asbd.mSampleRate       = SoundOutput->SamplesPerSecond;
-	asbd.mFormatID         = kAudioFormatLinearPCM;
-	asbd.mFormatFlags      = kAudioFormatFlagsNativeFloatPacked;
-	asbd.mChannelsPerFrame = 1;
-	asbd.mFramesPerPacket  = 1;
-	asbd.mBitsPerChannel   = 1 * sizeof(Float32) * 8;
-	asbd.mBytesPerPacket   = 1 * sizeof(Float32);
-	asbd.mBytesPerFrame    = 1 * sizeof(Float32);
+	SoundOutput->AudioDescriptor.mSampleRate       = SoundOutput->SamplesPerSecond;
+	SoundOutput->AudioDescriptor.mFormatID         = kAudioFormatLinearPCM;
+	SoundOutput->AudioDescriptor.mFormatFlags      = kAudioFormatFlagsNativeFloatPacked | kAudioFormatFlagIsNonInterleaved;
+	SoundOutput->AudioDescriptor.mFramesPerPacket  = 1;
+	SoundOutput->AudioDescriptor.mChannelsPerFrame = 2;
+	SoundOutput->AudioDescriptor.mBitsPerChannel   = sizeof(Float32) * 8; // 1 * sizeof(Float32) * 8;
+	SoundOutput->AudioDescriptor.mBytesPerFrame    = sizeof(Float32);
+	SoundOutput->AudioDescriptor.mBytesPerPacket   = SoundOutput->AudioDescriptor.mFramesPerPacket * SoundOutput->AudioDescriptor.mBytesPerFrame;
+#endif
+
 
 	// TODO(jeff): Add some error checking...
 	AudioUnitSetProperty(SoundOutput->AudioUnit,
                          kAudioUnitProperty_StreamFormat,
                          kAudioUnitScope_Input,
                          0,
-                         &asbd,
-                         sizeof(asbd));
+                         &SoundOutput->AudioDescriptor,
+                         sizeof(SoundOutput->AudioDescriptor));
 
 	AURenderCallbackStruct cb;
-	cb.inputProc       = SilentCallback; //SineWaveRenderCallback;
+	cb.inputProc = OSXAudioUnitCallback;
 	cb.inputProcRefCon = SoundOutput;
 
 	AudioUnitSetProperty(SoundOutput->AudioUnit,
@@ -236,6 +356,9 @@ void OSXStopCoreAudio(osx_sound_output* SoundOutput)
 	AudioUnitUninitialize(SoundOutput->AudioUnit);
 	AudioComponentInstanceDispose(SoundOutput->AudioUnit);
 }
+
+#endif
+
 
 
 void OSXHIDAdded(void* context, IOReturn result, void* sender, IOHIDDeviceRef device)
@@ -853,30 +976,14 @@ static void internalLogOpenGLErrors(const char* label)
 }
 
 
-void* threadProc(void *data)
-{
-	osx_thread_info *ThreadInfo = (osx_thread_info *)data;
-
-	printf("threadProc for threadIdx %d started...\n", ThreadInfo->LogicalThreadIndex);
-
-	for(;;)
-	{
-		if(OSXDoNextWorkQueueEntry(ThreadInfo->Queue, ThreadInfo->LogicalThreadIndex))
-		{
-			dispatch_semaphore_wait(ThreadInfo->Queue->SemaphoreHandle, DISPATCH_TIME_FOREVER);
-		}
-	}
-
-	return(0);
-}
-
-
+#if 0
 internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 {
     char Buffer[256];
     snprintf(Buffer, sizeof(Buffer), "Thread %lu: ------> %s\n", (long)pthread_self(), (char *)Data);
     printf("%s\n", Buffer);
 }
+#endif
 
 
 - (void)setup
@@ -886,28 +993,10 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 		return;
 	}
 
-	uint32 ThreadCount = ArrayCount(_threadInfo);
+	OSXMakeQueue(&_highPriorityQueue, 6);
+	OSXMakeQueue(&_lowPriorityQueue, 2);
 
-	_queue.SemaphoreHandle = dispatch_semaphore_create(0);
-
-	for (uint32 ThreadIndex = 0;
-		 ThreadIndex < ThreadCount;
-		 ++ThreadIndex)
-	{
-		osx_thread_info* Info = _threadInfo + ThreadIndex;
-
-		Info->Queue = &_queue;
-		Info->LogicalThreadIndex = ThreadIndex;
-
-		pthread_t		ThreadId;
-
-		int r = pthread_create(&ThreadId, NULL, threadProc, Info);
-		if (r != 0)
-		{
-			printf("Error creating thread %d\n", ThreadIndex);
-		}
-	}
-
+#if 0
 	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A0");
 	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A1");
 	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A2");
@@ -931,9 +1020,9 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B9");
 
 	OSXCompleteAllWork(&_queue);
+#endif
 
-
-	_renderAtHalfSpeed = false;
+	_renderAtHalfSpeed = true;
 
 	NSFileManager* FileManager = [NSFileManager defaultManager];
 	NSString* AppPath = [NSString stringWithFormat:@"%@/Contents/Resources",
@@ -976,7 +1065,7 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	uint32 AllocationFlags = MAP_PRIVATE|MAP_ANON;
 #endif
 
-	_gameMemory.PermanentStorageSize = Megabytes(256);
+	_gameMemory.PermanentStorageSize = Megabytes(256); //Megabytes(256);
 	_gameMemory.TransientStorageSize = Gigabytes(1); //Gigabytes(1);
 	_gameMemory.DEBUGPlatformFreeFileMemory = DEBUGPlatformFreeFileMemory;
 	_gameMemory.DEBUGPlatformReadEntireFile = DEBUGPlatformReadEntireFile;
@@ -1014,7 +1103,8 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	_gameMemory.TransientStorage = ((uint8*)_gameMemory.PermanentStorage
 								   + _gameMemory.PermanentStorageSize);
 
-	_gameMemory.HighPriorityQueue = &_queue;
+	_gameMemory.HighPriorityQueue = &_highPriorityQueue;
+	_gameMemory.LowPriorityQueue = &_lowPriorityQueue;
 	_gameMemory.PlatformAddEntry = OSXAddEntry;
 	_gameMemory.PlatformCompleteAllWork = OSXCompleteAllWork;
 
@@ -1183,10 +1273,36 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	[self setupGamepad];
 
 
-	_soundOutput.SamplesPerSecond = 48000;
-	_soundOutput.Frequency = 800.0;
-	_soundOutput.BytesPerSample = sizeof(int16) * 2;
-	_soundOutput.BufferSize = _soundOutput.SamplesPerSecond * _soundOutput.BytesPerSample;
+	//_soundOutput.Frequency = 800.0;
+	_soundOutput.SoundBuffer.SamplesPerSecond = 48000;
+	_soundOutput.SoundBufferSize = _soundOutput.SoundBuffer.SamplesPerSecond * sizeof(int16) * 2;
+
+	u32 MaxPossibleOverrun = 4 * 2 * sizeof(int16);
+
+	_soundOutput.SoundBuffer.Samples = (int16*)mmap(0, _soundOutput.SoundBufferSize + MaxPossibleOverrun,
+											PROT_READ|PROT_WRITE,
+											MAP_PRIVATE | MAP_ANON,
+											-1,
+											0);
+	if (_soundOutput.SoundBuffer.Samples == MAP_FAILED)
+	{
+		printf("Sound Buffer Samples mmap error: %d  %s", errno, strerror(errno));
+	}
+	memset(_soundOutput.SoundBuffer.Samples, 0, _soundOutput.SoundBufferSize);
+
+	_soundOutput.CoreAudioBuffer = (int16*)mmap(0, _soundOutput.SoundBufferSize + MaxPossibleOverrun,
+										PROT_READ|PROT_WRITE,
+										MAP_PRIVATE | MAP_ANON,
+										-1,
+										0);
+	if (_soundOutput.CoreAudioBuffer == MAP_FAILED)
+	{
+		printf("Core Audio Buffer mmap error: %d  %s", errno, strerror(errno));
+	}
+	memset(_soundOutput.CoreAudioBuffer, 0, _soundOutput.SoundBufferSize);
+
+	_soundOutput.ReadCursor = _soundOutput.CoreAudioBuffer;
+	_soundOutput.WriteCursor = _soundOutput.CoreAudioBuffer;
 
 	OSXInitCoreAudio(&_soundOutput);
 
@@ -1269,13 +1385,16 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	
 	CVTime cvtime = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(_displayLink);
 	_targetSecondsPerFrame = (double)cvtime.timeValue / (double)cvtime.timeScale;
+	_targetFramesPerSecond = (double)cvtime.timeScale / (double)cvtime.timeValue + 0.5;
 
 	if (_renderAtHalfSpeed)
 	{
 		_targetSecondsPerFrame += _targetSecondsPerFrame;
+		_targetFramesPerSecond /= 2;
 	}
 
 	printf("targetSecondsPerFrame: %f\n", _targetSecondsPerFrame);
+	printf("Target frames per second = %d\n", _targetFramesPerSecond);
 
 	cvreturn = CVDisplayLinkStart(_displayLink);
 	if (cvreturn != kCVReturnSuccess)
@@ -1357,6 +1476,9 @@ HandleDebugCycleCounters(game_memory *Memory)
 		time_t NewDLWriteTime = OSXGetLastWriteTime(_sourceGameCodeDLFullPath);
 		if (NewDLWriteTime != _game.DLLastWriteTime)
 		{
+			OSXCompleteAllWork(&_highPriorityQueue);
+			OSXCompleteAllWork(&_lowPriorityQueue);
+
 			OSXUnloadGameCode(&_game);
 			_game = OSXLoadGameCode(_sourceGameCodeDLFullPath);
 			_newInput->ExecutableReloaded = true;
@@ -1474,13 +1596,60 @@ HandleDebugCycleCounters(game_memory *Memory)
 				   _gameMemory.HighPriorityQueue->NextEntryToRead,
 				   _gameMemory.HighPriorityQueue->NextEntryToWrite);
 #endif
-			_game.UpdateAndRender(&_thread, &_gameMemory, _newInput, &_renderBuffer);
-			HandleDebugCycleCounters(&_gameMemory);
+			_game.UpdateAndRender(&_gameMemory, _newInput, &_renderBuffer);
+
+			//HandleDebugCycleCounters(&_gameMemory);
 		}
 
-
 		// TODO(jeff): Move this into the sound render code
-		_soundOutput.Frequency = 440.0 + (15 * _hidY);
+		//_soundOutput.Frequency = 440.0 + (15 * _hidY);
+
+
+		if (_game.GetSoundSamples)
+		{
+			// Sample Count is SamplesPerSecond / GameRefreshRate
+			//_soundOutput.SoundBuffer.SampleCount = 1600; // (48000samples/sec) / (30fps)
+			// ^^^ calculate this. We might be running at 30 or 60 fps
+			_soundOutput.SoundBuffer.SampleCount = _soundOutput.SoundBuffer.SamplesPerSecond / _targetFramesPerSecond;
+
+			_game.GetSoundSamples(&_gameMemory, &_soundOutput.SoundBuffer);
+
+			int16* CurrentSample = _soundOutput.SoundBuffer.Samples;
+			for (int i = 0; i < _soundOutput.SoundBuffer.SampleCount; ++i)
+			{
+				*_soundOutput.WriteCursor++ = *CurrentSample++;
+				*_soundOutput.WriteCursor++ = *CurrentSample++;
+
+				if ((char*)_soundOutput.WriteCursor >= ((char*)_soundOutput.CoreAudioBuffer + _soundOutput.SoundBufferSize))
+				{
+					//printf("Write cursor wrapped!\n");
+					_soundOutput.WriteCursor  = _soundOutput.CoreAudioBuffer;
+				}
+			}
+
+			// Prime the pump to get the write cursor out in front of the read cursor...
+			static bool firstTime = true;
+
+			if (firstTime)
+			{
+				firstTime = false;
+
+				_game.GetSoundSamples(&_gameMemory, &_soundOutput.SoundBuffer);
+
+				int16* CurrentSample = _soundOutput.SoundBuffer.Samples;
+				for (int i = 0; i < _soundOutput.SoundBuffer.SampleCount; ++i)
+				{
+					*_soundOutput.WriteCursor++ = *CurrentSample++;
+					*_soundOutput.WriteCursor++ = *CurrentSample++;
+
+					if ((char*)_soundOutput.WriteCursor >= ((char*)_soundOutput.CoreAudioBuffer + _soundOutput.SoundBufferSize))
+					{
+						_soundOutput.WriteCursor  = _soundOutput.CoreAudioBuffer;
+					}
+				}
+			}
+		}
+
 
 		game_input* Temp = _newInput;
 		_newInput = _oldInput;

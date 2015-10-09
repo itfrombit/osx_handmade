@@ -1,4 +1,5 @@
 build/
+.DS_Store
 Handmade\ Hero.xcodeproj/project.xcworkspace/*
 Handmade\ Hero.xcodeproj/xcuserdata/
 handmade/handmade.xcodeproj/project.xcworkspace/*
@@ -8,6 +9,10 @@ handmade/handmade.xcodeproj/xcuserdata/
 temp.out
 handmade/handmade.cpp
 handmade/handmade.h
+handmade/handmade_asset.cpp
+handmade/handmade_asset.h
+handmade/handmade_audio.cpp
+handmade/handmade_audio.h
 handmade/handmade_entity.cpp
 handmade/handmade_entity.h
 handmade/handmade_intrinsics.h
@@ -26,3 +31,4 @@ handmade/win32_handmade.cpp
 handmade/win32_handmade.h
 test/test*.bmp
 test2/*.bmp
+test3/*.wav

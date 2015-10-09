@@ -183,7 +183,7 @@ DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile)
 				}
 				else
 				{
-					DEBUGPlatformFreeFileMemory(Thread, Result.Contents);
+					DEBUGPlatformFreeFileMemory(Result.Contents);
 					Result.Contents = 0;
 				}
 			}
@@ -459,6 +459,48 @@ void OSXPlaybackInput(osx_state* State, game_input* NewInput)
 }
 
 
+void* OSXQueueThreadProc(void *data)
+{
+	platform_work_queue* Queue = (platform_work_queue*)data;
+
+	for(;;)
+	{
+		if(OSXDoNextWorkQueueEntry(Queue))
+		{
+			dispatch_semaphore_wait(Queue->SemaphoreHandle, DISPATCH_TIME_FOREVER);
+		}
+	}
+
+	return(0);
+}
+
+
+
+void OSXMakeQueue(platform_work_queue* Queue, uint32 ThreadCount)
+{
+	Queue->CompletionGoal = 0;
+	Queue->CompletionCount = 0;
+
+	Queue->NextEntryToWrite = 0;
+	Queue->NextEntryToRead = 0;
+
+	Queue->SemaphoreHandle = dispatch_semaphore_create(0);
+
+	for (uint32 ThreadIndex = 0;
+		 ThreadIndex < ThreadCount;
+		 ++ThreadIndex)
+	{
+		pthread_t		ThreadId;
+
+		int r = pthread_create(&ThreadId, NULL, OSXQueueThreadProc, Queue);
+		if (r != 0)
+		{
+			printf("Error creating thread %d\n", ThreadIndex);
+		}
+	}
+}
+
+
 void OSXAddEntry(platform_work_queue* Queue, platform_work_queue_callback* Callback, void* Data)
 {
     // TODO(casey): Switch to InterlockedCompareExchange eventually
@@ -472,8 +514,10 @@ void OSXAddEntry(platform_work_queue* Queue, platform_work_queue_callback* Callb
     OSMemoryBarrier();
     // Not needed: _mm_sfence();
     Queue->NextEntryToWrite = NewNextEntryToWrite;
-	int r = dispatch_semaphore_signal(Queue->SemaphoreHandle);
+	dispatch_semaphore_signal(Queue->SemaphoreHandle);
+
 #if 0
+	int r = dispatch_semaphore_signal(Queue->SemaphoreHandle);
 	if (r > 0)
 	{
 		printf("  jsb: A thread was woken\n");
@@ -485,7 +529,7 @@ void OSXAddEntry(platform_work_queue* Queue, platform_work_queue_callback* Callb
 #endif
 }
 
-bool32 OSXDoNextWorkQueueEntry(platform_work_queue* Queue, int ThreadIdx)
+bool32 OSXDoNextWorkQueueEntry(platform_work_queue* Queue)
 {
 	bool32 WeShouldSleep = false;
 
@@ -522,7 +566,7 @@ void OSXCompleteAllWork(platform_work_queue *Queue)
 {
 	while (Queue->CompletionGoal != Queue->CompletionCount)
 	{
-		OSXDoNextWorkQueueEntry(Queue, 999);
+		OSXDoNextWorkQueueEntry(Queue);
 	}
 
 	Queue->CompletionGoal = 0;

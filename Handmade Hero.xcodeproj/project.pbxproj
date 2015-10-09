@@ -20,6 +20,7 @@
 		4FBC23531A35B64700C661D2 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBC23521A35B64700C661D2 /* CoreVideo.framework */; };
 		4FBEB1B11A1FF3140001436D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBEB1AF1A1FF3140001436D /* OpenGL.framework */; };
 		4FBEB1B21A1FF3140001436D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBEB1B01A1FF3140001436D /* QuartzCore.framework */; };
+		4FC21E4D1BC78EA500AE32EC /* test3 in Resources */ = {isa = PBXBuildFile; fileRef = 4FC21E4C1BC78EA500AE32EC /* test3 */; settings = {ASSET_TAGS = (); }; };
 		4FDAAB5B1A85EA8E004748C4 /* test2 in Resources */ = {isa = PBXBuildFile; fileRef = 4FDAAB5A1A85EA8E004748C4 /* test2 */; };
 /* End PBXBuildFile section */
 
@@ -71,6 +72,7 @@
 		4FBEB1891A1FEF0F0001436D /* Handmade Hero.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Handmade Hero.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4FBEB1AF1A1FF3140001436D /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		4FBEB1B01A1FF3140001436D /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		4FC21E4C1BC78EA500AE32EC /* test3 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = test3; sourceTree = SOURCE_ROOT; };
 		4FDAAB5A1A85EA8E004748C4 /* test2 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = test2; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -117,6 +119,7 @@
 		4FBEB18B1A1FEF0F0001436D /* Handmade Hero */ = {
 			isa = PBXGroup;
 			children = (
+				4FC21E4C1BC78EA500AE32EC /* test3 */,
 				4FAC0B531A5F64E000D3C1EB /* test */,
 				4FDAAB5A1A85EA8E004748C4 /* test2 */,
 				4F99B1931A49537100A1DCB8 /* osx_handmade.h */,
@@ -227,6 +230,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4F99B1B21A4956A100A1DCB8 /* MainMenu.xib in Resources */,
+				4FC21E4D1BC78EA500AE32EC /* test3 in Resources */,
 				4FAC0B541A5F64E000D3C1EB /* test in Resources */,
 				4FDAAB5B1A85EA8E004748C4 /* test2 in Resources */,
 				4F99B1961A49537100A1DCB8 /* Images.xcassets in Resources */,

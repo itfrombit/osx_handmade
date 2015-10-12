@@ -4,6 +4,8 @@ Handmade\ Hero.xcodeproj/project.xcworkspace/*
 Handmade\ Hero.xcodeproj/xcuserdata/
 handmade/handmade.xcodeproj/project.xcworkspace/*
 handmade/handmade.xcodeproj/xcuserdata/
+test_asset_builder.xcodeproj/project.xcworkspace/*
+test_asset_builder.xcodeproj/xcuserdata/
 .ycm_extra_conf.py
 .ycm_extra_conf.pyc
 temp.out
@@ -11,12 +13,15 @@ handmade/handmade.cpp
 handmade/handmade.h
 handmade/handmade_asset.cpp
 handmade/handmade_asset.h
+handmade/handmade_asset_type_id.h
 handmade/handmade_audio.cpp
 handmade/handmade_audio.h
 handmade/handmade_entity.cpp
 handmade/handmade_entity.h
+handmade/handmade_file_formats.h
 handmade/handmade_intrinsics.h
 handmade/handmade_math.h
+handmade/handmade_optimized.cpp
 handmade/handmade_platform.h
 handmade/handmade_random.h
 handmade/handmade_sim_region.cpp
@@ -25,6 +30,8 @@ handmade/handmade_world.cpp
 handmade/handmade_world.h
 handmade_render_group.cpp                                                                                                                                                                            
 handmade_render_group.h
+handmade/test_asset_builder.cpp
+handmade/test_asset_builder.h
 handmade_tile.cpp
 handmade_tile.h
 handmade/win32_handmade.cpp
@@ -32,3 +39,8 @@ handmade/win32_handmade.h
 test/test*.bmp
 test2/*.bmp
 test3/*.wav
+test.hha
+test1.hha
+test2.hha
+test3.hha
+

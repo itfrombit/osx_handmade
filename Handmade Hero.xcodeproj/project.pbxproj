@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4F021D4F1BCB979A009089C7 /* test1.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F021D4C1BCB979A009089C7 /* test1.hha */; settings = {ASSET_TAGS = (); }; };
+		4F021D501BCB979A009089C7 /* test2.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F021D4D1BCB979A009089C7 /* test2.hha */; settings = {ASSET_TAGS = (); }; };
+		4F021D511BCB979A009089C7 /* test3.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F021D4E1BCB979A009089C7 /* test3.hha */; settings = {ASSET_TAGS = (); }; };
 		4F387A3B1A4964CF0097212D /* osx_handmade.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F387A3A1A4964CF0097212D /* osx_handmade.cpp */; };
 		4F99B1941A49537100A1DCB8 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F99B18E1A49537100A1DCB8 /* AppDelegate.m */; };
 		4F99B1951A49537100A1DCB8 /* HandmadeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4F99B1901A49537100A1DCB8 /* HandmadeView.mm */; };
@@ -54,6 +57,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4F021D4C1BCB979A009089C7 /* test1.hha */ = {isa = PBXFileReference; lastKnownFileType = file; path = test1.hha; sourceTree = SOURCE_ROOT; };
+		4F021D4D1BCB979A009089C7 /* test2.hha */ = {isa = PBXFileReference; lastKnownFileType = file; path = test2.hha; sourceTree = SOURCE_ROOT; };
+		4F021D4E1BCB979A009089C7 /* test3.hha */ = {isa = PBXFileReference; lastKnownFileType = file; path = test3.hha; sourceTree = SOURCE_ROOT; };
 		4F387A251A4958140097212D /* handmade.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = handmade.xcodeproj; path = handmade/handmade.xcodeproj; sourceTree = "<group>"; };
 		4F387A3A1A4964CF0097212D /* osx_handmade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = osx_handmade.cpp; sourceTree = "<group>"; };
 		4F99B18D1A49537100A1DCB8 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = "Handmade Hero/AppDelegate.h"; sourceTree = SOURCE_ROOT; };
@@ -119,6 +125,9 @@
 		4FBEB18B1A1FEF0F0001436D /* Handmade Hero */ = {
 			isa = PBXGroup;
 			children = (
+				4F021D4C1BCB979A009089C7 /* test1.hha */,
+				4F021D4D1BCB979A009089C7 /* test2.hha */,
+				4F021D4E1BCB979A009089C7 /* test3.hha */,
 				4FC21E4C1BC78EA500AE32EC /* test3 */,
 				4FAC0B531A5F64E000D3C1EB /* test */,
 				4FDAAB5A1A85EA8E004748C4 /* test2 */,
@@ -230,6 +239,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				4F99B1B21A4956A100A1DCB8 /* MainMenu.xib in Resources */,
+				4F021D4F1BCB979A009089C7 /* test1.hha in Resources */,
+				4F021D501BCB979A009089C7 /* test2.hha in Resources */,
+				4F021D511BCB979A009089C7 /* test3.hha in Resources */,
 				4FC21E4D1BC78EA500AE32EC /* test3 in Resources */,
 				4FAC0B541A5F64E000D3C1EB /* test in Resources */,
 				4FDAAB5B1A85EA8E004748C4 /* test2 in Resources */,

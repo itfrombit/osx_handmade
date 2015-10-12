@@ -15,6 +15,7 @@
 		4F387A311A49588D0097212D /* handmade.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F387A2F1A49588D0097212D /* handmade.cpp */; };
 		4F387A321A49588D0097212D /* handmade.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F387A301A49588D0097212D /* handmade.h */; };
 		4F8EB0841A59FEDB0039143E /* handmade_random.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F8EB0811A59FEDB0039143E /* handmade_random.h */; };
+		4FC21E521BC8C3B500AE32EC /* handmade_optimized.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4FC21E511BC8C3B500AE32EC /* handmade_optimized.cpp */; settings = {ASSET_TAGS = (); }; };
 		4FD1F0C21A77783D009C4849 /* handmade_math.h in Headers */ = {isa = PBXBuildFile; fileRef = 4FD1F0C11A77783D009C4849 /* handmade_math.h */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +32,7 @@
 		4F387A2F1A49588D0097212D /* handmade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = handmade.cpp; sourceTree = "<group>"; };
 		4F387A301A49588D0097212D /* handmade.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade.h; sourceTree = "<group>"; };
 		4F8EB0811A59FEDB0039143E /* handmade_random.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_random.h; sourceTree = "<group>"; };
+		4FC21E511BC8C3B500AE32EC /* handmade_optimized.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = handmade_optimized.cpp; sourceTree = "<group>"; };
 		4FD1F0C11A77783D009C4849 /* handmade_math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handmade_math.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -48,6 +50,7 @@
 		4F387A151A4958140097212D = {
 			isa = PBXGroup;
 			children = (
+				4FC21E511BC8C3B500AE32EC /* handmade_optimized.cpp */,
 				4F0607DF1A9E515C0061EAE2 /* handmade_entity.cpp */,
 				4F0607E01A9E515C0061EAE2 /* handmade_entity.h */,
 				4F0607E11A9E515C0061EAE2 /* handmade_sim_region.cpp */,
@@ -147,6 +150,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4F387A311A49588D0097212D /* handmade.cpp in Sources */,
+				4FC21E521BC8C3B500AE32EC /* handmade_optimized.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -758,11 +758,11 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 		}
 		if (elementValue == 1)
 		{
-			NSLog(@"%@ pressed", keyName);
+			//NSLog(@"%@ pressed", keyName);
 		}
 		else if (elementValue == 0)
 		{
-			NSLog(@"%@ released", keyName);
+			//NSLog(@"%@ released", keyName);
 		}
 	}
 	else if (usagePage == 9) // Buttons
@@ -1067,9 +1067,6 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 
 	_gameMemory.PermanentStorageSize = Megabytes(256); //Megabytes(256);
 	_gameMemory.TransientStorageSize = Gigabytes(1); //Gigabytes(1);
-	_gameMemory.DEBUGPlatformFreeFileMemory = DEBUGPlatformFreeFileMemory;
-	_gameMemory.DEBUGPlatformReadEntireFile = DEBUGPlatformReadEntireFile;
-	_gameMemory.DEBUGPlatformWriteEntireFile = DEBUGPlatformWriteEntireFile;
 
 	_osxState.TotalSize = _gameMemory.PermanentStorageSize + _gameMemory.TransientStorageSize;
 
@@ -1105,9 +1102,19 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 
 	_gameMemory.HighPriorityQueue = &_highPriorityQueue;
 	_gameMemory.LowPriorityQueue = &_lowPriorityQueue;
-	_gameMemory.PlatformAddEntry = OSXAddEntry;
-	_gameMemory.PlatformCompleteAllWork = OSXCompleteAllWork;
 
+	_gameMemory.PlatformAPI.AddEntry = OSXAddEntry;
+	_gameMemory.PlatformAPI.CompleteAllWork = OSXCompleteAllWork;
+
+	_gameMemory.PlatformAPI.GetAllFilesOfTypeBegin = OSXGetAllFilesOfTypeBegin;
+	_gameMemory.PlatformAPI.GetAllFilesOfTypeEnd = OSXGetAllFilesOfTypeEnd;
+	_gameMemory.PlatformAPI.OpenNextFile = OSXOpenNextFile;
+	_gameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
+	_gameMemory.PlatformAPI.FileError = OSXFileError;
+
+	_gameMemory.PlatformAPI.DEBUGFreeFileMemory = DEBUGPlatformFreeFileMemory;
+	_gameMemory.PlatformAPI.DEBUGReadEntireFile = DEBUGPlatformReadEntireFile;
+	_gameMemory.PlatformAPI.DEBUGWriteEntireFile = DEBUGPlatformWriteEntireFile;
 
 	///////////////////////////////////////////////////////////////////
 	// Set up replay buffers
@@ -1277,7 +1284,7 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	_soundOutput.SoundBuffer.SamplesPerSecond = 48000;
 	_soundOutput.SoundBufferSize = _soundOutput.SoundBuffer.SamplesPerSecond * sizeof(int16) * 2;
 
-	u32 MaxPossibleOverrun = 4 * 2 * sizeof(int16);
+	u32 MaxPossibleOverrun = 8 * 2 * sizeof(int16);
 
 	_soundOutput.SoundBuffer.Samples = (int16*)mmap(0, _soundOutput.SoundBufferSize + MaxPossibleOverrun,
 											PROT_READ|PROT_WRITE,

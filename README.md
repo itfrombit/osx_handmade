@@ -16,47 +16,39 @@ called libhandmade.dylib and includes it in the Handmade Hero
 product directory of the application bundle.
 
 
-Note 2015-10-09:
+Note 2015-10-12:
 ----------------
 I'm currently bringing the Mac port up-to-date after a summer hiatus.
-This version is compatible with Day 143 (after Sound Mixing was added).
+This version is compatible with Day 154 (after Asset Loading was added).
+
+Note that this version suffers from an audio glitch that Casey has not
+yet debugged. I believe the OS X Core Audio streaming is working properly.
 
 
 IMPORTANT
 ---------
 
-Once you clone or update from this repository, copy over the
-following files from Casey's source code to the handmade
-subdirectory:
-- handmade.cpp
-- handmade.h
-- handmade_entity.cpp
-- handmade_entity.h
-- handmade_intrinsics.h
-- handmade_math.h
-- handmade_platform.h
-- handmade_random.h
-- handmade_render_group.cpp
-- handmade_render_group.h
-- handmade_sim_region.cpp
-- handmade_sim_region.h
-- handmade_world.cpp
-- handmade_world.h
-- handmade_asset.cpp
-- handmade_asset.h
-- handmade_audio.cpp
-- handmade_audio.h
+Once you clone or update this repository, copy over Casey's .cpp
+and .h source files to the root directory of this repository.
 
 Also, copy over the test, test2, and test3 asset folders to the
 root directory of this repository.
 
+Before you build the application for the first time, you need to
+create the packed asset files. To do this, open the separate test_asset_builder
+Xcode project and build and run it once. It should find the test 
+asset directories and create the *.hha files. You only need to
+repeat this step when Casey changes the .hha file format, or when he
+modifies or adds new assets.
+
+
 This repository works with Casey's source code from
-handmade_hero_143.
+handmade_hero_154.
 
 EXTRA IMPORTANT: For better rendering performance, build the project in Release mode.
 The Debug mode version may drop audio frames.
 
-You can also temporarily set the renderAtHalfSpeed flag in HandmadeView.mm to
+You can also set the renderAtHalfSpeed flag in HandmadeView.mm to
 reduce the effective rendering rate to 30fps instead of the default
 60fps. The proper Core Audio sound buffer size is automatically adjusted.
 

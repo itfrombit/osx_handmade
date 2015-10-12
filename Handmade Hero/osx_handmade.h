@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <dispatch/dispatch.h>
+#include <glob.h>
 
 struct osx_offscreen_buffer
 {
@@ -121,6 +122,30 @@ void OSXBuildAppPathFilename(osx_state *State, char *Filename,
 DEBUG_PLATFORM_FREE_FILE_MEMORY(DEBUGPlatformFreeFileMemory);
 DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile);
 DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile);
+
+
+struct osx_platform_file_handle
+{
+	platform_file_handle H;
+	int OSXFileHandle;
+	char Filename[256];
+};
+
+
+struct osx_platform_file_group
+{
+	platform_file_group H;
+	glob_t GlobResults;
+	int CurrentIndex;
+};
+
+
+PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin);
+PLATFORM_GET_ALL_FILE_OF_TYPE_END(OSXGetAllFilesOfTypeEnd);
+PLATFORM_OPEN_FILE(OSXOpenNextFile);
+PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile);
+PLATFORM_FILE_ERROR(OSXFileError);
+
 
 time_t OSXGetLastWriteTime(const char* Filename);
 

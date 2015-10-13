@@ -1112,6 +1112,9 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	_gameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
 	_gameMemory.PlatformAPI.FileError = OSXFileError;
 
+	_gameMemory.PlatformAPI.AllocateMemory = OSXAllocateMemory;
+	_gameMemory.PlatformAPI.DeallocateMemory = OSXDeallocateMemory;
+
 	_gameMemory.PlatformAPI.DEBUGFreeFileMemory = DEBUGPlatformFreeFileMemory;
 	_gameMemory.PlatformAPI.DEBUGReadEntireFile = DEBUGPlatformReadEntireFile;
 	_gameMemory.PlatformAPI.DEBUGWriteEntireFile = DEBUGPlatformWriteEntireFile;

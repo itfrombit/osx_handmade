@@ -243,48 +243,50 @@ DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile)
 //#define PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(name) platform_file_group *name(char *Type)
 PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 {
+	platform_file_group Result = {};
+
 	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)mmap(0,
 											  sizeof(osx_platform_file_group),
 											  PROT_READ | PROT_WRITE,
 											  MAP_PRIVATE | MAP_ANON,
 											  -1,
 											  0);
+	Result.Platform = OSXFileGroup;
 
-	char* TypeAt = Type;
-	char WildCard[32] = "*.";
-
-	u32 WildCardIndex = 2;
-	for (;
-		 WildCardIndex < sizeof(WildCard);
-		 ++WildCardIndex)
+	const char* WildCard = "*.*";
+	switch (Type)
 	{
-		WildCard[WildCardIndex] = *TypeAt;
-		if (*TypeAt == 0)
-		{
+		case PlatformFileType_AssetFile:
+			{
+				WildCard = "*.hha";
+			}
 			break;
-		}
 
-		++TypeAt;
+		case PlatformFileType_SavedGameFile:
+			{
+				WildCard = "*.hhs";
+			}
+			break;
+
+		InvalidDefaultCase;
 	}
 
-	WildCard[WildCardIndex] = '\0';
-
-	OSXFileGroup->H.FileCount = 0;
+	Result.FileCount = 0;
 
 	if (glob(WildCard, 0, 0, &OSXFileGroup->GlobResults) == 0)
 	{
-		OSXFileGroup->H.FileCount = OSXFileGroup->GlobResults.gl_pathc;
+		Result.FileCount = OSXFileGroup->GlobResults.gl_pathc;
 		OSXFileGroup->CurrentIndex = 0;
 	}
 
-	return (platform_file_group*)OSXFileGroup;
+	return Result;
 }
 
 
 //#define PLATFORM_GET_ALL_FILE_OF_TYPE_END(name) void name(platform_file_group *FileGroup)
 PLATFORM_GET_ALL_FILE_OF_TYPE_END(OSXGetAllFilesOfTypeEnd)
 {
-	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup;
+	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
 	if (OSXFileGroup)
 	{
 		globfree(&OSXFileGroup->GlobResults);
@@ -297,27 +299,36 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_END(OSXGetAllFilesOfTypeEnd)
 //#define PLATFORM_OPEN_FILE(name) platform_file_handle *name(platform_file_group *FileGroup)
 PLATFORM_OPEN_FILE(OSXOpenNextFile)
 {
-	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup;
-	osx_platform_file_handle* Result = 0;
+	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
+	platform_file_handle Result = {};
 
-	if (OSXFileGroup->CurrentIndex < OSXFileGroup->H.FileCount)
+	if (OSXFileGroup->CurrentIndex < FileGroup->FileCount)
 	{
-		Result = (osx_platform_file_handle*)mmap(0,
+		osx_platform_file_handle *OSXFileHandle = (osx_platform_file_handle*)mmap(0,
 												 sizeof(osx_platform_file_handle),
 												 PROT_READ | PROT_WRITE,
 												 MAP_PRIVATE | MAP_ANON,
 												 -1,
 												 0);
+		Result.Platform = OSXFileHandle;
 
-		if (Result)
+		if (OSXFileHandle)
 		{
 			char* Filename = *(OSXFileGroup->GlobResults.gl_pathv + OSXFileGroup->CurrentIndex);
 
-			strcpy(Result->Filename, Filename);
-			Result->OSXFileHandle = open(Filename, O_RDONLY);
-			Result->H.NoErrors = (Result->OSXFileHandle != -1);
+			int i = 0;
+			while (i < sizeof(OSXFileHandle->Filename) && (Filename[i] != '\0'))
+			{
+				OSXFileHandle->Filename[i] = Filename[i];
+				++i;
+			}
+			OSXFileHandle->Filename[i] = '\0';
 
-			if (Result->OSXFileHandle != -1)
+			//strncpy(OSXFileHandle->Filename, Filename, sizeof(OSXFileHandle->Filename));
+			OSXFileHandle->OSXFileHandle = open(Filename, O_RDONLY);
+			Result.NoErrors = (OSXFileHandle->OSXFileHandle != -1);
+
+			if (OSXFileHandle->OSXFileHandle != -1)
 			{
 				printf("Loading asset %s\n", Filename);
 			}
@@ -335,17 +346,17 @@ PLATFORM_OPEN_FILE(OSXOpenNextFile)
 		printf("Ran out of assets to load.\n");
 	}
 
-	return (platform_file_handle*)Result;
+	return Result;
 }
 
 
 //#define PLATFORM_READ_DATA_FROM_FILE(name) void name(platform_file_handle *Source, u64 Offset, u64 Size, void *Dest)
 PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile)
 {
+	osx_platform_file_handle* OSXFileHandle = (osx_platform_file_handle*)Source->Platform;
+
 	if (PlatformNoFileErrors(Source))
 	{
-		osx_platform_file_handle* OSXFileHandle = (osx_platform_file_handle*)Source;
-
 		// TODO(jeff): Consider mmap instead of open/read for overlapped IO.
 		// TODO(jeff): If sticking with read, make sure to handle interrupted read.
 
@@ -358,13 +369,12 @@ PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile)
 		}
 		else
 		{
-			OSXFileError(&OSXFileHandle->H, "Read file failed.");
+			OSXFileError(Source, "Read file failed.");
 		}
 	}
 	else
 	{
-		osx_platform_file_handle* OSXFileHandle = (osx_platform_file_handle*)Source;
-		printf("We got errors in OSXReadDataFromFile: %s\n", OSXFileHandle->Filename);
+		printf("OSXReadDataFromFile had pre-existing file errors on file: %s\n", OSXFileHandle->Filename);
 	}
 }
 
@@ -719,5 +729,23 @@ void OSXCompleteAllWork(platform_work_queue *Queue)
 	Queue->CompletionCount = 0;
 }
 
+
+//#define PLATFORM_ALLOCATE_MEMORY(name) void *name(memory_index Size)
+PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory)
+{
+	void* Result = malloc(Size);
+
+	return(Result);
+}
+
+
+//#define PLATFORM_DEALLOCATE_MEMORY(name) void name(void *Memory)
+PLATFORM_DEALLOCATE_MEMORY(OSXDeallocateMemory)
+{
+	if (Memory)
+	{
+		free(Memory);
+	}
+}
 
 

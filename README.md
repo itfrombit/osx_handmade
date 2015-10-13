@@ -3,6 +3,8 @@ OS X Handmade Hero
 
 This is an ongoing OS X port of Casey Muratori's Handmade Hero.
 
+This repository works with Casey's source code from handmade_hero_161.
+
 This version uses native OS X libraries for the platform layer:
 - CoreAudio for sound
 - OpenGL for graphics
@@ -16,12 +18,13 @@ called libhandmade.dylib and includes it in the Handmade Hero
 product directory of the application bundle.
 
 
-Note 2015-10-12:
+Note 2015-10-13:
 ----------------
 I'm currently bringing the Mac port up-to-date after a summer hiatus.
-This version is compatible with Day 154 (after Asset Loading was added).
+This version is compatible with Day 161 (after the block allocator,
+before fonts).
 
-Note that this version suffers from an audio glitch that Casey has not
+Note that this version might suffer from an audio glitch that Casey has not
 yet debugged. I believe the OS X Core Audio streaming is working properly.
 
 
@@ -42,9 +45,6 @@ repeat this step when Casey changes the .hha file format, or when he
 modifies or adds new assets.
 
 
-This repository works with Casey's source code from
-handmade_hero_154.
-
 EXTRA IMPORTANT: For better rendering performance, build the project in Release mode.
 The Debug mode version may drop audio frames.
 
@@ -54,7 +54,7 @@ reduce the effective rendering rate to 30fps instead of the default
 
 I've implemented the necessary calls to output the Debug Cycle Counters.
 To enable this, just replace the three empty stub #defines in handmade_platform.h
-at lines 172-174 with the ones just above inside the _MSC_VER check.
+at lines 189-191 with the ones just above inside the _MSC_VER check.
 
 
 Author

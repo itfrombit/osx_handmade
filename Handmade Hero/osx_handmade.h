@@ -126,7 +126,7 @@ DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile);
 
 struct osx_platform_file_handle
 {
-	platform_file_handle H;
+	//platform_file_handle H;
 	int OSXFileHandle;
 	char Filename[256];
 };
@@ -134,7 +134,7 @@ struct osx_platform_file_handle
 
 struct osx_platform_file_group
 {
-	platform_file_group H;
+	//platform_file_group H;
 	glob_t GlobResults;
 	int CurrentIndex;
 };
@@ -146,6 +146,8 @@ PLATFORM_OPEN_FILE(OSXOpenNextFile);
 PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile);
 PLATFORM_FILE_ERROR(OSXFileError);
 
+PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory);
+PLATFORM_DEALLOCATE_MEMORY(OSXDeallocateMemory);
 
 time_t OSXGetLastWriteTime(const char* Filename);
 

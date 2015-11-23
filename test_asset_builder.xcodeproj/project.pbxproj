@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4F021D4B1BCB9129009089C7 /* test_asset_builder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F021D491BCB9129009089C7 /* test_asset_builder.cpp */; settings = {ASSET_TAGS = (); }; };
+		4F093E321C02DE5D00E163E9 /* osx_asset_builder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F093E301C02DE5D00E163E9 /* osx_asset_builder.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,8 +24,8 @@
 
 /* Begin PBXFileReference section */
 		4F021D3F1BCB90A1009089C7 /* test_asset_builder */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = test_asset_builder; sourceTree = BUILT_PRODUCTS_DIR; };
-		4F021D491BCB9129009089C7 /* test_asset_builder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = test_asset_builder.cpp; path = handmade/test_asset_builder.cpp; sourceTree = SOURCE_ROOT; };
-		4F021D4A1BCB9129009089C7 /* test_asset_builder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test_asset_builder.h; path = handmade/test_asset_builder.h; sourceTree = SOURCE_ROOT; };
+		4F093E301C02DE5D00E163E9 /* osx_asset_builder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = osx_asset_builder.cpp; sourceTree = "<group>"; };
+		4F093E311C02DE5D00E163E9 /* osx_asset_builder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = osx_asset_builder.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,8 +58,8 @@
 		4F021D411BCB90A1009089C7 /* test_asset_builder */ = {
 			isa = PBXGroup;
 			children = (
-				4F021D491BCB9129009089C7 /* test_asset_builder.cpp */,
-				4F021D4A1BCB9129009089C7 /* test_asset_builder.h */,
+				4F093E301C02DE5D00E163E9 /* osx_asset_builder.cpp */,
+				4F093E311C02DE5D00E163E9 /* osx_asset_builder.h */,
 			);
 			path = test_asset_builder;
 			sourceTree = "<group>";
@@ -120,7 +120,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4F021D4B1BCB9129009089C7 /* test_asset_builder.cpp in Sources */,
+				4F093E321C02DE5D00E163E9 /* osx_asset_builder.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,6 +207,7 @@
 		4F021D471BCB90A1009089C7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = ./handmade;
 				OTHER_CFLAGS = (
 					"-DHANDMADE_OSX=1",
 					"-DHANDMADE_SLOW=1",
@@ -223,6 +224,7 @@
 		4F021D481BCB90A1009089C7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = ./handmade;
 				OTHER_CFLAGS = (
 					"-DHANDMADE_OSX=1",
 					"-DHANDMADE_SLOW=1",

@@ -15,7 +15,7 @@
 		4F387A311A49588D0097212D /* handmade.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F387A2F1A49588D0097212D /* handmade.cpp */; };
 		4F387A321A49588D0097212D /* handmade.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F387A301A49588D0097212D /* handmade.h */; };
 		4F8EB0841A59FEDB0039143E /* handmade_random.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F8EB0811A59FEDB0039143E /* handmade_random.h */; };
-		4FC21E521BC8C3B500AE32EC /* handmade_optimized.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4FC21E511BC8C3B500AE32EC /* handmade_optimized.cpp */; settings = {ASSET_TAGS = (); }; };
+		4FC21E521BC8C3B500AE32EC /* handmade_optimized.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4FC21E511BC8C3B500AE32EC /* handmade_optimized.cpp */; };
 		4FD1F0C21A77783D009C4849 /* handmade_math.h in Headers */ = {isa = PBXBuildFile; fileRef = 4FD1F0C11A77783D009C4849 /* handmade_math.h */; };
 /* End PBXBuildFile section */
 
@@ -161,7 +161,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -176,7 +176,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -185,7 +185,7 @@
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
@@ -193,6 +193,14 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-Wno-return-type",
+					"-Wno-switch",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-Wno-c++11-narrowing",
+				);
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -201,7 +209,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -218,15 +226,23 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = (
+					"-Wno-return-type",
+					"-Wno-switch",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-Wno-c++11-narrowing",
+				);
 				SDKROOT = macosx;
 			};
 			name = Release;

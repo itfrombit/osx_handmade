@@ -7,9 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4F021D4F1BCB979A009089C7 /* test1.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F021D4C1BCB979A009089C7 /* test1.hha */; settings = {ASSET_TAGS = (); }; };
-		4F021D501BCB979A009089C7 /* test2.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F021D4D1BCB979A009089C7 /* test2.hha */; settings = {ASSET_TAGS = (); }; };
-		4F021D511BCB979A009089C7 /* test3.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F021D4E1BCB979A009089C7 /* test3.hha */; settings = {ASSET_TAGS = (); }; };
+		4F021D4F1BCB979A009089C7 /* test1.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F021D4C1BCB979A009089C7 /* test1.hha */; };
+		4F021D501BCB979A009089C7 /* test2.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F021D4D1BCB979A009089C7 /* test2.hha */; };
+		4F021D511BCB979A009089C7 /* test3.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F021D4E1BCB979A009089C7 /* test3.hha */; };
+		4F093E361C02E83200E163E9 /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = 4F093E351C02E83200E163E9 /* fonts */; };
+		4F093E381C02E8AD00E163E9 /* testfonts.hha in Resources */ = {isa = PBXBuildFile; fileRef = 4F093E371C02E8AD00E163E9 /* testfonts.hha */; };
 		4F387A3B1A4964CF0097212D /* osx_handmade.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F387A3A1A4964CF0097212D /* osx_handmade.cpp */; };
 		4F99B1941A49537100A1DCB8 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F99B18E1A49537100A1DCB8 /* AppDelegate.m */; };
 		4F99B1951A49537100A1DCB8 /* HandmadeView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4F99B1901A49537100A1DCB8 /* HandmadeView.mm */; };
@@ -23,7 +25,7 @@
 		4FBC23531A35B64700C661D2 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBC23521A35B64700C661D2 /* CoreVideo.framework */; };
 		4FBEB1B11A1FF3140001436D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBEB1AF1A1FF3140001436D /* OpenGL.framework */; };
 		4FBEB1B21A1FF3140001436D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FBEB1B01A1FF3140001436D /* QuartzCore.framework */; };
-		4FC21E4D1BC78EA500AE32EC /* test3 in Resources */ = {isa = PBXBuildFile; fileRef = 4FC21E4C1BC78EA500AE32EC /* test3 */; settings = {ASSET_TAGS = (); }; };
+		4FC21E4D1BC78EA500AE32EC /* test3 in Resources */ = {isa = PBXBuildFile; fileRef = 4FC21E4C1BC78EA500AE32EC /* test3 */; };
 		4FDAAB5B1A85EA8E004748C4 /* test2 in Resources */ = {isa = PBXBuildFile; fileRef = 4FDAAB5A1A85EA8E004748C4 /* test2 */; };
 /* End PBXBuildFile section */
 
@@ -60,6 +62,8 @@
 		4F021D4C1BCB979A009089C7 /* test1.hha */ = {isa = PBXFileReference; lastKnownFileType = file; path = test1.hha; sourceTree = SOURCE_ROOT; };
 		4F021D4D1BCB979A009089C7 /* test2.hha */ = {isa = PBXFileReference; lastKnownFileType = file; path = test2.hha; sourceTree = SOURCE_ROOT; };
 		4F021D4E1BCB979A009089C7 /* test3.hha */ = {isa = PBXFileReference; lastKnownFileType = file; path = test3.hha; sourceTree = SOURCE_ROOT; };
+		4F093E351C02E83200E163E9 /* fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = fonts; sourceTree = SOURCE_ROOT; };
+		4F093E371C02E8AD00E163E9 /* testfonts.hha */ = {isa = PBXFileReference; lastKnownFileType = file; path = testfonts.hha; sourceTree = "<group>"; };
 		4F387A251A4958140097212D /* handmade.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = handmade.xcodeproj; path = handmade/handmade.xcodeproj; sourceTree = "<group>"; };
 		4F387A3A1A4964CF0097212D /* osx_handmade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = osx_handmade.cpp; sourceTree = "<group>"; };
 		4F99B18D1A49537100A1DCB8 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = "Handmade Hero/AppDelegate.h"; sourceTree = SOURCE_ROOT; };
@@ -108,6 +112,7 @@
 		4FBEB1801A1FEF0F0001436D = {
 			isa = PBXGroup;
 			children = (
+				4F093E371C02E8AD00E163E9 /* testfonts.hha */,
 				4F387A251A4958140097212D /* handmade.xcodeproj */,
 				4FBEB18B1A1FEF0F0001436D /* Handmade Hero */,
 				4FBEB18A1A1FEF0F0001436D /* Products */,
@@ -125,6 +130,7 @@
 		4FBEB18B1A1FEF0F0001436D /* Handmade Hero */ = {
 			isa = PBXGroup;
 			children = (
+				4F093E351C02E83200E163E9 /* fonts */,
 				4F021D4C1BCB979A009089C7 /* test1.hha */,
 				4F021D4D1BCB979A009089C7 /* test2.hha */,
 				4F021D4E1BCB979A009089C7 /* test3.hha */,
@@ -238,6 +244,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4F093E381C02E8AD00E163E9 /* testfonts.hha in Resources */,
+				4F093E361C02E83200E163E9 /* fonts in Resources */,
 				4F99B1B21A4956A100A1DCB8 /* MainMenu.xib in Resources */,
 				4F021D4F1BCB979A009089C7 /* test1.hha in Resources */,
 				4F021D501BCB979A009089C7 /* test2.hha in Resources */,
@@ -291,7 +299,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -324,6 +332,10 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-Wno-c++11-narrowing",
+				);
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -332,7 +344,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -359,6 +371,10 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-Wno-c++11-narrowing",
+				);
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -377,6 +393,7 @@
 					"-DHANDMADE_INTERNAL=1",
 					"-Wno-null-dereference",
 				);
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				PRODUCT_NAME = "Handmade Hero";
 			};
 			name = Debug;
@@ -395,6 +412,7 @@
 					"-DHANDMADE_INTERNAL=1",
 					"-Wno-null-dereference",
 				);
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				PRODUCT_NAME = "Handmade Hero";
 			};
 			name = Release;

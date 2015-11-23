@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6250" systemVersion="14A388a" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9060" systemVersion="15B42" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6250"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9060"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -170,7 +170,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="335" y="390" width="960" height="540"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="877"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1577"/>
             <value key="minSize" type="size" width="100" height="100"/>
             <view key="contentView" id="EiT-Mj-1SZ">
                 <rect key="frame" x="0.0" y="0.0" width="960" height="540"/>
@@ -178,6 +178,7 @@
                 <subviews>
                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="wER-w1-w9N" customClass="HandmadeView">
                         <rect key="frame" x="0.0" y="0.0" width="960" height="540"/>
+                        <animations/>
                     </customView>
                 </subviews>
                 <constraints>
@@ -186,6 +187,7 @@
                     <constraint firstAttribute="bottom" secondItem="wER-w1-w9N" secondAttribute="bottom" id="sN6-gS-mJD"/>
                     <constraint firstItem="wER-w1-w9N" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" id="u9S-kl-Cse"/>
                 </constraints>
+                <animations/>
             </view>
         </window>
     </objects>

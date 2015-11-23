@@ -31,6 +31,8 @@
 #include <mach/mach_time.h>
 
 #include <pthread.h>
+#include <unistd.h>
+
 
 #ifdef HANDMADE_MIN_OSX
 #include "handmade_platform.h"
@@ -47,9 +49,79 @@
 //#pragma clang diagnostic ignored "-Wc++11-compat-deprecated-writable-strings"
 //#pragma clang diagnostic pop
 
+global_variable bool32 GlobalPause;
+
+#define STRINGIFY(S) #S
+
+#if HANDMADE_INTERNAL
+DEBUG_PLATFORM_EXECUTE_SYSTEM_COMMAND(DEBUGExecuteSystemCommand)
+{
+    debug_executing_process Result = {};
+
+	char* Args[] = {"/bin/sh",
+					STRINGIFY(DYNAMIC_COMPILE_COMMAND),
+	                0};
+
+	char* WorkingDirectory = STRINGIFY(DYNAMIC_COMPILE_PATH);
+
+	int PID = fork();
+
+	switch(PID)
+	{
+		case -1:
+			printf("Error forking process: %d\n", PID);
+			break;
+
+		case 0:
+		{
+			// child
+			chdir(WorkingDirectory);
+			int ExecCode = execvp(Args[0], Args);
+			if (ExecCode == -1)
+			{
+				printf("Error in execve: %d\n", errno);
+			}
+			break;
+		}
+
+		default:
+			// parent
+			printf("Launched child process %d\n", PID);
+			break;
+	}
 
 
+	Result.OSHandle = PID;
 
+    return(Result);
+}
+
+
+DEBUG_PLATFORM_GET_PROCESS_STATE(DEBUGGetProcessState)
+{
+	debug_process_state Result = {};
+
+	int PID = (int)Process.OSHandle;
+	int ExitCode = 0;
+
+	if (PID > 0)
+	{
+		Result.StartedSuccessfully = true;
+	}
+
+	if (waitpid(PID, &ExitCode, WNOHANG) == PID)
+	{
+		Result.ReturnCode = WEXITSTATUS(ExitCode);
+		printf("Child process %d exited with code %d...\n", PID, ExitCode);
+	}
+	else
+	{
+		Result.IsRunning = true;
+	}
+
+    return(Result);
+}
+#endif
 
 #define MAX_HID_BUTTONS 32
 
@@ -115,6 +187,8 @@
 	BOOL						_glFallbackMode;
 
 	BOOL						_renderAtHalfSpeed;
+
+	u64							_lastCounter;
 }
 @end
 
@@ -718,13 +792,14 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 				OSXProcessKeyboardMessage(&controller->ActionRight, isDown);
 				break;
 
+#if HANDMADE_INTERNAL
 			case kHIDUsage_KeyboardP:
 				keyName = @"p";
 
 				if (isDown)
 				{
 					// TODO(jeff): Implement global pause
-					//GlobalPause = !GlobalPause;
+					GlobalPause = !GlobalPause;
 				}
 				break;
 
@@ -751,7 +826,7 @@ void OSXHIDAction(void* context, IOReturn result, void* sender, IOHIDValueRef va
 					}
 				}
 				break;
-
+#endif
 			default:
 				return;
 				break;
@@ -986,6 +1061,28 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 #endif
 
 
+float OSXGetSecondsElapsed(u64 Then, u64 Now)
+{
+	static mach_timebase_info_data_t tb;
+
+	u64 Elapsed = Now - Then;
+
+	if (tb.denom == 0)
+	{
+		// First time we need to get the timebase
+		mach_timebase_info(&tb);
+	}
+
+	//Nanoseconds Nanos = AbsoluteToNanoseconds(*((AbsoluteTime*)&Elapsed));
+	//float Result = (float)UnsignedWideToUInt64(Nanos) * 1.0E-9;
+
+	u64 Nanos = Elapsed * tb.numer / tb.denom;
+	float Result = (float)Nanos * 1.0E-9;
+
+	return Result;
+}
+
+
 - (void)setup
 {
 	if (_setupComplete)
@@ -996,31 +1093,6 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	OSXMakeQueue(&_highPriorityQueue, 6);
 	OSXMakeQueue(&_lowPriorityQueue, 2);
 
-#if 0
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A0");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A1");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A2");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A3");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A4");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A5");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A6");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A7");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A8");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String A9");
-
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B0");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B1");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B2");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B3");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B4");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B5");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B6");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B7");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B8");
-	OSXAddEntry(&_queue, DoWorkerWork, (void*)"String B9");
-
-	OSXCompleteAllWork(&_queue);
-#endif
 
 	_renderAtHalfSpeed = true;
 
@@ -1067,8 +1139,11 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 
 	_gameMemory.PermanentStorageSize = Megabytes(256); //Megabytes(256);
 	_gameMemory.TransientStorageSize = Gigabytes(1); //Gigabytes(1);
+	_gameMemory.DebugStorageSize = Megabytes(256); //Megabytes(64);
 
-	_osxState.TotalSize = _gameMemory.PermanentStorageSize + _gameMemory.TransientStorageSize;
+	_osxState.TotalSize = _gameMemory.PermanentStorageSize +
+	                      _gameMemory.TransientStorageSize +
+	                      _gameMemory.DebugStorageSize;
 
 
 #ifndef HANDMADE_USE_VM_ALLOCATE
@@ -1084,6 +1159,8 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	{
 		printf("mmap error: %d  %s", errno, strerror(errno));
 	}
+
+	//memset(_osxState.GameMemoryBlock, 0, _osxState.TotalSize);
 #else
 	kern_return_t result = vm_allocate((vm_map_t)mach_task_self(),
 									   (vm_address_t*)&_osxState.GameMemoryBlock,
@@ -1099,6 +1176,8 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	_gameMemory.PermanentStorage = _osxState.GameMemoryBlock;
 	_gameMemory.TransientStorage = ((uint8*)_gameMemory.PermanentStorage
 								   + _gameMemory.PermanentStorageSize);
+	_gameMemory.DebugStorage = (u8*)_gameMemory.TransientStorage +
+								_gameMemory.TransientStorageSize;
 
 	_gameMemory.HighPriorityQueue = &_highPriorityQueue;
 	_gameMemory.LowPriorityQueue = &_lowPriorityQueue;
@@ -1115,12 +1194,20 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	_gameMemory.PlatformAPI.AllocateMemory = OSXAllocateMemory;
 	_gameMemory.PlatformAPI.DeallocateMemory = OSXDeallocateMemory;
 
+#if HANDMADE_INTERNAL
 	_gameMemory.PlatformAPI.DEBUGFreeFileMemory = DEBUGPlatformFreeFileMemory;
 	_gameMemory.PlatformAPI.DEBUGReadEntireFile = DEBUGPlatformReadEntireFile;
 	_gameMemory.PlatformAPI.DEBUGWriteEntireFile = DEBUGPlatformWriteEntireFile;
 
+	_gameMemory.PlatformAPI.DEBUGExecuteSystemCommand = DEBUGExecuteSystemCommand;
+	_gameMemory.PlatformAPI.DEBUGGetProcessState = DEBUGGetProcessState;
+#endif
+
 	///////////////////////////////////////////////////////////////////
 	// Set up replay buffers
+
+	// TODO(jeff): The loop replay is broken. Disable for now...
+#if 0
 
 	for (int ReplayIndex = 0;
 	     ReplayIndex < ArrayCount(_osxState.ReplayBuffers);
@@ -1135,14 +1222,23 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 
 		if (ReplayBuffer->FileHandle != -1)
 		{
+			int Result = ftruncate(ReplayBuffer->FileHandle, _osxState.TotalSize);
+
+			if (Result != 0)
+			{
+				printf("ftruncate error on ReplayBuffer[%d]: %d: %s\n",
+				       ReplayIndex, errno, strerror(errno));
+			}
+
 			ReplayBuffer->MemoryBlock = mmap(0, _osxState.TotalSize,
 			                                 PROT_READ|PROT_WRITE,
 			                                 MAP_PRIVATE,
 			                                 ReplayBuffer->FileHandle,
 			                                 0);
+
 			if (ReplayBuffer->MemoryBlock != MAP_FAILED)
 			{
-#if 1
+#if 0
 				fstore_t fstore = {};
 				fstore.fst_flags = F_ALLOCATECONTIG;
 				fstore.fst_posmode = F_PEOFPOSMODE;
@@ -1150,6 +1246,7 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 				fstore.fst_length = _osxState.TotalSize;
 
 				int Result = fcntl(ReplayBuffer->FileHandle, F_PREALLOCATE, &fstore);
+
 				if (Result != -1)
 				{
 					Result = ftruncate(ReplayBuffer->FileHandle, _osxState.TotalSize);
@@ -1165,6 +1262,10 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 					printf("fcntl error on ReplayBuffer[%d]: %d: %s\n",
 					       ReplayIndex, errno, strerror(errno));
 				}
+
+				//memset(ReplayBuffer->MemoryBlock, 0, _osxState.TotalSize);
+				//memset(ReplayBuffer->MemoryBlock, 0, _osxState.TotalSize);
+				//memcpy(ReplayBuffer->MemoryBlock, 0, _osxState.TotalSize);
 #else
 				// NOTE(jeff): Tried out Filip's lseek suggestion to see if
 				// it is any faster than ftruncate. Seems about the same.
@@ -1195,6 +1296,7 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 		}
 	}
 
+#endif
 
 	///////////////////////////////////////////////////////////////////
 	// Set up input
@@ -1263,8 +1365,10 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	*/
 
 	int BytesPerPixel = 4;
-	_renderBuffer.Width = 960; // 1920;
-	_renderBuffer.Height = 540; // 1080;
+	//_renderBuffer.Width = 960; // 1920;
+	//_renderBuffer.Height = 540; // 1080;
+	_renderBuffer.Width = 960;
+	_renderBuffer.Height = 540;
 
 	_renderBuffer.Pitch = Align16(_renderBuffer.Width * BytesPerPixel);
 	int BitmapMemorySize = (_renderBuffer.Pitch * _renderBuffer.Height);
@@ -1315,6 +1419,8 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 	_soundOutput.WriteCursor = _soundOutput.CoreAudioBuffer;
 
 	OSXInitCoreAudio(&_soundOutput);
+
+	_lastCounter = mach_absolute_time();
 
 	_setupComplete = YES;
 }
@@ -1414,9 +1520,11 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoWorkerWork)
 }
 
 
+#if 0
 internal void
 HandleDebugCycleCounters(game_memory *Memory)
 {
+
 #if HANDMADE_INTERNAL
     printf("DEBUG CYCLE COUNTS:\n");
     for(int CounterIndex = 0;
@@ -1440,7 +1548,10 @@ HandleDebugCycleCounters(game_memory *Memory)
         }
     }
 #endif
+
 }
+#endif
+
 
 - (void)reshape
 {
@@ -1450,18 +1561,24 @@ HandleDebugCycleCounters(game_memory *Memory)
 }
 
 
+#if HANDMADE_INTERNAL
+global_variable debug_table GlobalDebugTable_;
+debug_table* GlobalDebugTable = &GlobalDebugTable_;
+#endif
+
 - (void)processFrameAndRunGameLogic:(BOOL)runGameLogicFlag
 {
 	// NOTE(jeff): Drawing is normally done on a background thread via CVDisplayLink.
 	// When the window/view is resized, reshape is called automatically on the
 	// main thread, so lock the context from simultaneous access during a resize.
 
+	u64 CurrentTime = mach_absolute_time();
+
+	_lastCounter = CurrentTime;
+
 	// TODO(jeff): Tighten up this GLContext lock
 	CGLLockContext(static_cast<CGLContextObj>([[self openGLContext] CGLContextObj]));
 
-
-	//uint64 LastCycleCount = rdtsc();
-	//uint64 StartTime = mach_absolute_time();
 
 	if (!runGameLogicFlag)
 	{
@@ -1476,12 +1593,19 @@ HandleDebugCycleCounters(game_memory *Memory)
 	{
 		// NOTE(jeff): Not a resize, so run game logic and render the next frame
 
+		//
+		//
+		//
+
+		BEGIN_BLOCK(ExecutableRefresh);
+
 		_newInput->dtForFrame = _targetSecondsPerFrame;
 
 		///////////////////////////////////////////////////////////////////
 		// Check for updated game code
 
-		_newInput->ExecutableReloaded = false;
+		//_newInput->ExecutableReloaded = false;
+		_gameMemory.ExecutableReloaded = false;
 
 		time_t NewDLWriteTime = OSXGetLastWriteTime(_sourceGameCodeDLFullPath);
 		if (NewDLWriteTime != _game.DLLastWriteTime)
@@ -1489,10 +1613,22 @@ HandleDebugCycleCounters(game_memory *Memory)
 			OSXCompleteAllWork(&_highPriorityQueue);
 			OSXCompleteAllWork(&_lowPriorityQueue);
 
+#if HANDMADE_INTERNAL
+			GlobalDebugTable = &GlobalDebugTable_;
+#endif
+
 			OSXUnloadGameCode(&_game);
 			_game = OSXLoadGameCode(_sourceGameCodeDLFullPath);
-			_newInput->ExecutableReloaded = true;
+			//_newInput->ExecutableReloaded = true;
+			_gameMemory.ExecutableReloaded = true;
 		}
+		END_BLOCK(ExecutableRefresh);
+
+		//
+		//
+		//
+
+		BEGIN_BLOCK(InputProcessing);
 
 		//game_controller_input* OldKeyboardController = GetController(_oldInput, 0);
 		game_controller_input* OldKeyboardController = GetController(&_currentInput, 0);
@@ -1511,7 +1647,7 @@ HandleDebugCycleCounters(game_memory *Memory)
 
 		if (NewKeyboardController->Start.EndedDown)
 		{
-			printf("jsb: Start ended down\n");
+			printf("Start ended down\n");
 		}
 
 
@@ -1550,16 +1686,52 @@ HandleDebugCycleCounters(game_memory *Memory)
 			NSPoint PointInWindow = RectInWindow.origin;
 			NSPoint PointInView = [self convertPoint:PointInWindow fromView:nil];
 
-			_newInput->MouseX = PointInView.x;
-			_newInput->MouseY = PointInView.y;
+			//_newInput->MouseX = (-0.5f * (r32)_renderBuffer.Width + 0.5f) + (r32)PointInView.x;
+			//_newInput->MouseY = (-0.5f * (r32)_renderBuffer.Height + 0.5f) + (r32)PointInView.y;
+			_newInput->MouseX = (r32)PointInView.x;
+			//_newInput->MouseY = (r32)((_renderBuffer.Height - 1) - PointInView.y);
+			_newInput->MouseY = (r32)PointInView.y;
+		
 			_newInput->MouseZ = 0; // TODO(casey): Support mousewheel?
 
 			NSUInteger ButtonMask = [NSEvent pressedMouseButtons];
-			_newInput->MouseButtons[0].EndedDown = ButtonMask & 0x0001;
-			_newInput->MouseButtons[1].EndedDown = (ButtonMask >> 1) & 0x0001;
-			_newInput->MouseButtons[2].EndedDown = (ButtonMask >> 2) & 0x0001;
-			_newInput->MouseButtons[3].EndedDown = (ButtonMask >> 3) & 0x0001;
-			_newInput->MouseButtons[4].EndedDown = (ButtonMask >> 4) & 0x0001;
+
+			for (u32 ButtonIndex = 0;
+				 ButtonIndex < PlatformMouseButton_Count;
+				 ++ButtonIndex)
+			{
+				u32 IsDown = 0;
+
+				if (ButtonIndex > 0)
+				{
+					IsDown = (ButtonMask >> ButtonIndex) & 0x0001;
+				}
+				else
+				{
+					IsDown = ButtonMask & 0x0001;
+				}
+
+				// NOTE(jeff): On OS X, Mouse Button 1 is Right, 2 is Middle
+				u32 MouseButton = ButtonIndex;
+				if (ButtonIndex == 1) MouseButton = PlatformMouseButton_Right;
+				else if (ButtonIndex == 2) MouseButton = PlatformMouseButton_Middle;
+
+				_newInput->MouseButtons[MouseButton] = _oldInput->MouseButtons[MouseButton];
+				_newInput->MouseButtons[MouseButton].HalfTransitionCount = 0;
+
+#if 0
+				_newInput->MouseButtons[MouseButton].EndedDown = ButtonClicked;
+				_newInput->MouseButtons[MouseButton].HalfTransitionCount = 0;
+
+				if (ButtonClicked)
+				{
+					++_newInput->MouseButtons[MouseButton].HalfTransitionCount;
+					printf("Mouse Button %d was clicked at (%f, %f)\n", ButtonIndex, _newInput->MouseX, _newInput->MouseY);
+				}
+#else
+				OSXProcessKeyboardMessage(&_newInput->MouseButtons[MouseButton], IsDown);
+#endif
+			}
 		}
 		else
 		{
@@ -1567,6 +1739,30 @@ HandleDebugCycleCounters(game_memory *Memory)
 			_newInput->MouseY = _oldInput->MouseY;
 			_newInput->MouseZ = _oldInput->MouseZ;
 		}
+
+		int ModifierFlags = [[NSApp currentEvent] modifierFlags];
+		_newInput->ShiftDown = (ModifierFlags & NSShiftKeyMask);
+		_newInput->AltDown = (ModifierFlags & NSAlternateKeyMask);
+		_newInput->ControlDown = (ModifierFlags & NSControlKeyMask);
+
+#if 0
+		if (ModifierFlags & NSShiftKeyMask)
+		{
+			printf("Shift Key is down\n");
+		}
+		if (ModifierFlags & NSAlternateKeyMask)
+		{
+			printf("Alt Key is down\n");
+		}
+		if (ModifierFlags & NSCommandKeyMask)
+		{
+			printf("Command Key is down\n");
+		}
+		if (ModifierFlags & NSControlKeyMask)
+		{
+			printf("Control Key is down\n");
+		}
+#endif
 
 #if 0
 		// NOTE(jeff): Support for multiple controllers here...
@@ -1588,61 +1784,65 @@ HandleDebugCycleCounters(game_memory *Memory)
 		}
 #endif
 
+		END_BLOCK(InputProcessing);
 
-		if (_osxState.InputRecordingIndex)
+		//
+		//
+		//
+
+		BEGIN_BLOCK(GameUpdate);
+
+		if (!GlobalPause)
 		{
-			OSXRecordInput(&_osxState, _newInput);
-		}
-
-		if (_osxState.InputPlayingIndex)
-		{
-			OSXPlaybackInput(&_osxState, _newInput);
-		}
-
-		if (_game.UpdateAndRender)
-		{
-#if 0
-			printf("Queue:  Read: %d  Write: %d\n",
-				   _gameMemory.HighPriorityQueue->NextEntryToRead,
-				   _gameMemory.HighPriorityQueue->NextEntryToWrite);
-#endif
-			_game.UpdateAndRender(&_gameMemory, _newInput, &_renderBuffer);
-
-			//HandleDebugCycleCounters(&_gameMemory);
-		}
-
-		// TODO(jeff): Move this into the sound render code
-		//_soundOutput.Frequency = 440.0 + (15 * _hidY);
-
-
-		if (_game.GetSoundSamples)
-		{
-			// Sample Count is SamplesPerSecond / GameRefreshRate
-			//_soundOutput.SoundBuffer.SampleCount = 1600; // (48000samples/sec) / (30fps)
-			// ^^^ calculate this. We might be running at 30 or 60 fps
-			_soundOutput.SoundBuffer.SampleCount = _soundOutput.SoundBuffer.SamplesPerSecond / _targetFramesPerSecond;
-
-			_game.GetSoundSamples(&_gameMemory, &_soundOutput.SoundBuffer);
-
-			int16* CurrentSample = _soundOutput.SoundBuffer.Samples;
-			for (int i = 0; i < _soundOutput.SoundBuffer.SampleCount; ++i)
+			if (_osxState.InputRecordingIndex)
 			{
-				*_soundOutput.WriteCursor++ = *CurrentSample++;
-				*_soundOutput.WriteCursor++ = *CurrentSample++;
-
-				if ((char*)_soundOutput.WriteCursor >= ((char*)_soundOutput.CoreAudioBuffer + _soundOutput.SoundBufferSize))
-				{
-					//printf("Write cursor wrapped!\n");
-					_soundOutput.WriteCursor  = _soundOutput.CoreAudioBuffer;
-				}
+				OSXRecordInput(&_osxState, _newInput);
 			}
 
-			// Prime the pump to get the write cursor out in front of the read cursor...
-			static bool firstTime = true;
-
-			if (firstTime)
+			if (_osxState.InputPlayingIndex)
 			{
-				firstTime = false;
+				game_input Temp = *_newInput;
+
+				OSXPlaybackInput(&_osxState, _newInput);
+
+				for (u32 MouseButtonIndex = 0;
+					 MouseButtonIndex < PlatformMouseButton_Count;
+					 ++MouseButtonIndex)
+				{
+					_newInput->MouseButtons[MouseButtonIndex] = Temp.MouseButtons[MouseButtonIndex];
+				}
+				_newInput->MouseX = Temp.MouseX;
+				_newInput->MouseY = Temp.MouseY;
+				_newInput->MouseZ = Temp.MouseZ;
+			}
+
+			if (_game.UpdateAndRender)
+			{
+				_game.UpdateAndRender(&_gameMemory, _newInput, &_renderBuffer);
+
+				//HandleDebugCycleCounters(&_gameMemory);
+			}
+		}
+
+		END_BLOCK(GameUpdate);
+
+		//
+		//
+		//
+
+		BEGIN_BLOCK(AudioUpdate);
+
+		if (!GlobalPause)
+		{
+			// TODO(jeff): Move this into the sound render code
+			//_soundOutput.Frequency = 440.0 + (15 * _hidY);
+
+			if (_game.GetSoundSamples)
+			{
+				// Sample Count is SamplesPerSecond / GameRefreshRate
+				//_soundOutput.SoundBuffer.SampleCount = 1600; // (48000samples/sec) / (30fps)
+				// ^^^ calculate this. We might be running at 30 or 60 fps
+				_soundOutput.SoundBuffer.SampleCount = _soundOutput.SoundBuffer.SamplesPerSecond / _targetFramesPerSecond;
 
 				_game.GetSoundSamples(&_gameMemory, &_soundOutput.SoundBuffer);
 
@@ -1654,11 +1854,52 @@ HandleDebugCycleCounters(game_memory *Memory)
 
 					if ((char*)_soundOutput.WriteCursor >= ((char*)_soundOutput.CoreAudioBuffer + _soundOutput.SoundBufferSize))
 					{
+						//printf("Write cursor wrapped!\n");
 						_soundOutput.WriteCursor  = _soundOutput.CoreAudioBuffer;
+					}
+				}
+
+				// Prime the pump to get the write cursor out in front of the read cursor...
+				static bool firstTime = true;
+
+				if (firstTime)
+				{
+					firstTime = false;
+
+					_game.GetSoundSamples(&_gameMemory, &_soundOutput.SoundBuffer);
+
+					int16* CurrentSample = _soundOutput.SoundBuffer.Samples;
+					for (int i = 0; i < _soundOutput.SoundBuffer.SampleCount; ++i)
+					{
+						*_soundOutput.WriteCursor++ = *CurrentSample++;
+						*_soundOutput.WriteCursor++ = *CurrentSample++;
+
+						if ((char*)_soundOutput.WriteCursor >= ((char*)_soundOutput.CoreAudioBuffer + _soundOutput.SoundBufferSize))
+						{
+							_soundOutput.WriteCursor  = _soundOutput.CoreAudioBuffer;
+						}
 					}
 				}
 			}
 		}
+
+		END_BLOCK(AudioUpdate);
+
+		//
+		//
+		//
+
+#if HANDMADE_INTERNAL
+		BEGIN_BLOCK(DebugCollation);
+
+		if (_game.DEBUGFrameEnd && runGameLogicFlag)
+		{
+			GlobalDebugTable = _game.DEBUGFrameEnd(&_gameMemory, _newInput, &_renderBuffer);
+		}
+		GlobalDebugTable_.EventArrayIndex_EventIndex = 0;
+
+		END_BLOCK(DebugCollation);
+#endif
 
 
 		game_input* Temp = _newInput;
@@ -1669,6 +1910,8 @@ HandleDebugCycleCounters(game_memory *Memory)
 
 	///////////////////////////////////////////////////////////////////
 	// Draw the latest frame to the screen
+
+	BEGIN_BLOCK(FrameDisplay);
 
 	[[self openGLContext] makeCurrentContext];
 
@@ -1724,25 +1967,18 @@ HandleDebugCycleCounters(game_memory *Memory)
     CGLFlushDrawable(static_cast<CGLContextObj>([[self openGLContext] CGLContextObj]));
     CGLUnlockContext(static_cast<CGLContextObj>([[self openGLContext] CGLContextObj]));
 
+	END_BLOCK(FrameDisplay);
 
-	///////////////////////////////////////////////////////////////////
-	// Update performance counters
+	//
+	//
+	//
 
-	//uint64 EndCycleCount = rdtsc();
-	//uint64 EndTime = mach_absolute_time();
-	
-	//uint64 CyclesElapsed = EndCycleCount - LastCycleCount;
-	
-	//real64 MSPerFrame = (real64)(EndTime - StartTime) * _machTimebaseConversionFactor / 1.0E6;
+	// TODO(jeff): FramerateWait block. Doesn't make sense to do it here as we
+	//             are using CVDisplayLink
 
-	//static int j = 0;
-	//NSString* msPerFrame = [NSString stringWithFormat:@"%8.5f - %d", MSPerFrame, j++];
-	//NSLog(msPerFrame);
-
-	//real64 SPerFrame = MSPerFrame / 1000.0;
-	//real64 FPS = 1.0 / SPerFrame;
-	
-	// NSLog(@"%.02fms/f,  %.02ff/s", MSPerFrame, FPS);
+	u64 EndCounter = mach_absolute_time();
+	FRAME_MARKER(OSXGetSecondsElapsed(_lastCounter, EndCounter));
+	_lastCounter = EndCounter;
 }
 
 #pragma clang diagnostic push
@@ -1758,6 +1994,7 @@ HandleDebugCycleCounters(game_memory *Memory)
     CVDisplayLinkStop(_displayLink);
     CVDisplayLinkRelease(_displayLink);
 
+	printf("dealloc!\n");
     //[super dealloc];
 }
 #pragma clang diagnostic pop
@@ -1804,6 +2041,13 @@ HandleDebugCycleCounters(game_memory *Memory)
 	// We're currently processing the key via HID.
 	// We'll probably move it here to avoid needing
 	// a hypothetical keyboard entitlement.
+
+	switch ([event keyCode])
+	{
+		case 12:
+			printf("QQQQQ!\n");
+			break;
+	}
 }
 
 @end

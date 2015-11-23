@@ -16,11 +16,18 @@ handmade/handmade_asset.h
 handmade/handmade_asset_type_id.h
 handmade/handmade_audio.cpp
 handmade/handmade_audio.h
+handmade/handmade_config.h
+handmade/handmade_debug.cpp
+handmade/handmade_debug.h
+handmade/handmade_debug_interface.h
 handmade/handmade_entity.cpp
 handmade/handmade_entity.h
 handmade/handmade_file_formats.h
+handmade/handmade_generated.h
 handmade/handmade_intrinsics.h
 handmade/handmade_math.h
+handmade/handmade_meta.cpp
+handmade/handmade_meta.h
 handmade/handmade_optimized.cpp
 handmade/handmade_platform.h
 handmade/handmade_random.h
@@ -30,6 +37,8 @@ handmade/handmade_world.cpp
 handmade/handmade_world.h
 handmade_render_group.cpp                                                                                                                                                                            
 handmade_render_group.h
+handmade/simple_preprocessor.cpp
+handmade/stb_truetype.h
 handmade/test_asset_builder.cpp
 handmade/test_asset_builder.h
 handmade_tile.cpp
@@ -43,4 +52,5 @@ test.hha
 test1.hha
 test2.hha
 test3.hha
+testfonts.hha
 

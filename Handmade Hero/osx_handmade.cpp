@@ -111,6 +111,7 @@ OSXGetAppFilename(osx_state *State)
     }
 }
 
+#if 0
 static int
 StringLength(char *String)
 {
@@ -121,6 +122,7 @@ StringLength(char *String)
     }
     return(Count);
 }
+#endif
 
 void
 OSXBuildAppPathFilename(osx_state *State, char *Filename,
@@ -132,7 +134,7 @@ OSXBuildAppPathFilename(osx_state *State, char *Filename,
 }
 
 
-
+#if HANDMADE_INTERNAL
 DEBUG_PLATFORM_FREE_FILE_MEMORY(DEBUGPlatformFreeFileMemory)
 {
 	if (Memory)
@@ -235,8 +237,7 @@ DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile)
 
 	return Result;
 }
-
-
+#endif
 
 
 
@@ -439,6 +440,9 @@ OSXLoadGameCode(const char* SourceDLName)
 
 		Result.GetSoundSamples = (game_get_sound_samples*)
 			dlsym(Result.GameCodeDL, "GameGetSoundSamples");
+
+		Result.DEBUGFrameEnd = (debug_game_frame_end*)
+			dlsym(Result.GameCodeDL, "DEBUGGameFrameEnd");
 
 		Result.IsValid = Result.UpdateAndRender && Result.GetSoundSamples;
 	}
@@ -676,11 +680,11 @@ void OSXAddEntry(platform_work_queue* Queue, platform_work_queue_callback* Callb
 	int r = dispatch_semaphore_signal(Queue->SemaphoreHandle);
 	if (r > 0)
 	{
-		printf("  jsb: A thread was woken\n");
+		printf("  dispatch_semaphore_signal: A thread was woken\n");
 	}
 	else
 	{
-		printf("  jsb: No thread was woken\n");
+		printf("  dispatch_semaphore_signal: No thread was woken\n");
 	}
 #endif
 }

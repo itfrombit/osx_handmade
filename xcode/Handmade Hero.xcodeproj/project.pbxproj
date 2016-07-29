@@ -1,0 +1,224 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 47;
+	objects = {
+
+/* Begin PBXFileReference section */
+		4F7317F51C6E885D00D29A61 /* osx_handmade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade.cpp; path = ../code/osx_handmade.cpp; sourceTree = "<group>"; };
+		4F7317F61C6E885D00D29A61 /* osx_handmade.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = osx_handmade.h; path = ../code/osx_handmade.h; sourceTree = "<group>"; };
+		4F7317F71C6E885D00D29A61 /* osx_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = osx_main.mm; path = ../code/osx_main.mm; sourceTree = "<group>"; };
+		4F7317F81C6E887B00D29A61 /* osx_handmade_audio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade_audio.cpp; path = ../code/osx_handmade_audio.cpp; sourceTree = "<group>"; };
+		4F7317F91C6E887B00D29A61 /* osx_handmade_debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade_debug.cpp; path = ../code/osx_handmade_debug.cpp; sourceTree = "<group>"; };
+		4F7317FA1C6E887B00D29A61 /* osx_handmade_dylib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade_dylib.cpp; path = ../code/osx_handmade_dylib.cpp; sourceTree = "<group>"; };
+		4F7317FB1C6E887B00D29A61 /* osx_handmade_file.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade_file.cpp; path = ../code/osx_handmade_file.cpp; sourceTree = "<group>"; };
+		4F7317FC1C6E887B00D29A61 /* osx_handmade_game.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade_game.cpp; path = ../code/osx_handmade_game.cpp; sourceTree = "<group>"; };
+		4F7317FD1C6E887B00D29A61 /* osx_handmade_hid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade_hid.cpp; path = ../code/osx_handmade_hid.cpp; sourceTree = "<group>"; };
+		4F7317FE1C6E887B00D29A61 /* osx_handmade_playback.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade_playback.cpp; path = ../code/osx_handmade_playback.cpp; sourceTree = "<group>"; };
+		4F7317FF1C6E887B00D29A61 /* osx_handmade_process.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade_process.cpp; path = ../code/osx_handmade_process.cpp; sourceTree = "<group>"; };
+		4F7318001C6E887B00D29A61 /* osx_handmade_thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = osx_handmade_thread.cpp; path = ../code/osx_handmade_thread.cpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		4F7317E91C6E850200D29A61 = {
+			isa = PBXGroup;
+			children = (
+				4F7317F41C6E883000D29A61 /* code */,
+			);
+			sourceTree = "<group>";
+		};
+		4F7317F41C6E883000D29A61 /* code */ = {
+			isa = PBXGroup;
+			children = (
+				4F7317F81C6E887B00D29A61 /* osx_handmade_audio.cpp */,
+				4F7317F91C6E887B00D29A61 /* osx_handmade_debug.cpp */,
+				4F7317FA1C6E887B00D29A61 /* osx_handmade_dylib.cpp */,
+				4F7317FB1C6E887B00D29A61 /* osx_handmade_file.cpp */,
+				4F7317FC1C6E887B00D29A61 /* osx_handmade_game.cpp */,
+				4F7317FD1C6E887B00D29A61 /* osx_handmade_hid.cpp */,
+				4F7317FE1C6E887B00D29A61 /* osx_handmade_playback.cpp */,
+				4F7317FF1C6E887B00D29A61 /* osx_handmade_process.cpp */,
+				4F7318001C6E887B00D29A61 /* osx_handmade_thread.cpp */,
+				4F7317F51C6E885D00D29A61 /* osx_handmade.cpp */,
+				4F7317F61C6E885D00D29A61 /* osx_handmade.h */,
+				4F7317F71C6E885D00D29A61 /* osx_main.mm */,
+			);
+			name = code;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		4F7317EE1C6E850200D29A61 /* Handmade Hero */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 4F7317F11C6E850200D29A61 /* Build configuration list for PBXLegacyTarget "Handmade Hero" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = ../code;
+			dependencies = (
+			);
+			name = "Handmade Hero";
+			passBuildSettingsInEnvironment = 1;
+			productName = "Handmade Hero";
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		4F7317EA1C6E850200D29A61 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				KnownAssetTags = (
+					New,
+				);
+				LastUpgradeCheck = 0720;
+				ORGANIZATIONNAME = "Jeff Buck";
+				TargetAttributes = {
+					4F7317EE1C6E850200D29A61 = {
+						CreatedOnToolsVersion = 7.2.1;
+					};
+				};
+			};
+			buildConfigurationList = 4F7317ED1C6E850200D29A61 /* Build configuration list for PBXProject "Handmade Hero" */;
+			compatibilityVersion = "Xcode 6.3";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4F7317E91C6E850200D29A61;
+			productRefGroup = 4F7317E91C6E850200D29A61;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4F7317EE1C6E850200D29A61 /* Handmade Hero */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		4F7317EF1C6E850200D29A61 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++11";
+				CLANG_CXX_LIBRARY = "libstdc++";
+				CLANG_ENABLE_MODULES = NO;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+			};
+			name = Debug;
+		};
+		4F7317F01C6E850200D29A61 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++11";
+				CLANG_CXX_LIBRARY = "libstdc++";
+				CLANG_ENABLE_MODULES = NO;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+			};
+			name = Release;
+		};
+		4F7317F21C6E850200D29A61 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		4F7317F31C6E850200D29A61 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4F7317ED1C6E850200D29A61 /* Build configuration list for PBXProject "Handmade Hero" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4F7317EF1C6E850200D29A61 /* Debug */,
+				4F7317F01C6E850200D29A61 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4F7317F11C6E850200D29A61 /* Build configuration list for PBXLegacyTarget "Handmade Hero" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4F7317F21C6E850200D29A61 /* Debug */,
+				4F7317F31C6E850200D29A61 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4F7317EA1C6E850200D29A61 /* Project object */;
+}

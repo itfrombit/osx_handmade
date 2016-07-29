@@ -1,3 +1,10 @@
+///////////////////////////////////////////////////////////////////////
+// osx_handmade.h
+//
+// Jeff Buck
+// Copyright 2014-2016. All Rights Reserved.
+//
+
 #pragma once
 
 #include <AudioUnit/AudioUnit.h>
@@ -5,11 +12,25 @@
 #include <math.h>
 #include <dispatch/dispatch.h>
 #include <glob.h>
+#include <sys/stat.h>
+#include <pthread.h>
+#include <unistd.h>
+
+
+//#import <CoreVideo/CVDisplayLink.h>
+
+#include <CoreGraphics/CGGeometry.h>
+#include <CoreGraphics/CGEventSource.h>
+#include <CoreGraphics/CGEventTypes.h>
+
+#include <AudioUnit/AudioUnit.h>
+#include <AudioToolbox/AudioToolbox.h>
+#include <IOKit/hid/IOHIDLib.h>
+
 
 struct osx_offscreen_buffer
 {
 	// NOTE: Pixels are always 32-bits wide. BB GG RR XX
-	//BITMAPINFO Info;
 	void* Memory;
 	int Width;
 	int Height;
@@ -59,14 +80,15 @@ struct osx_sound_output
 };
 
 
-//#define OSX_STATE_FILENAME_COUNT PROC_PIDPATHINFO_MAXSIZE
-#define OSX_STATE_FILENAME_COUNT FILENAME_MAX
+void OSXInitCoreAudio(osx_sound_output* SoundOutput);
+void OSXStopCoreAudio(osx_sound_output* SoundOutput);
+
 
 struct osx_replay_buffer
 {
 	int FileHandle;
 	int MemoryMap;
-	char Filename[OSX_STATE_FILENAME_COUNT];
+	char Filename[FILENAME_MAX];
 	void* MemoryBlock;
 };
 
@@ -83,7 +105,7 @@ struct osx_state
 	int PlaybackHandle;
 	int InputPlayingIndex;
 
-	char AppFilename[OSX_STATE_FILENAME_COUNT];
+	char AppFilename[FILENAME_MAX];
 	char* OnePastLastAppFilenameSlash;
 };
 
@@ -115,27 +137,23 @@ rdtsc()
 #endif
 
 
-void OSXGetAppFilename(osx_state *State);
-
-void OSXBuildAppPathFilename(osx_state *State, char *Filename,
-                             int DestCount, char *Dest);
-
+#if HANDMADE_INTERNAL
 DEBUG_PLATFORM_FREE_FILE_MEMORY(DEBUGPlatformFreeFileMemory);
 DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile);
 DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile);
-
+DEBUG_PLATFORM_EXECUTE_SYSTEM_COMMAND(DEBUGExecuteSystemCommand);
+DEBUG_PLATFORM_GET_PROCESS_STATE(DEBUGGetProcessState);
+#endif
 
 struct osx_platform_file_handle
 {
-	//platform_file_handle H;
 	int OSXFileHandle;
-	char Filename[256];
+	char Filename[FILENAME_MAX];
 };
 
 
 struct osx_platform_file_group
 {
-	//platform_file_group H;
 	glob_t GlobResults;
 	int CurrentIndex;
 };
@@ -150,7 +168,15 @@ PLATFORM_FILE_ERROR(OSXFileError);
 PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory);
 PLATFORM_DEALLOCATE_MEMORY(OSXDeallocateMemory);
 
+
+
+void OSXGetAppFilename(osx_state *State);
+
+void OSXBuildAppPathFilename(osx_state *State, char *Filename,
+                             int DestCount, char *Dest);
+
 time_t OSXGetLastWriteTime(const char* Filename);
+float OSXGetSecondsElapsed(u64 Then, u64 Now);
 
 osx_game_code OSXLoadGameCode(const char* SourceDLName);
 void OSXUnloadGameCode(osx_game_code* GameCode);
@@ -196,6 +222,91 @@ void OSXMakeQueue(platform_work_queue* Queue, uint32 ThreadCount);
 void OSXAddEntry(platform_work_queue* Queue, platform_work_queue_callback* Callback, void* Data);
 bool32 OSXDoNextWorkQueueEntry(platform_work_queue* Queue);
 void OSXCompleteAllWork(platform_work_queue *Queue);
+
+
+
+#define MAX_HID_BUTTONS 32
+
+typedef struct osx_game_data
+{
+	// graphics
+	uint						TextureId;
+
+	// input
+	IOHIDManagerRef				HIDManager;
+	int							HIDX;
+	int							HIDY;
+	uint8						HIDButtons[MAX_HID_BUTTONS];
+
+	char SourceGameCodeDLFullPath[FILENAME_MAX];
+
+	game_memory					GameMemory;
+	game_offscreen_buffer		RenderBuffer;
+
+	game_input					Input[2];
+	game_input*					NewInput;
+	game_input*					OldInput;
+
+	osx_state					OSXState;
+	osx_game_code				Game;
+
+	osx_sound_output			SoundOutput;
+
+	platform_work_queue			HighPriorityQueue;
+	platform_work_queue			LowPriorityQueue;
+
+	int32						TargetFramesPerSecond;
+	real32						TargetSecondsPerFrame;
+
+	real64						MachTimebaseConversionFactor;
+	int							SetupComplete;
+
+	int							RenderAtHalfSpeed;
+
+	u64							LastCounter;
+} osx_game_data;
+
+
+void OSXSetupGamepad(osx_game_data* game_data);
+
+void OSXUpdateGlobalDebugTable();
+
+
+void OSXToggleGlobalPause();
+
+b32 OSXIsGameRunning();
+void OSXStopGame();
+
+
+
+inline void OSXProcessKeyboardMessage(game_button_state *NewState, bool32 IsDown)
+{
+	if (NewState->EndedDown != IsDown)
+	{
+		NewState->EndedDown = IsDown;
+		++NewState->HalfTransitionCount;
+	}
+}
+
+void OSXKeyProcessing(b32 isDown, u32 key,
+					  int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
+					  game_input* input);
+
+#if HANDMADE_INTERNAL
+#define OSXDebugLogOpenGLErrors(l) OSXDebugInternalLogOpenGLErrors(l)
+#else
+#define OSXDebugLogOpenGLErrors(l) {} 
+#endif
+
+void OSXDebugInternalLogOpenGLErrors(const char* label);
+void OSXSetupSound(osx_game_data* GameData);
+void OSXSetupGameData(osx_game_data* GameData);
+void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height, int BytesPerPixel);
+
+void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
+									b32 MouseInWindowFlag, CGPoint MouseLocation,
+									int MouseButtonMask);
+
 
 
 

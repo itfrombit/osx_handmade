@@ -767,6 +767,10 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+#if 0
+	// Our original platform code...
+
 	GLfloat vertices[] =
 	{
 		-1, -1, 0,
@@ -813,6 +817,68 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#else
+	// Casey's port over to OpenGL...
+
+	glViewport(0, 0, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height);
+
+	glBindTexture(GL_TEXTURE_2D, GameData->TextureId);
+	glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA8,
+				 GameData->RenderBuffer.Width,
+				 GameData->RenderBuffer.Height,
+				 0,
+				 GL_BGRA,
+				 GL_UNSIGNED_BYTE,
+				 GameData->RenderBuffer.Memory);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glEnable(GL_TEXTURE_2D);
+
+
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	
+	glBegin(GL_TRIANGLES);
+
+	r32 P = 1.0f;
+
+	// Lower triangle
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(-P, -P);
+
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex2f(P, -P);
+
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2f(P, P);
+
+	// Upper triangle
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(-P, -P);
+
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2f(P, P);
+
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex2f(-P, P);
+
+	glEnd();
+#endif
+
 
 
 	END_BLOCK(FrameDisplay);

@@ -247,10 +247,10 @@ int main(int argc, const char* argv[])
 	//
 	// Create the main window and the content view
 	NSRect screenRect = [[NSScreen mainScreen] frame];
-	//float Width = 1920.0;
-	//float Height = 1080.0;
-	float Width = 960.0;
-	float Height = 540.0;
+	float Width = 1920.0;
+	float Height = 1080.0;
+	//float Width = 960.0;
+	//float Height = 540.0;
 	int BytesPerPixel = 4;
 
 	GlobalAspectRatio = Width / Height;

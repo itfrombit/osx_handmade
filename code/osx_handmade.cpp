@@ -35,6 +35,9 @@
 
 
 #include "handmade_platform.h"
+#include "handmade_intrinsics.h"
+#include "handmade_math.h"
+
 #include "osx_handmade.h"
 
 

@@ -842,6 +842,8 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	glEnable(GL_TEXTURE_2D);
 
+	glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
@@ -850,31 +852,44 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	glLoadIdentity();
 
 	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	
+	r32 a = SafeRatio1(2.0f, (r32)GameData->RenderBuffer.Width);
+	r32 b = SafeRatio1(2.0f, (r32)GameData->RenderBuffer.Height);
+	r32 Proj[] =
+	{
+		 a,  0,  0,  0,
+		 0,  b,  0,  0,
+		 0,  0,  1,  0,
+		-1, -1,  0,  1
+	};
+	glLoadMatrixf(Proj);
+
+	v2 MinP = {0, 0};
+	v2 MaxP = {(r32)GameData->RenderBuffer.Width,
+	           (r32)GameData->RenderBuffer.Height};
+	v4 Color = {1, 1, 1, 1};
 	glBegin(GL_TRIANGLES);
 
-	r32 P = 1.0f;
+	glColor4f(Color.r, Color.g, Color.b, Color.a);
 
 	// Lower triangle
 	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(-P, -P);
+	glVertex2f(MinP.x, MinP.y);
 
 	glTexCoord2f(1.0f, 0.0f);
-	glVertex2f(P, -P);
+	glVertex2f(MaxP.x, MinP.y);
 
 	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(P, P);
+	glVertex2f(MaxP.x, MaxP.y);
 
 	// Upper triangle
 	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(-P, -P);
+	glVertex2f(MinP.x, MinP.y);
 
 	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(P, P);
+	glVertex2f(MaxP.x, MaxP.y);
 
 	glTexCoord2f(0.0f, 1.0f);
-	glVertex2f(-P, P);
+	glVertex2f(MinP.x, MaxP.y);
 
 	glEnd();
 #endif

@@ -38,8 +38,18 @@
 #include "handmade_intrinsics.h"
 #include "handmade_math.h"
 
+
 #include "osx_handmade.h"
 
+global_variable bool32 GlobalPause;
+global_variable b32 GlobalRunning = 1;
+global_variable b32 GlobalUseSoftwareRendering;
+global_variable GLuint OpenGLDefaultInternalTextureFormat;
+
+global_variable platform_api Platform;
+
+#include "handmade_opengl.cpp"
+#include "handmade_render.cpp"
 
 #include "osx_handmade_debug.cpp"
 #include "osx_handmade_file.cpp"

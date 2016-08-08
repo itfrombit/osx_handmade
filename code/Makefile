@@ -78,7 +78,7 @@ handmade.o: $(HANDMADE_CODE_PATH)/handmade.cpp $(HANDMADE_CODE_PATH)/handmade.h
 
 
 osx_handmade.o: osx_handmade.cpp osx_handmade.h
-	$(CXX) $(COPTS) -I$(HANDMADE_CODE_PATH) -Wno-null-dereference -Wno-c++11-compat-deprecated-writable-strings -Wno-unused-function -Wno-unused-variable -c $<
+	$(CXX) $(COPTS) -I$(HANDMADE_CODE_PATH) -Wno-null-dereference -Wno-c++11-compat-deprecated-writable-strings -Wno-unused-function -Wno-unused-variable -Wno-missing-braces -c $<
 
 osx_main.o: osx_main.mm osx_handmade.cpp osx_handmade.h $(HANDMADE_CODE_PATH)/handmade.h $(HANDMADE_CODE_PATH)/handmade.cpp
 	$(CXX) $(COPTS) -I$(HANDMADE_CODE_PATH) -Wno-null-dereference -Wno-c++11-compat-deprecated-writable-strings -Wno-unused-function -Wno-unused-variable -c $<

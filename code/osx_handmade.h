@@ -240,6 +240,12 @@ typedef struct osx_game_data
 
 	char SourceGameCodeDLFullPath[FILENAME_MAX];
 
+	umm							CurrentSortMemorySize;
+	void*						SortMemory;
+
+	u32							PushBufferSize;
+	void*						PushBuffer;
+
 	game_memory					GameMemory;
 	game_offscreen_buffer		RenderBuffer;
 
@@ -301,6 +307,7 @@ void OSXKeyProcessing(b32 isDown, u32 key,
 void OSXDebugInternalLogOpenGLErrors(const char* label);
 void OSXSetupSound(osx_game_data* GameData);
 void OSXSetupGameData(osx_game_data* GameData);
+void OSXSetupOpenGL(osx_game_data* GameData);
 void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height, int BytesPerPixel);
 
 void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,

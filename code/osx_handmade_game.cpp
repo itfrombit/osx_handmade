@@ -6,8 +6,6 @@ global_variable debug_table GlobalDebugTable_;
 debug_table* GlobalDebugTable = &GlobalDebugTable_;
 #endif
 
-global_variable bool32 GlobalPause;
-global_variable b32 GlobalRunning = 1;
 
 void OSXToggleGlobalPause()
 {
@@ -111,6 +109,37 @@ void OSXSetupSound(osx_game_data* GameData)
 }
 
 
+void OSXSetupOpenGL(osx_game_data* GameData)
+{
+	//glDisable(GL_DEPTH_TEST);
+	//glLoadIdentity();
+	//glViewport(0, 0, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height);
+
+
+	glGenTextures(1, &GameData->TextureId);
+	OSXDebugLogOpenGLErrors("glGenTextures");
+
+	glBindTexture(GL_TEXTURE_2D, GameData->TextureId);
+	OSXDebugLogOpenGLErrors("glBindTexture");
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height,
+				 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+	OSXDebugLogOpenGLErrors("glTexImage2D");
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	OSXDebugLogOpenGLErrors("glTexParameteri");
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	OSXDebugLogOpenGLErrors("glTexParameteri");
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE /*GL_MODULATE*/);
+	OSXDebugLogOpenGLErrors("glTexEnvi");
+
+	OpenGLDefaultInternalTextureFormat = GL_RGBA8;
+	OpenGLDefaultInternalTextureFormat = GL_SRGB8_ALPHA8;
+	glEnable(GL_FRAMEBUFFER_SRGB);
+}
+
 ///////////////////////////////////////////////////////////////////////
 // Game Code
 //
@@ -169,6 +198,13 @@ void OSXSetupGameData(osx_game_data* GameData)
 	///////////////////////////////////////////////////////////////////
 	// Set up memory
 	//
+	GameData->CurrentSortMemorySize = Megabytes(1);
+	GameData->SortMemory = OSXAllocateMemory(GameData->CurrentSortMemorySize);
+
+	GameData->PushBufferSize = Megabytes(4);
+	GameData->PushBuffer = OSXAllocateMemory(GameData->PushBufferSize);
+
+
 #if HANDMADE_INTERNAL
 	char* RequestedAddress = (char*)Gigabytes(8);
 	uint32 AllocationFlags = MAP_PRIVATE|MAP_ANON|MAP_FIXED;
@@ -241,6 +277,8 @@ void OSXSetupGameData(osx_game_data* GameData)
 	GameData->GameMemory.PlatformAPI.DEBUGExecuteSystemCommand = DEBUGExecuteSystemCommand;
 	GameData->GameMemory.PlatformAPI.DEBUGGetProcessState = DEBUGGetProcessState;
 #endif
+
+	Platform = GameData->GameMemory.PlatformAPI;
 
 	///////////////////////////////////////////////////////////////////
 	// Set up replay buffers
@@ -481,6 +519,174 @@ void OSXKeyProcessing(bool32 isDown, u32 key,
 }
 
 
+void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
+							  game_offscreen_buffer* RenderBuffer,
+							  game_render_commands* Commands,
+						      s32 WindowWidth,
+						      s32 WindowHeight,
+						      void* SortMemory)
+{
+	SortEntries(Commands, SortMemory);
+
+	if (0) // Software Rendering
+	{
+		loaded_bitmap OutputTarget;
+		OutputTarget.Memory = RenderBuffer->Memory;
+		OutputTarget.Width = RenderBuffer->Width;
+		OutputTarget.Height = RenderBuffer->Height;
+		OutputTarget.Pitch = RenderBuffer->Pitch;
+
+		SoftwareRenderCommands(RenderQueue, Commands, &OutputTarget);
+
+		// We always display via hardware
+
+		OpenGLDisplayBitmap(RenderBuffer->Width, RenderBuffer->Height,
+							RenderBuffer->Memory, RenderBuffer->Pitch,
+							WindowWidth, WindowHeight);
+		//SwapBuffers();
+	}
+	else
+	{
+		OpenGLRenderCommands(Commands, WindowWidth, WindowHeight);
+		//SwapBuffers();
+	}
+
+	//glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+#if 0
+	// Our original platform code...
+
+	GLfloat vertices[] =
+	{
+		-1, -1, 0,
+		-1, 1, 0,
+		1, 1, 0,
+		1, -1, 0,
+	};
+
+	/*
+	GLfloat tex_coords[] =
+	{
+		0, 1,
+		0, 0,
+		1, 0,
+		1, 1,
+	};
+	*/
+
+	// Casey's renderer flips the Y-coords back around to "normal"
+	GLfloat tex_coords[] =
+	{
+		0, 0,
+		0, 1,
+		1, 1,
+		1, 0,
+	};
+
+    glVertexPointer(3, GL_FLOAT, 0, vertices);
+    glTexCoordPointer(2, GL_FLOAT, 0, tex_coords);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    glBindTexture(GL_TEXTURE_2D, GameData->TextureId);
+
+    glEnable(GL_TEXTURE_2D);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height,
+					GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, GameData->RenderBuffer.Memory);
+
+    GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+    glColor4f(1,1,1,1);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+    glDisable(GL_TEXTURE_2D);
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#else
+	// Casey's port over to OpenGL...
+
+
+#if 0
+	glViewport(0, 0, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height);
+
+	glBindTexture(GL_TEXTURE_2D, GameData->TextureId);
+	glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA8,
+				 GameData->RenderBuffer.Width,
+				 GameData->RenderBuffer.Height,
+				 0,
+				 GL_BGRA,
+				 GL_UNSIGNED_BYTE,
+				 GameData->RenderBuffer.Memory);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glEnable(GL_TEXTURE_2D);
+
+	glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glMatrixMode(GL_PROJECTION);
+	r32 a = SafeRatio1(2.0f, (r32)GameData->RenderBuffer.Width);
+	r32 b = SafeRatio1(2.0f, (r32)GameData->RenderBuffer.Height);
+	r32 Proj[] =
+	{
+		 a,  0,  0,  0,
+		 0,  b,  0,  0,
+		 0,  0,  1,  0,
+		-1, -1,  0,  1
+	};
+	glLoadMatrixf(Proj);
+
+	v2 MinP = {0, 0};
+	v2 MaxP = {(r32)GameData->RenderBuffer.Width,
+	           (r32)GameData->RenderBuffer.Height};
+	v4 Color = {1, 1, 1, 1};
+	glBegin(GL_TRIANGLES);
+
+	glColor4f(Color.r, Color.g, Color.b, Color.a);
+
+	// Lower triangle
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(MinP.x, MinP.y);
+
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex2f(MaxP.x, MinP.y);
+
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2f(MaxP.x, MaxP.y);
+
+	// Upper triangle
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(MinP.x, MinP.y);
+
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2f(MaxP.x, MaxP.y);
+
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex2f(MinP.x, MaxP.y);
+
+	glEnd();
+#endif
+
+#endif
+}
+
+
 
 void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 									b32 MouseInWindowFlag, CGPoint MouseLocation,
@@ -623,6 +829,12 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK(GameUpdate);
 
+	game_render_commands RenderCommands = RenderCommandStruct(
+											GameData->PushBufferSize,
+											GameData->PushBuffer,
+											GameData->RenderBuffer.Width,
+											GameData->RenderBuffer.Height);
+
 	if (!GlobalPause)
 	{
 		if (GameData->OSXState.InputRecordingIndex)
@@ -649,7 +861,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 		if (GameData->Game.UpdateAndRender)
 		{
-			GameData->Game.UpdateAndRender(&GameData->GameMemory, GameData->NewInput, &GameData->RenderBuffer);
+			GameData->Game.UpdateAndRender(&GameData->GameMemory, GameData->NewInput, &RenderCommands);
 
 #if 0
 			if (GameData->NewInput->QuitRequested)
@@ -731,7 +943,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	if (GameData->Game.DEBUGFrameEnd)
 	{
-		GlobalDebugTable = GameData->Game.DEBUGFrameEnd(&GameData->GameMemory, GameData->NewInput, &GameData->RenderBuffer);
+		GlobalDebugTable = GameData->Game.DEBUGFrameEnd(&GameData->GameMemory, GameData->NewInput, &RenderCommands);
 	}
 	GlobalDebugTable_.EventArrayIndex_EventIndex = 0;
 
@@ -764,144 +976,23 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK(FrameDisplay);
 
-	glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-#if 0
-	// Our original platform code...
-
-	GLfloat vertices[] =
+	umm NeededSortMemorySize = RenderCommands.PushBufferElementCount * sizeof(tile_sort_entry);
+	if (GameData->CurrentSortMemorySize < NeededSortMemorySize)
 	{
-		-1, -1, 0,
-		-1, 1, 0,
-		1, 1, 0,
-		1, -1, 0,
-	};
+		OSXDeallocateMemory(GameData->SortMemory);
+		GameData->CurrentSortMemorySize = NeededSortMemorySize;
+		GameData->SortMemory = OSXAllocateMemory(GameData->CurrentSortMemorySize);
+	}
 
-	/*
-	GLfloat tex_coords[] =
-	{
-		0, 1,
-		0, 0,
-		1, 0,
-		1, 1,
-	};
-	*/
-
-	// Casey's renderer flips the Y-coords back around to "normal"
-	GLfloat tex_coords[] =
-	{
-		0, 0,
-		0, 1,
-		1, 1,
-		1, 0,
-	};
-
-    glVertexPointer(3, GL_FLOAT, 0, vertices);
-    glTexCoordPointer(2, GL_FLOAT, 0, tex_coords);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glBindTexture(GL_TEXTURE_2D, GameData->TextureId);
-
-    glEnable(GL_TEXTURE_2D);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height,
-					GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, GameData->RenderBuffer.Memory);
-
-    GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
-    glColor4f(1,1,1,1);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
-    glDisable(GL_TEXTURE_2D);
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#else
-	// Casey's port over to OpenGL...
-
-	glViewport(0, 0, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height);
-
-	glBindTexture(GL_TEXTURE_2D, GameData->TextureId);
-	glTexImage2D(GL_TEXTURE_2D,
-				 0,
-				 GL_RGBA8,
-				 GameData->RenderBuffer.Width,
-				 GameData->RenderBuffer.Height,
-				 0,
-				 GL_BGRA,
-				 GL_UNSIGNED_BYTE,
-				 GameData->RenderBuffer.Memory);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-	glEnable(GL_TEXTURE_2D);
-
-	glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glMatrixMode(GL_PROJECTION);
-	r32 a = SafeRatio1(2.0f, (r32)GameData->RenderBuffer.Width);
-	r32 b = SafeRatio1(2.0f, (r32)GameData->RenderBuffer.Height);
-	r32 Proj[] =
-	{
-		 a,  0,  0,  0,
-		 0,  b,  0,  0,
-		 0,  0,  1,  0,
-		-1, -1,  0,  1
-	};
-	glLoadMatrixf(Proj);
-
-	v2 MinP = {0, 0};
-	v2 MaxP = {(r32)GameData->RenderBuffer.Width,
-	           (r32)GameData->RenderBuffer.Height};
-	v4 Color = {1, 1, 1, 1};
-	glBegin(GL_TRIANGLES);
-
-	glColor4f(Color.r, Color.g, Color.b, Color.a);
-
-	// Lower triangle
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(MinP.x, MinP.y);
-
-	glTexCoord2f(1.0f, 0.0f);
-	glVertex2f(MaxP.x, MinP.y);
-
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(MaxP.x, MaxP.y);
-
-	// Upper triangle
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(MinP.x, MinP.y);
-
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(MaxP.x, MaxP.y);
-
-	glTexCoord2f(0.0f, 1.0f);
-	glVertex2f(MinP.x, MaxP.y);
-
-	glEnd();
-#endif
-
-
+	OSXDisplayBufferInWindow(&GameData->HighPriorityQueue,
+							 &GameData->RenderBuffer,
+							 &RenderCommands,
+							 GameData->RenderBuffer.Width,
+							 GameData->RenderBuffer.Height,
+							 GameData->SortMemory);
 
 	END_BLOCK(FrameDisplay);
-
-	//
-	//
-	//
-
 }
 
 

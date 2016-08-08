@@ -314,32 +314,7 @@ int main(int argc, const char* argv[])
 	///////////////////////////////////////////////////////////////////
 	// Non-Cocoa OpenGL
 	//
-	glDisable(GL_DEPTH_TEST);
-	glLoadIdentity();
-	glViewport(0, 0, GameData.RenderBuffer.Width, GameData.RenderBuffer.Height);
-
-
-	OSXDebugLogOpenGLErrors("glPixelStorei");
-
-	glGenTextures(1, &GameData.TextureId);
-	OSXDebugLogOpenGLErrors("glGenTextures");
-
-	glBindTexture(GL_TEXTURE_2D, GameData.TextureId);
-	OSXDebugLogOpenGLErrors("glBindTexture");
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GameData.RenderBuffer.Width, GameData.RenderBuffer.Height,
-				 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
-	OSXDebugLogOpenGLErrors("glTexImage2D");
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	OSXDebugLogOpenGLErrors("glTexParameteri");
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	OSXDebugLogOpenGLErrors("glTexParameteri");
-
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE /*GL_MODULATE*/);
-	OSXDebugLogOpenGLErrors("glTexEnvi");
-
+	OSXSetupOpenGL(&GameData);
 
 
 #if 0
@@ -396,7 +371,6 @@ int main(int argc, const char* argv[])
 		OSXProcessFrameAndRunGameLogic(&GameData, WindowFrame,
 									   MouseInWindowFlag, MouseLocationInView,
 									   MouseButtonMask);
-
 
 		// flushes and forces vsync
 #if HANDMADE_USE_VSYNC

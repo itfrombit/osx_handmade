@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from handmade_hero_day_241.
+This repository works with Casey's source code from handmade_hero_day_246.
 
 
 Note 2016-07-11:
@@ -11,7 +11,10 @@ Note 2016-07-11:
 I am currently in the process of bringing the OS X platform layer up-to-date
 after another long winter/spring hiatus.
 
-This version is compatible with Day 241.
+
+Note 2016-08-13:
+----------------
+This version is compatible with Day 246.
 
 However, the Handmade Hero source code is currently using the
 non-portable _snprintf_s function in handmade_debug.cpp.
@@ -27,7 +30,7 @@ shell script, just insert the contents of the provided file 'vsprintf.cpp'
 near the top of the handmade_debug.cpp (just below the '#include <stdio.h>' line).
 
 
-Some things have changed from the previous commit. The directory
+Some things have changed from earlier versions. The directory
 structure has been cleaned up and is now more compatible with
 the Handmade Hero Github repository.
 
@@ -82,8 +85,8 @@ Hot-loading is supported, so you can just run 'make' again (or have your
 favorite editor do it) while the application is running to build and
 reload the newest code.
 
-For better rendering performance, build the project in Release mode
-(this is the Makefile default). You can also set the renderAtHalfSpeed
+For better rendering performance using the software renderer, build
+the project in Release mode. You can also set the renderAtHalfSpeed
 flag in HandmadeView.mm to reduce the effective rendering rate to 30fps
 instead of the default 60fps. The proper Core Audio sound buffer size
 is automatically adjusted.

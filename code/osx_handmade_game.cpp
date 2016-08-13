@@ -7,6 +7,14 @@ debug_table* GlobalDebugTable = &GlobalDebugTable_;
 #endif
 
 
+CGLPixelFormatAttribute GLPixelFormatAttribs[] =
+	{
+		kCGLPFAAccelerated,
+		kCGLPFADoubleBuffer,
+		(CGLPixelFormatAttribute)0
+	};
+
+
 void OSXToggleGlobalPause()
 {
 	GlobalPause = !GlobalPause;
@@ -109,6 +117,11 @@ void OSXSetupSound(osx_game_data* GameData)
 }
 
 
+void OSXSetPixelFormat()
+{
+}
+
+
 void OSXSetupOpenGL(osx_game_data* GameData)
 {
 	//glDisable(GL_DEPTH_TEST);
@@ -143,8 +156,23 @@ void OSXSetupOpenGL(osx_game_data* GameData)
 ///////////////////////////////////////////////////////////////////////
 // Game Code
 //
+osx_thread_startup OSXGetThreadStartupForGL(CGLContextObj ShareContext)
+{
+	osx_thread_startup Result = {};
 
-void OSXSetupGameData(osx_game_data* GameData)
+	CGLPixelFormatObj PixelFormat = NULL;
+	GLint PixelFormatCount = 0;
+	CGLChoosePixelFormat(GLPixelFormatAttribs, &PixelFormat, &PixelFormatCount);
+
+	CGLContextObj NewContext;
+	CGLCreateContext(PixelFormat, ShareContext, &NewContext);
+	Result.OpenGLContext = NewContext;
+
+	return Result;
+}
+
+
+void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 {
 	if (GameData->SetupComplete)
 	{
@@ -155,8 +183,16 @@ void OSXSetupGameData(osx_game_data* GameData)
 	///////////////////////////////////////////////////////////////////
 	// Worker Threads
 	//
-	OSXMakeQueue(&GameData->HighPriorityQueue, 6);
-	OSXMakeQueue(&GameData->LowPriorityQueue, 2);
+	
+	osx_thread_startup HighPriStartups[6] = {};
+	//OSXMakeQueue(&GameData->HighPriorityQueue, 6);
+	OSXMakeQueue(&GameData->HighPriorityQueue, ArrayCount(HighPriStartups), HighPriStartups);
+
+
+	osx_thread_startup LowPriStartups[2] = {};
+	LowPriStartups[0] = OSXGetThreadStartupForGL(CGLContext);
+	LowPriStartups[1] = OSXGetThreadStartupForGL(CGLContext);
+	OSXMakeQueue(&GameData->LowPriorityQueue, ArrayCount(LowPriStartups), LowPriStartups);
 
 
 	///////////////////////////////////////////////////////////////////
@@ -265,6 +301,9 @@ void OSXSetupGameData(osx_game_data* GameData)
 	GameData->GameMemory.PlatformAPI.OpenNextFile = OSXOpenNextFile;
 	GameData->GameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
 	GameData->GameMemory.PlatformAPI.FileError = OSXFileError;
+
+	GameData->GameMemory.PlatformAPI.AllocateTexture = Win32AllocateTexture;
+	GameData->GameMemory.PlatformAPI.DeallocateTexture = Win32DeallocateTexture;
 
 	GameData->GameMemory.PlatformAPI.AllocateMemory = OSXAllocateMemory;
 	GameData->GameMemory.PlatformAPI.DeallocateMemory = OSXDeallocateMemory;

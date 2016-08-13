@@ -26,7 +26,7 @@
 #endif
 
 
-global_variable NSOpenGLContext* GLContext;
+global_variable NSOpenGLContext* GlobalGLContext;
 global_variable r32 GlobalAspectRatio;
 
 
@@ -92,7 +92,7 @@ global_variable r32 GlobalAspectRatio;
 	NSWindow* window = [notification object];
 	NSRect frame = [window frame];
 
-	[GLContext update];
+	[GlobalGLContext update];
 
 	// OpenGL reshape. Typically done in the view
 	glDisable(GL_DEPTH_TEST);
@@ -235,12 +235,26 @@ int main(int argc, const char* argv[])
 	///////////////////////////////////////////////////////////////////
 	// Game Setup
 	//
+    NSOpenGLPixelFormatAttribute openGLAttributes[] =
+    {
+        NSOpenGLPFAAccelerated,
+#if HANDMADE_USE_VSYNC
+        NSOpenGLPFADoubleBuffer, // Uses vsync
+#endif
+        NSOpenGLPFADepthSize, 24,
+        //NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
+        0
+    };
+	NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:openGLAttributes];
+    GlobalGLContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:NULL];
+    [format release];
+
 
 	// game_data holds the OS X platform layer non-Cocoa data structures
 	osx_game_data GameData = {};
 
 
-	OSXSetupGameData(&GameData);
+	OSXSetupGameData(&GameData, [GlobalGLContext CGLContextObj]);
 
 	///////////////////////////////////////////////////////////////////
 	// NSWindow and NSOpenGLView
@@ -283,33 +297,18 @@ int main(int argc, const char* argv[])
 	//
 	// OpenGL setup with Cocoa
 	//
-    NSOpenGLPixelFormatAttribute openGLAttributes[] =
-    {
-        NSOpenGLPFAAccelerated,
-#if HANDMADE_USE_VSYNC
-        NSOpenGLPFADoubleBuffer, // Uses vsync
-#endif
-        NSOpenGLPFADepthSize, 24,
-        //NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
-        0
-    };
-	NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:openGLAttributes];
-    GLContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:NULL];
-    [format release];
-
 #if HANDMADE_USE_VSYNC
     GLint swapInt = 1;
 #else
     GLint swapInt = 0;
 #endif
-	[GLContext setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
+	[GlobalGLContext setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
 
 	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	[GLContext setView:[window contentView]];
+	[GlobalGLContext setView:[window contentView]];
 
-	[GLContext makeCurrentContext];
-
+	[GlobalGLContext makeCurrentContext];
 
 	///////////////////////////////////////////////////////////////////
 	// Non-Cocoa OpenGL
@@ -340,7 +339,7 @@ int main(int argc, const char* argv[])
 	{
 		OSXProcessPendingMessages(&GameData);
 
-		[GLContext makeCurrentContext];
+		[GlobalGLContext makeCurrentContext];
 
 
 		///////////////////////////////////////////////////////////////
@@ -374,7 +373,7 @@ int main(int argc, const char* argv[])
 
 		// flushes and forces vsync
 #if HANDMADE_USE_VSYNC
-		[GLContext flushBuffer];
+		[GlobalGLContext flushBuffer];
 #else
 		glFlush();
 #endif

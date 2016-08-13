@@ -8,7 +8,15 @@
 
 void* OSXQueueThreadProc(void *data)
 {
-	platform_work_queue* Queue = (platform_work_queue*)data;
+	//platform_work_queue* Queue = (platform_work_queue*)data;
+	osx_thread_startup* Thread = (osx_thread_startup*)data;
+	platform_work_queue* Queue = Thread->Queue;
+
+	if (Thread->OpenGLContext)
+	{
+		CGLSetCurrentContext(Thread->OpenGLContext);
+	}
+
 
 	for(;;)
 	{
@@ -23,7 +31,7 @@ void* OSXQueueThreadProc(void *data)
 
 
 
-void OSXMakeQueue(platform_work_queue* Queue, uint32 ThreadCount)
+void OSXMakeQueue(platform_work_queue* Queue, uint32 ThreadCount, osx_thread_startup* Startups)
 {
 	Queue->CompletionGoal = 0;
 	Queue->CompletionCount = 0;
@@ -37,9 +45,11 @@ void OSXMakeQueue(platform_work_queue* Queue, uint32 ThreadCount)
 		 ThreadIndex < ThreadCount;
 		 ++ThreadIndex)
 	{
-		pthread_t		ThreadId;
+		osx_thread_startup* Startup = Startups + ThreadIndex;
+		Startup->Queue = Queue;
 
-		int r = pthread_create(&ThreadId, NULL, OSXQueueThreadProc, Queue);
+		pthread_t		ThreadId;
+		int r = pthread_create(&ThreadId, NULL, OSXQueueThreadProc, Startup);
 		if (r != 0)
 		{
 			printf("Error creating thread %d\n", ThreadIndex);

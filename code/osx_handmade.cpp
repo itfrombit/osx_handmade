@@ -35,8 +35,9 @@
 
 
 #include "handmade_platform.h"
-#include "handmade_intrinsics.h"
-#include "handmade_math.h"
+//#include "handmade_intrinsics.h"
+//#include "handmade_math.h"
+#include "handmade_shared.h"
 
 
 #include "osx_handmade.h"
@@ -47,6 +48,10 @@ global_variable b32 GlobalUseSoftwareRendering;
 global_variable GLuint OpenGLDefaultInternalTextureFormat;
 
 global_variable platform_api Platform;
+
+// NOTE(jeff): These are already defined in glext.h.
+#undef GL_EXT_texture_sRGB
+#undef GL_EXT_framebuffer_sRGB
 
 #include "handmade_opengl.cpp"
 #include "handmade_render.cpp"

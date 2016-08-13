@@ -165,6 +165,8 @@ PLATFORM_OPEN_FILE(OSXOpenNextFile);
 PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile);
 PLATFORM_FILE_ERROR(OSXFileError);
 
+PLATFORM_ALLOCATE_TEXTURE(OSXAllocateTexture);
+PLATFORM_DEALLOCATE_TEXTURE(OSXDeallocateTexture);
 PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory);
 PLATFORM_DEALLOCATE_MEMORY(OSXDeallocateMemory);
 
@@ -208,12 +210,15 @@ struct platform_work_queue
 	dispatch_semaphore_t SemaphoreHandle;
 
 	platform_work_queue_entry Entries[256];
+
+	b32 NeedsOpenGL;
 };
 
 
-struct osx_thread_info
+struct osx_thread_startup
 {
-    int LogicalThreadIndex;
+    //int LogicalThreadIndex;
+    CGLContextObj OpenGLContext;
     platform_work_queue *Queue;
 };
 
@@ -306,7 +311,7 @@ void OSXKeyProcessing(b32 isDown, u32 key,
 
 void OSXDebugInternalLogOpenGLErrors(const char* label);
 void OSXSetupSound(osx_game_data* GameData);
-void OSXSetupGameData(osx_game_data* GameData);
+void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext);
 void OSXSetupOpenGL(osx_game_data* GameData);
 void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height, int BytesPerPixel);
 

@@ -42,12 +42,21 @@
 
 #include "osx_handmade.h"
 
-global_variable bool32 GlobalPause;
+global_variable platform_api Platform;
+
+enum osx_rendering_type
+{
+	OSXRenderType_RenderOpenGL_DisplayOpenGL,
+	OSXRenderType_RenderSoftware_DisplayOpenGL
+};
+
+global_variable osx_rendering_type GlobalRenderingType;
 global_variable b32 GlobalRunning = 1;
-global_variable b32 GlobalUseSoftwareRendering;
+global_variable bool32 GlobalPause;
+
 global_variable GLuint OpenGLDefaultInternalTextureFormat;
 
-global_variable platform_api Platform;
+
 
 // NOTE(jeff): These are already defined in glext.h.
 #undef GL_EXT_texture_sRGB

@@ -249,6 +249,7 @@ int main(int argc, const char* argv[])
     GlobalGLContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:NULL];
     [format release];
 
+	DEBUGSetEventRecording(true);
 
 	// game_data holds the OS X platform layer non-Cocoa data structures
 	osx_game_data GameData = {};
@@ -377,7 +378,6 @@ int main(int argc, const char* argv[])
 #else
 		glFlush();
 #endif
-
 
 		u64 EndCounter = mach_absolute_time();
 

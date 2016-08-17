@@ -124,29 +124,7 @@ void OSXSetPixelFormat()
 
 void OSXSetupOpenGL(osx_game_data* GameData)
 {
-	//glDisable(GL_DEPTH_TEST);
-	//glLoadIdentity();
-	//glViewport(0, 0, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height);
-
-
 	glGenTextures(1, &GameData->TextureId);
-	OSXDebugLogOpenGLErrors("glGenTextures");
-
-	glBindTexture(GL_TEXTURE_2D, GameData->TextureId);
-	OSXDebugLogOpenGLErrors("glBindTexture");
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height,
-				 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
-	OSXDebugLogOpenGLErrors("glTexImage2D");
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	OSXDebugLogOpenGLErrors("glTexParameteri");
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	OSXDebugLogOpenGLErrors("glTexParameteri");
-
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE /*GL_MODULATE*/);
-	OSXDebugLogOpenGLErrors("glTexEnvi");
 
 	OpenGLDefaultInternalTextureFormat = GL_RGBA8;
 	OpenGLDefaultInternalTextureFormat = GL_SRGB8_ALPHA8;
@@ -251,7 +229,10 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 
 	GameData->GameMemory.PermanentStorageSize = Megabytes(256); //Megabytes(256);
 	GameData->GameMemory.TransientStorageSize = Gigabytes(1); //Gigabytes(1);
-	GameData->GameMemory.DebugStorageSize = Megabytes(64); //Megabytes(64);
+	GameData->GameMemory.DebugStorageSize = Megabytes(256); //Megabytes(64);
+#if HANDMADE_INTERNAL
+	GameData->GameMemory.DebugTable = GlobalDebugTable;
+#endif
 
 	GameData->OSXState.TotalSize = GameData->GameMemory.PermanentStorageSize +
 	                      GameData->GameMemory.TransientStorageSize +
@@ -302,8 +283,8 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameData->GameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
 	GameData->GameMemory.PlatformAPI.FileError = OSXFileError;
 
-	GameData->GameMemory.PlatformAPI.AllocateTexture = Win32AllocateTexture;
-	GameData->GameMemory.PlatformAPI.DeallocateTexture = Win32DeallocateTexture;
+	GameData->GameMemory.PlatformAPI.AllocateTexture = AllocateTexture;
+	GameData->GameMemory.PlatformAPI.DeallocateTexture = DeallocateTexture;
 
 	GameData->GameMemory.PlatformAPI.AllocateMemory = OSXAllocateMemory;
 	GameData->GameMemory.PlatformAPI.DeallocateMemory = OSXDeallocateMemory;
@@ -563,12 +544,19 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 							  game_render_commands* Commands,
 						      s32 WindowWidth,
 						      s32 WindowHeight,
-						      void* SortMemory)
+						      void* SortMemory,
+						      GLuint TextureId)
 {
 	SortEntries(Commands, SortMemory);
 
-	if (0) // Software Rendering
+	if (GlobalRenderingType == OSXRenderType_RenderOpenGL_DisplayOpenGL)
 	{
+		OpenGLRenderCommands(Commands, WindowWidth, WindowHeight);
+	}
+	else
+	{
+		Assert(GlobalRenderingType == OSXRenderType_RenderSoftware_DisplayOpenGL);
+
 		loaded_bitmap OutputTarget;
 		OutputTarget.Memory = RenderBuffer->Memory;
 		OutputTarget.Width = RenderBuffer->Width;
@@ -581,148 +569,10 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 
 		OpenGLDisplayBitmap(RenderBuffer->Width, RenderBuffer->Height,
 							RenderBuffer->Memory, RenderBuffer->Pitch,
-							WindowWidth, WindowHeight);
+							WindowWidth, WindowHeight,
+							TextureId);
 		//SwapBuffers();
 	}
-	else
-	{
-		OpenGLRenderCommands(Commands, WindowWidth, WindowHeight);
-		//SwapBuffers();
-	}
-
-	//glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-#if 0
-	// Our original platform code...
-
-	GLfloat vertices[] =
-	{
-		-1, -1, 0,
-		-1, 1, 0,
-		1, 1, 0,
-		1, -1, 0,
-	};
-
-	/*
-	GLfloat tex_coords[] =
-	{
-		0, 1,
-		0, 0,
-		1, 0,
-		1, 1,
-	};
-	*/
-
-	// Casey's renderer flips the Y-coords back around to "normal"
-	GLfloat tex_coords[] =
-	{
-		0, 0,
-		0, 1,
-		1, 1,
-		1, 0,
-	};
-
-    glVertexPointer(3, GL_FLOAT, 0, vertices);
-    glTexCoordPointer(2, GL_FLOAT, 0, tex_coords);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glBindTexture(GL_TEXTURE_2D, GameData->TextureId);
-
-    glEnable(GL_TEXTURE_2D);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height,
-					GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, GameData->RenderBuffer.Memory);
-
-    GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
-    glColor4f(1,1,1,1);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
-    glDisable(GL_TEXTURE_2D);
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#else
-	// Casey's port over to OpenGL...
-
-
-#if 0
-	glViewport(0, 0, GameData->RenderBuffer.Width, GameData->RenderBuffer.Height);
-
-	glBindTexture(GL_TEXTURE_2D, GameData->TextureId);
-	glTexImage2D(GL_TEXTURE_2D,
-				 0,
-				 GL_RGBA8,
-				 GameData->RenderBuffer.Width,
-				 GameData->RenderBuffer.Height,
-				 0,
-				 GL_BGRA,
-				 GL_UNSIGNED_BYTE,
-				 GameData->RenderBuffer.Memory);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-	glEnable(GL_TEXTURE_2D);
-
-	glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glMatrixMode(GL_PROJECTION);
-	r32 a = SafeRatio1(2.0f, (r32)GameData->RenderBuffer.Width);
-	r32 b = SafeRatio1(2.0f, (r32)GameData->RenderBuffer.Height);
-	r32 Proj[] =
-	{
-		 a,  0,  0,  0,
-		 0,  b,  0,  0,
-		 0,  0,  1,  0,
-		-1, -1,  0,  1
-	};
-	glLoadMatrixf(Proj);
-
-	v2 MinP = {0, 0};
-	v2 MaxP = {(r32)GameData->RenderBuffer.Width,
-	           (r32)GameData->RenderBuffer.Height};
-	v4 Color = {1, 1, 1, 1};
-	glBegin(GL_TRIANGLES);
-
-	glColor4f(Color.r, Color.g, Color.b, Color.a);
-
-	// Lower triangle
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(MinP.x, MinP.y);
-
-	glTexCoord2f(1.0f, 0.0f);
-	glVertex2f(MaxP.x, MinP.y);
-
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(MaxP.x, MaxP.y);
-
-	// Upper triangle
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(MinP.x, MinP.y);
-
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(MaxP.x, MaxP.y);
-
-	glTexCoord2f(0.0f, 1.0f);
-	glVertex2f(MinP.x, MaxP.y);
-
-	glEnd();
-#endif
-
-#endif
 }
 
 
@@ -731,38 +581,18 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 									b32 MouseInWindowFlag, CGPoint MouseLocation,
 									int MouseButtonMask)
 {
-	BEGIN_BLOCK(ExecutableRefresh);
+	{DEBUG_DATA_BLOCK("Platform/Controls");
+		DEBUG_B32(GlobalPause);
+		DEBUG_B32(GlobalRenderingType);
+	}
 
 	GameData->NewInput->dtForFrame = GameData->TargetSecondsPerFrame;
 
-	///////////////////////////////////////////////////////////////////
-	// Check for updated game code
-
-	//GameData->NewInput->ExecutableReloaded = false;
-	GameData->GameMemory.ExecutableReloaded = false;
-
-	time_t NewDLWriteTime = OSXGetLastWriteTime(GameData->SourceGameCodeDLFullPath);
-	if (NewDLWriteTime != GameData->Game.DLLastWriteTime)
-	{
-		OSXCompleteAllWork(&GameData->HighPriorityQueue);
-		OSXCompleteAllWork(&GameData->LowPriorityQueue);
-
-#if HANDMADE_INTERNAL
-		GlobalDebugTable = &GlobalDebugTable_;
-#endif
-
-
-		OSXUnloadGameCode(&GameData->Game);
-		GameData->Game = OSXLoadGameCode(GameData->SourceGameCodeDLFullPath);
-		GameData->GameMemory.ExecutableReloaded = true;
-	}
-	END_BLOCK(ExecutableRefresh);
-
 	//
 	//
 	//
 
-	BEGIN_BLOCK(InputProcessing);
+	BEGIN_BLOCK("Input Processing");
 
 	game_controller_input* OldKeyboardController = GetController(GameData->OldInput, 0);
 	game_controller_input* NewKeyboardController = GetController(GameData->NewInput, 0);
@@ -821,6 +651,8 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 			GameData->NewInput->MouseButtons[MouseButton] = GameData->OldInput->MouseButtons[MouseButton];
 			GameData->NewInput->MouseButtons[MouseButton].HalfTransitionCount = 0;
+
+			OSXProcessKeyboardMessage(&GameData->NewInput->MouseButtons[MouseButton], IsDown);
 		}
 	}
 	else
@@ -860,13 +692,13 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	}
 #endif
 
-	END_BLOCK(InputProcessing);
+	END_BLOCK();
 
 	//
 	//
 	//
 
-	BEGIN_BLOCK(GameUpdate);
+	BEGIN_BLOCK("Game Update");
 
 	game_render_commands RenderCommands = RenderCommandStruct(
 											GameData->PushBufferSize,
@@ -902,23 +734,21 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 		{
 			GameData->Game.UpdateAndRender(&GameData->GameMemory, GameData->NewInput, &RenderCommands);
 
-#if 0
 			if (GameData->NewInput->QuitRequested)
 			{
-				BeginFadeToDesktop(&Fader);
+				GlobalRunning = false;
 			}
-#endif
 			//HandleDebugCycleCounters(&GameData->GameMemory);
 		}
 	}
 
-	END_BLOCK(GameUpdate);
+	END_BLOCK();
 
 	//
 	//
 	//
 
-	BEGIN_BLOCK(AudioUpdate);
+	BEGIN_BLOCK("Audio Update");
 
 	if (!GlobalPause)
 	{
@@ -971,22 +801,55 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 		}
 	}
 
-	END_BLOCK(AudioUpdate);
+	END_BLOCK();
 
 	//
 	//
 	//
 
 #if HANDMADE_INTERNAL
-	BEGIN_BLOCK(DebugCollation);
+	BEGIN_BLOCK("Debug Collation");
+
+	b32 ExecutableNeedsToBeReloaded = false;
+
+	time_t NewDLWriteTime = OSXGetLastWriteTime(GameData->SourceGameCodeDLFullPath);
+	if (NewDLWriteTime != GameData->Game.DLLastWriteTime)
+	{
+		ExecutableNeedsToBeReloaded = true;
+	}
+
+	GameData->GameMemory.ExecutableReloaded = false;
+
+	if (ExecutableNeedsToBeReloaded)
+	{
+		OSXCompleteAllWork(&GameData->HighPriorityQueue);
+		OSXCompleteAllWork(&GameData->LowPriorityQueue);
+		DEBUGSetEventRecording(false);
+	}
 
 	if (GameData->Game.DEBUGFrameEnd)
 	{
-		GlobalDebugTable = GameData->Game.DEBUGFrameEnd(&GameData->GameMemory, GameData->NewInput, &RenderCommands);
+		GameData->Game.DEBUGFrameEnd(&GameData->GameMemory, GameData->NewInput, &RenderCommands);
 	}
-	GlobalDebugTable_.EventArrayIndex_EventIndex = 0;
 
-	END_BLOCK(DebugCollation);
+	if (ExecutableNeedsToBeReloaded)
+	{
+		OSXUnloadGameCode(&GameData->Game);
+
+		for (u32 LoadTryIndex = 0;
+			 !GameData->Game.IsValid && (LoadTryIndex < 100);
+			 ++LoadTryIndex)
+		{
+			GameData->Game = OSXLoadGameCode(GameData->SourceGameCodeDLFullPath);
+			usleep(100);
+		}
+
+		GameData->GameMemory.ExecutableReloaded = true;
+		DEBUGSetEventRecording(GameData->Game.IsValid);
+	}
+
+
+	END_BLOCK();
 #endif
 
 
@@ -1013,7 +876,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	///////////////////////////////////////////////////////////////////
 	// Draw the latest frame to the screen
 
-	BEGIN_BLOCK(FrameDisplay);
+	BEGIN_BLOCK("Frame Display");
 
 
 	umm NeededSortMemorySize = RenderCommands.PushBufferElementCount * sizeof(tile_sort_entry);
@@ -1029,9 +892,10 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 							 &RenderCommands,
 							 GameData->RenderBuffer.Width,
 							 GameData->RenderBuffer.Height,
-							 GameData->SortMemory);
+							 GameData->SortMemory,
+							 GameData->TextureId);
 
-	END_BLOCK(FrameDisplay);
+	END_BLOCK();
 }
 
 

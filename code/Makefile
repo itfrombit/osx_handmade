@@ -66,12 +66,13 @@ osx_asset_builder.o:	osx_asset_builder.cpp
 	$(CXX) $(COPTS) -Wno-c++11-compat-deprecated-writable-strings -Wno-missing-braces -c $<
 
 
-libhandmade.dylib: handmade.o handmade_optimized.o
+#libhandmade.dylib: handmade.o handmade_optimized.o
+libhandmade.dylib: handmade.o
 	$(CXX) $(COPTS) -lstdc++ -dynamiclib -o $@ $^
 
 
-handmade_optimized.o:	$(HANDMADE_CODE_PATH)/handmade_optimized.cpp
-	$(CXX) -O3 -Wall $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -c $<
+#handmade_optimized.o:	$(HANDMADE_CODE_PATH)/handmade_optimized.cpp
+#	$(CXX) -O3 -Wall $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -c $<
 
 handmade.o: $(HANDMADE_CODE_PATH)/handmade.cpp $(HANDMADE_CODE_PATH)/handmade.h
 	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -c $<

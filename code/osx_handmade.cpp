@@ -50,7 +50,7 @@ enum osx_rendering_type
 	OSXRenderType_RenderSoftware_DisplayOpenGL
 };
 
-global_variable osx_rendering_type GlobalRenderingType;
+global_variable osx_rendering_type GlobalRenderingType = OSXRenderType_RenderOpenGL_DisplayOpenGL;
 global_variable b32 GlobalRunning = 1;
 global_variable bool32 GlobalPause;
 

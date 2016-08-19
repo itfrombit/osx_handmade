@@ -331,7 +331,7 @@ int main(int argc, const char* argv[])
 	///////////////////////////////////////////////////////////////////
 	// Run loop 
 	//
-	uint tickCounter = 0;
+	//uint tickCounter = 0;
 	u64 CurrentTime = mach_absolute_time();
 	GameData.LastCounter = CurrentTime;
 	float frameTime = 0.0f;
@@ -383,10 +383,10 @@ int main(int argc, const char* argv[])
 
 		FRAME_MARKER(OSXGetSecondsElapsed(GameData.LastCounter, EndCounter));
 
-#if 1
 		frameTime += OSXGetSecondsElapsed(GameData.LastCounter, EndCounter);
 		GameData.LastCounter = EndCounter;
 
+#if 0
 		++tickCounter;
 		if (tickCounter == 60)
 		{

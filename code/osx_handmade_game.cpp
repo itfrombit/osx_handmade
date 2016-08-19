@@ -215,7 +215,7 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameData->CurrentSortMemorySize = Megabytes(1);
 	GameData->SortMemory = OSXAllocateMemory(GameData->CurrentSortMemorySize);
 
-	GameData->PushBufferSize = Megabytes(4);
+	GameData->PushBufferSize = Megabytes(64);
 	GameData->PushBuffer = OSXAllocateMemory(GameData->PushBufferSize);
 
 

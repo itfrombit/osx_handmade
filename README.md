@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from handmade_hero_day_258.
+This repository works with Casey's source code from handmade_hero_day_265.
 
 
 Note 2016-07-11:
@@ -12,9 +12,9 @@ I am currently in the process of bringing the OS X platform layer up-to-date
 after another long winter/spring hiatus.
 
 
-Note 2016-08-17:
+Note 2016-08-19:
 ----------------
-This version is compatible with Day 258.
+This version is compatible with Day 265.
 
 However, the Handmade Hero source code is currently using the
 non-portable _snprintf_s function in handmade_debug.cpp.
@@ -29,6 +29,9 @@ If you would rather fix the error by hand instead of running the above
 shell script, just insert the contents of the provided file 'vsprintf.cpp'
 near the top of the handmade_debug.cpp (just below the '#include <stdio.h>' line).
 
+The TIMED_FUNCTION() macro in handmade_debug_interface.h does not compile
+under clang. I've hacked a temporary fix for this, but hopefully Casey
+will address this in a not-too-distant episode.
 
 Some things have changed from earlier versions. The directory
 structure has been cleaned up and is now more compatible with

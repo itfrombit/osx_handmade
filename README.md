@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from handmade_hero_day_299.
+This repository works with Casey's source code from handmade_hero_day_301.
 
 
 Note 2016-07-11:
@@ -14,7 +14,7 @@ after another long winter/spring hiatus.
 
 Note 2016-08-28:
 ----------------
-This version is compatible with Day 299.
+This version is compatible with Day 301.
 
 However, the Handmade Hero source code is currently using the
 non-portable _snprintf_s function in handmade_debug.cpp.

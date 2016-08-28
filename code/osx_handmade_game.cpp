@@ -895,7 +895,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	BEGIN_BLOCK("Frame Display");
 
 
-	umm NeededSortMemorySize = RenderCommands.PushBufferElementCount * sizeof(sort_entry);
+	umm NeededSortMemorySize = GetSortTempMemorySize(&RenderCommands);
 	if (GameData->CurrentSortMemorySize < NeededSortMemorySize)
 	{
 		OSXDeallocateMemory(GameData->SortMemory);

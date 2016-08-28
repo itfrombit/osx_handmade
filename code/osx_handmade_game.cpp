@@ -215,6 +215,9 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameData->CurrentSortMemorySize = Megabytes(1);
 	GameData->SortMemory = OSXAllocateMemory(GameData->CurrentSortMemorySize);
 
+	GameData->CurrentClipMemorySize = Megabytes(1);
+	GameData->ClipMemory = OSXAllocateMemory(GameData->CurrentClipMemorySize);
+
 	GameData->PushBufferSize = Megabytes(64);
 	GameData->PushBuffer = OSXAllocateMemory(GameData->PushBufferSize);
 
@@ -437,72 +440,72 @@ void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height
 }
 
 
-void OSXKeyProcessing(bool32 isDown, u32 key,
+void OSXKeyProcessing(bool32 IsDown, u32 Key,
 					  int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
-					  game_input* input)
+					  game_input* Input, osx_game_data* GameData)
 {
-	game_controller_input* controller = GetController(input, 0);
+	game_controller_input* Controller = GetController(Input, 0);
 
-	switch (key)
+	switch (Key)
 	{
 		case 'w':
-			OSXProcessKeyboardMessage(&controller->MoveUp, isDown);
+			OSXProcessKeyboardMessage(&Controller->MoveUp, IsDown);
 			break;
 
 		case 'a':
-			OSXProcessKeyboardMessage(&controller->MoveLeft, isDown);
+			OSXProcessKeyboardMessage(&Controller->MoveLeft, IsDown);
 			break;
 
 		case 's':
-			OSXProcessKeyboardMessage(&controller->MoveDown, isDown);
+			OSXProcessKeyboardMessage(&Controller->MoveDown, IsDown);
 			break;
 
 		case 'd':
-			OSXProcessKeyboardMessage(&controller->MoveRight, isDown);
+			OSXProcessKeyboardMessage(&Controller->MoveRight, IsDown);
 			break;
 
 		case 'q':
-			if (isDown && CommandKeyFlag)
+			if (IsDown && CommandKeyFlag)
 			{
 				OSXStopGame();
 			}
 			else
 			{
-				OSXProcessKeyboardMessage(&controller->LeftShoulder, isDown);
+				OSXProcessKeyboardMessage(&Controller->LeftShoulder, IsDown);
 			}
 			break;
 
 		case 'e':
-			OSXProcessKeyboardMessage(&controller->RightShoulder, isDown);
+			OSXProcessKeyboardMessage(&Controller->RightShoulder, IsDown);
 			break;
 
 		case ' ':
-			OSXProcessKeyboardMessage(&controller->Start, isDown);
+			OSXProcessKeyboardMessage(&Controller->Start, IsDown);
 			break;
 
 		case 27:
-			OSXProcessKeyboardMessage(&controller->Back, isDown);
+			OSXProcessKeyboardMessage(&Controller->Back, IsDown);
 			break;
 
 		case 0xF700: //NSUpArrowFunctionKey
-			OSXProcessKeyboardMessage(&controller->ActionUp, isDown);
+			OSXProcessKeyboardMessage(&Controller->ActionUp, IsDown);
 			break;
 
 		case 0xF702: //NSLeftArrowFunctionKey
-			OSXProcessKeyboardMessage(&controller->ActionLeft, isDown);
+			OSXProcessKeyboardMessage(&Controller->ActionLeft, IsDown);
 			break;
 
 		case 0xF701: //NSDownArrowFunctionKey
-			OSXProcessKeyboardMessage(&controller->ActionDown, isDown);
+			OSXProcessKeyboardMessage(&Controller->ActionDown, IsDown);
 			break;
 
 		case 0xF703: //NSRightArrowFunctionKey
-			OSXProcessKeyboardMessage(&controller->ActionRight, isDown);
+			OSXProcessKeyboardMessage(&Controller->ActionRight, IsDown);
 			break;
 
 #if HANDMADE_INTERNAL
 		case 'p':
-			if (isDown)
+			if (IsDown)
 			{
 				OSXToggleGlobalPause();
 			}
@@ -510,23 +513,30 @@ void OSXKeyProcessing(bool32 isDown, u32 key,
 
 		case 'l':
 #if 0
-			if (isDown)
+			if (IsDown)
 			{
-				if (GameData->OSXState.InputPlayingIndex == 0)
+				if (CommandKeyFlag)
 				{
-					if (GameData->OSXState.InputRecordingIndex == 0)
-					{
-						OSXBeginRecordingInput(GameData->OSXState, 1);
-					}
-					else
-					{
-						OSXEndRecordingInput(&GameData->OSXState);
-						OSXBeginInputPlayback(&GameData->OSXState, 1);
-					}
+					OSXBeginInputPlayback(&GameData->OSXState, 1);
 				}
 				else
 				{
-					OSXEndInputPlayback(&GameData->OSXState);
+					if (GameData->OSXState.InputPlayingIndex == 0)
+					{
+						if (GameData->OSXState.InputRecordingIndex == 0)
+						{
+							OSXBeginRecordingInput(&GameData->OSXState, 1);
+						}
+						else
+						{
+							OSXEndRecordingInput(&GameData->OSXState);
+							OSXBeginInputPlayback(&GameData->OSXState, 1);
+						}
+					}
+					else
+					{
+						OSXEndInputPlayback(&GameData->OSXState);
+					}
 				}
 			}
 #endif
@@ -545,13 +555,17 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 						      s32 WindowWidth,
 						      s32 WindowHeight,
 						      void* SortMemory,
+						      void* ClipRectMemory,
 						      GLuint TextureId)
 {
 	SortEntries(Commands, SortMemory);
+	LinearizeClipRects(Commands, ClipRectMemory);
 
 	if (GlobalRenderingType == OSXRenderType_RenderOpenGL_DisplayOpenGL)
 	{
+		BEGIN_BLOCK("OpenGLRenderCommands");
 		OpenGLRenderCommands(Commands, WindowWidth, WindowHeight);
+		END_BLOCK();
 	}
 	else
 	{
@@ -563,7 +577,9 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 		OutputTarget.Height = RenderBuffer->Height;
 		OutputTarget.Pitch = RenderBuffer->Pitch;
 
+		//BEGIN_BLOCK("SoftwareRenderCommands");
 		SoftwareRenderCommands(RenderQueue, Commands, &OutputTarget);
+		//END_BLOCK();
 
 		// We always display via hardware
 
@@ -879,12 +895,20 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	BEGIN_BLOCK("Frame Display");
 
 
-	umm NeededSortMemorySize = RenderCommands.PushBufferElementCount * sizeof(tile_sort_entry);
+	umm NeededSortMemorySize = RenderCommands.PushBufferElementCount * sizeof(sort_entry);
 	if (GameData->CurrentSortMemorySize < NeededSortMemorySize)
 	{
 		OSXDeallocateMemory(GameData->SortMemory);
 		GameData->CurrentSortMemorySize = NeededSortMemorySize;
 		GameData->SortMemory = OSXAllocateMemory(GameData->CurrentSortMemorySize);
+	}
+
+	umm NeededClipMemorySize = RenderCommands.PushBufferElementCount * sizeof(render_entry_cliprect);
+	if (GameData->CurrentClipMemorySize < NeededClipMemorySize)
+	{
+		OSXDeallocateMemory(GameData->ClipMemory);
+		GameData->CurrentClipMemorySize = NeededClipMemorySize;
+		GameData->ClipMemory = OSXAllocateMemory(GameData->CurrentClipMemorySize);
 	}
 
 	OSXDisplayBufferInWindow(&GameData->HighPriorityQueue,
@@ -893,6 +917,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 							 GameData->RenderBuffer.Width,
 							 GameData->RenderBuffer.Height,
 							 GameData->SortMemory,
+							 GameData->ClipMemory,
 							 GameData->TextureId);
 
 	END_BLOCK();

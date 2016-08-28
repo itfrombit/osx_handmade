@@ -164,7 +164,7 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 				
 				OSXKeyProcessing(KeyDownFlag, C,
 								 CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
-								 GameData->NewInput);
+								 GameData->NewInput, GameData);
 			} break;
 
 			case NSKeyUp:
@@ -179,7 +179,7 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 
 				OSXKeyProcessing(KeyDownFlag, C,
 								 CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
-								 GameData->NewInput);
+								 GameData->NewInput, GameData);
 			} break;
 
 			default:
@@ -374,7 +374,9 @@ int main(int argc, const char* argv[])
 
 		// flushes and forces vsync
 #if HANDMADE_USE_VSYNC
+		BEGIN_BLOCK("SwapBuffers");
 		[GlobalGLContext flushBuffer];
+		END_BLOCK();
 #else
 		glFlush();
 #endif

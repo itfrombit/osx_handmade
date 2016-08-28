@@ -248,6 +248,9 @@ typedef struct osx_game_data
 	umm							CurrentSortMemorySize;
 	void*						SortMemory;
 
+	umm							CurrentClipMemorySize;
+	void*						ClipMemory;
+
 	u32							PushBufferSize;
 	void*						PushBuffer;
 
@@ -299,9 +302,9 @@ inline void OSXProcessKeyboardMessage(game_button_state *NewState, bool32 IsDown
 	}
 }
 
-void OSXKeyProcessing(b32 isDown, u32 key,
+void OSXKeyProcessing(b32 IsDown, u32 Key,
 					  int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
-					  game_input* input);
+					  game_input* Input, osx_game_data* GameData);
 
 #if HANDMADE_INTERNAL
 #define OSXDebugLogOpenGLErrors(l) OSXDebugInternalLogOpenGLErrors(l)

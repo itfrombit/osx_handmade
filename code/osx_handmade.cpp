@@ -62,6 +62,7 @@ global_variable GLuint OpenGLDefaultInternalTextureFormat;
 #undef GL_EXT_texture_sRGB
 #undef GL_EXT_framebuffer_sRGB
 
+#include "handmade_sort.cpp"
 #include "handmade_opengl.cpp"
 #include "handmade_render.cpp"
 

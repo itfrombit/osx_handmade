@@ -52,7 +52,8 @@ enum osx_rendering_type
 
 global_variable osx_rendering_type GlobalRenderingType = OSXRenderType_RenderOpenGL_DisplayOpenGL;
 global_variable b32 GlobalRunning = 1;
-global_variable bool32 GlobalPause;
+global_variable b32 GlobalPause;
+global_variable b32 GlobalShowSortGroups;
 
 global_variable GLuint OpenGLDefaultInternalTextureFormat;
 
@@ -62,6 +63,7 @@ global_variable GLuint OpenGLDefaultInternalTextureFormat;
 #undef GL_EXT_texture_sRGB
 #undef GL_EXT_framebuffer_sRGB
 
+#include "handmade_render.h"
 #include "handmade_sort.cpp"
 #include "handmade_opengl.cpp"
 #include "handmade_render.cpp"

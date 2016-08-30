@@ -245,6 +245,9 @@ typedef struct osx_game_data
 
 	char SourceGameCodeDLFullPath[FILENAME_MAX];
 
+	umm							FrameTempArenaSize;
+	memory_arena				FrameTempArena;
+
 	umm							CurrentSortMemorySize;
 	void*						SortMemory;
 

@@ -212,11 +212,11 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	///////////////////////////////////////////////////////////////////
 	// Set up memory
 	//
-	GameData->CurrentSortMemorySize = Megabytes(1);
-	GameData->SortMemory = OSXAllocateMemory(GameData->CurrentSortMemorySize);
 
-	GameData->CurrentClipMemorySize = Megabytes(1);
-	GameData->ClipMemory = OSXAllocateMemory(GameData->CurrentClipMemorySize);
+	GameData->FrameTempArenaSize = Megabytes(64);
+	InitializeArena(&GameData->FrameTempArena,
+					GameData->FrameTempArenaSize,
+					OSXAllocateMemory(GameData->FrameTempArenaSize));
 
 	GameData->PushBufferSize = Megabytes(64);
 	GameData->PushBuffer = OSXAllocateMemory(GameData->PushBufferSize);
@@ -554,17 +554,17 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 							  game_render_commands* Commands,
 						      s32 WindowWidth,
 						      s32 WindowHeight,
-						      void* SortMemory,
-						      void* ClipRectMemory,
+						      memory_arena* TempArena,
 						      GLuint TextureId)
 {
-	SortEntries(Commands, SortMemory);
-	LinearizeClipRects(Commands, ClipRectMemory);
+	temporary_memory TempMem = BeginTemporaryMemory(TempArena);
+
+	game_render_prep Prep = PrepForRender(Commands, TempArena);
 
 	if (GlobalRenderingType == OSXRenderType_RenderOpenGL_DisplayOpenGL)
 	{
 		BEGIN_BLOCK("OpenGLRenderCommands");
-		OpenGLRenderCommands(Commands, WindowWidth, WindowHeight);
+		OpenGLRenderCommands(Commands, &Prep, WindowWidth, WindowHeight);
 		END_BLOCK();
 	}
 	else
@@ -578,7 +578,7 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 		OutputTarget.Pitch = RenderBuffer->Pitch;
 
 		//BEGIN_BLOCK("SoftwareRenderCommands");
-		SoftwareRenderCommands(RenderQueue, Commands, &OutputTarget);
+		SoftwareRenderCommands(RenderQueue, Commands, &Prep, &OutputTarget);
 		//END_BLOCK();
 
 		// We always display via hardware
@@ -589,6 +589,8 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 							TextureId);
 		//SwapBuffers();
 	}
+
+	EndTemporaryMemory(TempMem);
 }
 
 
@@ -600,6 +602,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	{DEBUG_DATA_BLOCK("Platform/Controls");
 		DEBUG_B32(GlobalPause);
 		DEBUG_B32(GlobalRenderingType);
+		DEBUG_B32(GlobalShowSortGroups);
 	}
 
 	GameData->NewInput->dtForFrame = GameData->TargetSecondsPerFrame;
@@ -894,30 +897,12 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Frame Display");
 
-
-	umm NeededSortMemorySize = GetSortTempMemorySize(&RenderCommands);
-	if (GameData->CurrentSortMemorySize < NeededSortMemorySize)
-	{
-		OSXDeallocateMemory(GameData->SortMemory);
-		GameData->CurrentSortMemorySize = NeededSortMemorySize;
-		GameData->SortMemory = OSXAllocateMemory(GameData->CurrentSortMemorySize);
-	}
-
-	umm NeededClipMemorySize = RenderCommands.PushBufferElementCount * sizeof(render_entry_cliprect);
-	if (GameData->CurrentClipMemorySize < NeededClipMemorySize)
-	{
-		OSXDeallocateMemory(GameData->ClipMemory);
-		GameData->CurrentClipMemorySize = NeededClipMemorySize;
-		GameData->ClipMemory = OSXAllocateMemory(GameData->CurrentClipMemorySize);
-	}
-
 	OSXDisplayBufferInWindow(&GameData->HighPriorityQueue,
 							 &GameData->RenderBuffer,
 							 &RenderCommands,
 							 GameData->RenderBuffer.Width,
 							 GameData->RenderBuffer.Height,
-							 GameData->SortMemory,
-							 GameData->ClipMemory,
+							 &GameData->FrameTempArena,
 							 GameData->TextureId);
 
 	END_BLOCK();

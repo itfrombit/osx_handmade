@@ -25,16 +25,35 @@
 #include <mach/mach_init.h>
 #include <mach/mach_time.h>
 #include <mach/vm_map.h>
+#include <mach-o/dyld.h>
 #include <libkern/OSAtomic.h> // for OSMemoryBarrier
 #include <pthread.h>
 
+#define GL_GLEXT_LEGACY
+
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#include <OpenGL/glu.h>
-
+//#include <OpenGL/glext.h>
+//#include <OpenGL/glu.h>
 
 #include "handmade_platform.h"
+
+
+#define GL_BGRA_EXT                                          0x80E1
+
+typedef void gl_bind_framebuffer(GLenum target, GLuint framebuffer);
+typedef void gl_gen_framebuffers(GLsizei n, GLuint *framebuffers);
+typedef void gl_framebuffer_texture_2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+typedef GLenum gl_check_framebuffer_status(GLenum target);
+
+global_variable gl_bind_framebuffer* glBindFramebuffer;
+global_variable gl_gen_framebuffers* glGenFramebuffers;
+global_variable gl_framebuffer_texture_2D* glFramebufferTexture2D;
+global_variable gl_check_framebuffer_status* glCheckFramebufferStatus;
+
+
+
+
 //#include "handmade_intrinsics.h"
 //#include "handmade_math.h"
 #include "handmade_shared.h"
@@ -50,8 +69,8 @@ enum osx_rendering_type
 	OSXRenderType_RenderSoftware_DisplayOpenGL
 };
 
-//global_variable osx_rendering_type GlobalRenderingType = OSXRenderType_RenderOpenGL_DisplayOpenGL;
-global_variable osx_rendering_type GlobalRenderingType = OSXRenderType_RenderSoftware_DisplayOpenGL;
+global_variable osx_rendering_type GlobalRenderingType = OSXRenderType_RenderOpenGL_DisplayOpenGL;
+//global_variable osx_rendering_type GlobalRenderingType = OSXRenderType_RenderSoftware_DisplayOpenGL;
 global_variable b32 GlobalRunning = 1;
 global_variable b32 GlobalPause;
 global_variable b32 GlobalShowSortGroups;

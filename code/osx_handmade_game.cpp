@@ -53,10 +53,11 @@ void OSXDebugInternalLogOpenGLErrors(const char* label)
 				errString = "Invalid Operation";
 				break;
 
+/*
 			case GL_INVALID_FRAMEBUFFER_OPERATION:
 				errString = "Invalid Framebuffer Operation";
 				break;
-
+*/
 			case GL_OUT_OF_MEMORY:
 				errString = "Out of Memory";
 				break;
@@ -124,6 +125,30 @@ void OSXSetPixelFormat()
 
 void OSXSetupOpenGL(osx_game_data* GameData)
 {
+	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL",
+						 RTLD_LAZY);
+	if (Image)
+	{
+		glBindFramebuffer = (gl_bind_framebuffer*)dlsym(Image, "glBindFramebuffer");
+		glGenFramebuffers = (gl_gen_framebuffers*)dlsym(Image, "glGenFramebuffers");
+		glFramebufferTexture2D = (gl_framebuffer_texture_2D*)dlsym(Image, "glFramebufferTexture2D");
+		glCheckFramebufferStatus = (gl_check_framebuffer_status*)dlsym(Image, "glCheckFramebufferStatus");
+
+		if (glBindFramebuffer)
+		{
+			printf("OpenGL extension functions loaded\n");
+		}
+		else
+		{
+			printf("Could not dynamically load glBindFramebuffer\n");
+		}
+	}
+	else
+	{
+		printf("Could not dynamically load OpenGL\n");
+	}
+
+
 	glGenTextures(1, &GameData->TextureId);
 
 	OpenGLDefaultInternalTextureFormat = GL_RGBA8;

@@ -578,7 +578,7 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 		OutputTarget.Pitch = RenderBuffer->Pitch;
 
 		//BEGIN_BLOCK("SoftwareRenderCommands");
-		SoftwareRenderCommands(RenderQueue, Commands, &Prep, &OutputTarget);
+		SoftwareRenderCommands(RenderQueue, Commands, &Prep, &OutputTarget, TempArena);
 		//END_BLOCK();
 
 		// We always display via hardware

@@ -12,12 +12,6 @@ void* OSXQueueThreadProc(void *data)
 	osx_thread_startup* Thread = (osx_thread_startup*)data;
 	platform_work_queue* Queue = Thread->Queue;
 
-	if (Thread->OpenGLContext)
-	{
-		CGLSetCurrentContext(Thread->OpenGLContext);
-	}
-
-
 	for(;;)
 	{
 		if(OSXDoNextWorkQueueEntry(Queue))

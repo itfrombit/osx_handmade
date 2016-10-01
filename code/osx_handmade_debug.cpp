@@ -37,35 +37,3 @@ float OSXGetSecondsElapsed(u64 Then, u64 Now)
 }
 
 
-#if 0
-internal void
-HandleDebugCycleCounters(game_memory *Memory)
-{
-
-#if HANDMADE_INTERNAL
-    printf("DEBUG CYCLE COUNTS:\n");
-    for(int CounterIndex = 0;
-        CounterIndex < ArrayCount(Memory->Counters);
-        ++CounterIndex)
-    {
-        debug_cycle_counter *Counter = Memory->Counters + CounterIndex;
-
-        if(Counter->HitCount)
-        {
-            char TextBuffer[256];
-            snprintf(TextBuffer, sizeof(TextBuffer),
-                     "  %d: %llucy %uh %llucy/h\n",
-                     CounterIndex,
-                     Counter->CycleCount,
-                     Counter->HitCount,
-                     Counter->CycleCount / Counter->HitCount);
-            printf("%s", TextBuffer);
-            Counter->HitCount = 0;
-            Counter->CycleCount = 0;
-        }
-    }
-#endif
-
-}
-#endif
-

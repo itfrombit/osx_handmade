@@ -82,24 +82,45 @@ global_variable r32 GlobalAspectRatio;
                     toSize:(NSSize)frameSize
 {
 	// Maintain the proper aspect ratio...
-	frameSize.height = frameSize.width / GlobalAspectRatio;
+	//frameSize.height = frameSize.width / GlobalAspectRatio;
+
+	NSRect WindowRect = [window frame];
+	NSRect ContentRect = [window contentRectForFrameRect:WindowRect];
+	
+	r32 WidthAdd = (WindowRect.size.width - ContentRect.size.width);
+	r32 HeightAdd = (WindowRect.size.height - ContentRect.size.height);
+
+	r32 RenderWidth = 1920;
+	r32 RenderHeight = 1080;
+	//r32 RenderWidth = 2560;
+	//r32 RenderHeight = 1440;
+
+	r32 NewCy = (RenderHeight * (frameSize.width - WidthAdd)) / RenderWidth;
+
+	frameSize.height = NewCy + HeightAdd;
 
 	return frameSize;
 }
 
 
+#if 0
 - (void)windowDidResize:(NSNotification*)notification
 {
 	NSWindow* window = [notification object];
-	NSRect frame = [window frame];
 
+	//Assert(GlobalGLContext == [NSOpenGLContext currentContext]);
+	//[GlobalGLContext update];
+	[GlobalGLContext makeCurrentContext];
 	[GlobalGLContext update];
 
 	// OpenGL reshape. Typically done in the view
-	glDisable(GL_DEPTH_TEST);
-	glLoadIdentity();
-	glViewport(0, 0, frame.size.width, frame.size.height);
+	//glLoadIdentity();
+
+	NSRect ContentViewFrame = [[window contentView] frame];
+	glViewport(0, 0, ContentViewFrame.size.width, ContentViewFrame.size.height);
+	[GlobalGLContext update];
 }
+#endif
 
 @end
 //
@@ -190,6 +211,56 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 }
 
 
+
+///////////////////////////////////////////////////////////////////////
+@interface HandmadeView : NSOpenGLView
+{
+}
+@end
+
+@implementation HandmadeView
+
+- (id)init
+{
+	self = [super init];
+
+	return self;
+}
+
+
+- (void)prepareOpenGL
+{
+	[super prepareOpenGL];
+	[[self openGLContext] makeCurrentContext];
+}
+
+- (void)reshape
+{
+	[super reshape];
+
+	NSRect bounds = [self bounds];
+	//[[self openGLContext] makeCurrentContext];
+	[GlobalGLContext makeCurrentContext];
+	[GlobalGLContext update];
+	glViewport(0, 0, bounds.size.width, bounds.size.height);
+
+#if 0
+	printf("HandmadeView reshape: [%.0f, %.0f] [%.0f, %.0f]\n",
+		   bounds.origin.x,
+		   bounds.origin.y,
+		   bounds.size.width,
+		   bounds.size.height);
+
+	glLoadIdentity();
+	glClearColor(1.0, 0.0, 0.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+#endif
+}
+
+
+@end
+
+
 ///////////////////////////////////////////////////////////////////////
 // Startup
 
@@ -246,9 +317,8 @@ int main(int argc, const char* argv[])
         //NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
         0
     };
-	NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:openGLAttributes];
-    GlobalGLContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:NULL];
-    [format release];
+	NSOpenGLPixelFormat* PixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:openGLAttributes];
+    GlobalGLContext = [[NSOpenGLContext alloc] initWithFormat:PixelFormat shareContext:NULL];
 
 	DEBUGSetEventRecording(true);
 
@@ -263,6 +333,10 @@ int main(int argc, const char* argv[])
 	//
 	// Create the main window and the content view
 	NSRect screenRect = [[NSScreen mainScreen] frame];
+	//float Width = 3840.0;
+	//float Height = 2160.0;
+	//float Width = 2560.0;
+	//float Height = 1440.0;
 	float Width = 1920.0;
 	float Height = 1080.0;
 	//float Width = 960.0;
@@ -271,12 +345,12 @@ int main(int argc, const char* argv[])
 
 	GlobalAspectRatio = Width / Height;
 
-	NSRect frame = NSMakeRect((screenRect.size.width - Width) * 0.5,
+	NSRect InitialFrame = NSMakeRect((screenRect.size.width - Width) * 0.5,
 	                          (screenRect.size.height - Height) * 0.5,
 	                          Width,
 	                          Height);
 
-	NSWindow* window = [[NSWindow alloc] initWithContentRect:frame
+	NSWindow* window = [[NSWindow alloc] initWithContentRect:InitialFrame
 										 styleMask:NSTitledWindowMask
 											               | NSClosableWindowMask
 											               | NSMiniaturizableWindowMask
@@ -287,7 +361,23 @@ int main(int argc, const char* argv[])
 	[window setBackgroundColor: NSColor.blackColor];
 	[window setDelegate:appDelegate];
 
-	[window setMinSize:NSMakeSize(100, 100)];
+	NSView* cv = [window contentView];
+	[cv setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+	[cv setAutoresizesSubviews:YES];
+
+#if 1
+	HandmadeView* GLView = [[HandmadeView alloc] init];
+	[GLView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+	[GLView setPixelFormat:PixelFormat];
+	[GLView setOpenGLContext:GlobalGLContext];
+	[GLView setFrame:[cv bounds]];
+
+	[cv addSubview:GLView];
+#endif
+
+    [PixelFormat release];
+
+	[window setMinSize:NSMakeSize(160, 90)];
 	[window setTitle:@"Handmade Hero"];
 	[window makeKeyAndOrderFront:nil];
 
@@ -348,6 +438,17 @@ int main(int argc, const char* argv[])
 		// Main Game Function
 		//
 		CGRect WindowFrame = [window frame];
+		CGRect ContentViewFrame = [[window contentView] frame];
+
+#if 0
+		printf("WindowFrame: [%.0f, %.0f]",
+			   WindowFrame.size.width,
+			   WindowFrame.size.height);
+
+		printf("    ContentFrame: [%.0f, %.0f]\n",
+			   ContentViewFrame.size.width,
+			   ContentViewFrame.size.height);
+#endif
 
 		CGPoint MouseLocationInScreen = [NSEvent mouseLocation];
 		BOOL MouseInWindowFlag = NSPointInRect(MouseLocationInScreen, WindowFrame);
@@ -369,7 +470,7 @@ int main(int argc, const char* argv[])
 
 		u32 MouseButtonMask = [NSEvent pressedMouseButtons];
 
-		OSXProcessFrameAndRunGameLogic(&GameData, WindowFrame,
+		OSXProcessFrameAndRunGameLogic(&GameData, ContentViewFrame,
 									   MouseInWindowFlag, MouseLocationInView,
 									   MouseButtonMask);
 

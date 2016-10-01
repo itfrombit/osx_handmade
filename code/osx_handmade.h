@@ -165,8 +165,6 @@ PLATFORM_OPEN_FILE(OSXOpenNextFile);
 PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile);
 PLATFORM_FILE_ERROR(OSXFileError);
 
-PLATFORM_ALLOCATE_TEXTURE(OSXAllocateTexture);
-PLATFORM_DEALLOCATE_TEXTURE(OSXDeallocateTexture);
 PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory);
 PLATFORM_DEALLOCATE_MEMORY(OSXDeallocateMemory);
 
@@ -218,7 +216,7 @@ struct platform_work_queue
 struct osx_thread_startup
 {
     //int LogicalThreadIndex;
-    CGLContextObj OpenGLContext;
+    //CGLContextObj OpenGLContext;
     platform_work_queue *Queue;
 };
 
@@ -271,6 +269,8 @@ typedef struct osx_game_data
 
 	platform_work_queue			HighPriorityQueue;
 	platform_work_queue			LowPriorityQueue;
+
+	//texture_op_queue			TextureOpQueue;
 
 	int32						TargetFramesPerSecond;
 	real32						TargetSecondsPerFrame;

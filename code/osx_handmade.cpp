@@ -63,14 +63,8 @@ global_variable gl_check_framebuffer_status* glCheckFramebufferStatus;
 
 global_variable platform_api Platform;
 
-enum osx_rendering_type
-{
-	OSXRenderType_RenderOpenGL_DisplayOpenGL,
-	OSXRenderType_RenderSoftware_DisplayOpenGL
-};
 
-global_variable osx_rendering_type GlobalRenderingType = OSXRenderType_RenderOpenGL_DisplayOpenGL;
-//global_variable osx_rendering_type GlobalRenderingType = OSXRenderType_RenderSoftware_DisplayOpenGL;
+global_variable b32 GlobalSoftwareRendering;
 global_variable b32 GlobalRunning = 1;
 global_variable b32 GlobalPause;
 global_variable b32 GlobalShowSortGroups;

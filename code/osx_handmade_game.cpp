@@ -148,6 +148,7 @@ void OSXSetupOpenGL(osx_game_data* GameData)
 		printf("Could not dynamically load OpenGL\n");
 	}
 
+	OpenGLInit(1, 1);
 
 	glGenTextures(1, &GameData->TextureId);
 
@@ -159,21 +160,6 @@ void OSXSetupOpenGL(osx_game_data* GameData)
 ///////////////////////////////////////////////////////////////////////
 // Game Code
 //
-osx_thread_startup OSXGetThreadStartupForGL(CGLContextObj ShareContext)
-{
-	osx_thread_startup Result = {};
-
-	CGLPixelFormatObj PixelFormat = NULL;
-	GLint PixelFormatCount = 0;
-	CGLChoosePixelFormat(GLPixelFormatAttribs, &PixelFormat, &PixelFormatCount);
-
-	CGLContextObj NewContext;
-	CGLCreateContext(PixelFormat, ShareContext, &NewContext);
-	Result.OpenGLContext = NewContext;
-
-	return Result;
-}
-
 
 void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 {
@@ -193,8 +179,6 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 
 
 	osx_thread_startup LowPriStartups[2] = {};
-	LowPriStartups[0] = OSXGetThreadStartupForGL(CGLContext);
-	LowPriStartups[1] = OSXGetThreadStartupForGL(CGLContext);
 	OSXMakeQueue(&GameData->LowPriorityQueue, ArrayCount(LowPriStartups), LowPriStartups);
 
 
@@ -311,9 +295,6 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameData->GameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
 	GameData->GameMemory.PlatformAPI.FileError = OSXFileError;
 
-	GameData->GameMemory.PlatformAPI.AllocateTexture = AllocateTexture;
-	GameData->GameMemory.PlatformAPI.DeallocateTexture = DeallocateTexture;
-
 	GameData->GameMemory.PlatformAPI.AllocateMemory = OSXAllocateMemory;
 	GameData->GameMemory.PlatformAPI.DeallocateMemory = OSXDeallocateMemory;
 
@@ -325,6 +306,19 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameData->GameMemory.PlatformAPI.DEBUGExecuteSystemCommand = DEBUGExecuteSystemCommand;
 	GameData->GameMemory.PlatformAPI.DEBUGGetProcessState = DEBUGGetProcessState;
 #endif
+
+	u32 TextureOpCount = 1024;
+	platform_texture_op_queue* TextureOpQueue = &GameData->GameMemory.TextureOpQueue;
+	TextureOpQueue->FirstFree = 
+		(texture_op*)OSXAllocateMemory(TextureOpCount * sizeof(texture_op));
+	for (u32 TextureOpIndex = 0;
+		 TextureOpIndex < (TextureOpCount - 1);
+		 ++TextureOpIndex)
+	{
+		texture_op* Op = TextureOpQueue->FirstFree + TextureOpIndex;
+		Op->Next = TextureOpQueue->FirstFree + TextureOpIndex + 1;
+	}
+
 
 	Platform = GameData->GameMemory.PlatformAPI;
 
@@ -577,8 +571,9 @@ void OSXKeyProcessing(bool32 IsDown, u32 Key,
 void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 							  game_offscreen_buffer* RenderBuffer,
 							  game_render_commands* Commands,
-						      s32 WindowWidth,
-						      s32 WindowHeight,
+							  rectangle2i DrawRegion,
+							  u32 WindowWidth,
+							  u32 WindowHeight,
 						      memory_arena* TempArena,
 						      GLuint TextureId)
 {
@@ -586,16 +581,15 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 
 	game_render_prep Prep = PrepForRender(Commands, TempArena);
 
-	if (GlobalRenderingType == OSXRenderType_RenderOpenGL_DisplayOpenGL)
+	if (!GlobalSoftwareRendering)
 	{
 		BEGIN_BLOCK("OpenGLRenderCommands");
-		OpenGLRenderCommands(Commands, &Prep, WindowWidth, WindowHeight);
+
+		OpenGLRenderCommands(Commands, &Prep, DrawRegion, WindowWidth, WindowHeight);
 		END_BLOCK();
 	}
 	else
 	{
-		Assert(GlobalRenderingType == OSXRenderType_RenderSoftware_DisplayOpenGL);
-
 		loaded_bitmap OutputTarget;
 		OutputTarget.Memory = RenderBuffer->Memory;
 		OutputTarget.Width = RenderBuffer->Width;
@@ -610,7 +604,8 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 
 		OpenGLDisplayBitmap(RenderBuffer->Width, RenderBuffer->Height,
 							RenderBuffer->Memory, RenderBuffer->Pitch,
-							WindowWidth, WindowHeight,
+							DrawRegion,
+							Commands->ClearColor,
 							TextureId);
 		//SwapBuffers();
 	}
@@ -626,7 +621,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 {
 	{DEBUG_DATA_BLOCK("Platform/Controls");
 		DEBUG_B32(GlobalPause);
-		DEBUG_B32(GlobalRenderingType);
+		DEBUG_B32(GlobalSoftwareRendering);
 		DEBUG_B32(GlobalShowSortGroups);
 	}
 
@@ -637,6 +632,15 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	//
 
 	BEGIN_BLOCK("Input Processing");
+
+	game_render_commands RenderCommands = RenderCommandStruct(
+											GameData->PushBufferSize,
+											GameData->PushBuffer,
+											GameData->RenderBuffer.Width,
+											GameData->RenderBuffer.Height);
+
+	rectangle2i DrawRegion = AspectRatioFit(RenderCommands.Width, RenderCommands.Height,
+											WindowFrame.size.width, WindowFrame.size.height);
 
 	game_controller_input* OldKeyboardController = GetController(GameData->OldInput, 0);
 	game_controller_input* NewKeyboardController = GetController(GameData->NewInput, 0);
@@ -668,8 +672,12 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 		//GameData->NewInput->MouseY = (-0.5f * (r32)GameData->RenderBuffer.Height + 0.5f) + (r32)PointInView.y;
 		//GameData->NewInput->MouseY = (r32)((GameData->RenderBuffer.Height - 1) - PointInView.y);
 
-		GameData->NewInput->MouseX = (r32)MouseLocation.x;
-		GameData->NewInput->MouseY = (r32)MouseLocation.y;
+		r32 MouseX = (r32)MouseLocation.x;
+		r32 MouseY = (r32)MouseLocation.y;
+
+		GameData->NewInput->MouseX = RenderCommands.Width * Clamp01MapToRange(DrawRegion.MinX, MouseX, DrawRegion.MaxX);
+		GameData->NewInput->MouseY = RenderCommands.Height * Clamp01MapToRange(DrawRegion.MinY, MouseY, DrawRegion.MaxY);
+
 
 		GameData->NewInput->MouseZ = 0; // TODO(casey): Support mousewheel?
 
@@ -744,11 +752,6 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Game Update");
 
-	game_render_commands RenderCommands = RenderCommandStruct(
-											GameData->PushBufferSize,
-											GameData->PushBuffer,
-											GameData->RenderBuffer.Width,
-											GameData->RenderBuffer.Height);
 
 	if (!GlobalPause)
 	{
@@ -922,11 +925,31 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Frame Display");
 
+	platform_texture_op_queue* TextureOpQueue = &GameData->GameMemory.TextureOpQueue;
+
+	BeginTicketMutex(&TextureOpQueue->Mutex);
+	texture_op* FirstTextureOp = TextureOpQueue->First;
+	texture_op* LastTextureOp = TextureOpQueue->Last;
+	TextureOpQueue->First = 0;
+	TextureOpQueue->Last = 0;
+	EndTicketMutex(&TextureOpQueue->Mutex);
+
+	if (FirstTextureOp)
+	{
+		Assert(LastTextureOp);
+		OpenGLManageTextures(FirstTextureOp);
+		BeginTicketMutex(&TextureOpQueue->Mutex);
+		LastTextureOp->Next = TextureOpQueue->FirstFree;
+		TextureOpQueue->FirstFree = FirstTextureOp;
+		EndTicketMutex(&TextureOpQueue->Mutex);
+	}
+
 	OSXDisplayBufferInWindow(&GameData->HighPriorityQueue,
 							 &GameData->RenderBuffer,
 							 &RenderCommands,
-							 GameData->RenderBuffer.Width,
-							 GameData->RenderBuffer.Height,
+							 DrawRegion,
+							 WindowFrame.size.width,
+							 WindowFrame.size.height,
 							 &GameData->FrameTempArena,
 							 GameData->TextureId);
 

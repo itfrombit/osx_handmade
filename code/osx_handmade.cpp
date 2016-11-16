@@ -61,7 +61,7 @@ global_variable gl_check_framebuffer_status* glCheckFramebufferStatus;
 
 #include "osx_handmade.h"
 
-global_variable platform_api Platform;
+platform_api Platform;
 
 
 global_variable b32 GlobalSoftwareRendering;

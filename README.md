@@ -3,12 +3,11 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from handmade_hero_day_335.
+This repository works with Casey's source code from handmade_hero_day_341.
 
 
 Note 2016-09-30:
 ----------------
-This version is compatible with Day 335.
 
 The TIMED_FUNCTION() macro in handmade_debug_interface.h does not compile
 under clang. I've hacked a temporary fix for this, but hopefully Casey

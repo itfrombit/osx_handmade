@@ -14,6 +14,7 @@
 
 #include <mach/mach_time.h>
 
+#define Maximum(A, B) ((A > B) ? (A) : (B))
 
 #import "handmade_platform.h"
 #import "handmade_memory.h"

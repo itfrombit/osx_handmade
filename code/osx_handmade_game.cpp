@@ -172,7 +172,7 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	///////////////////////////////////////////////////////////////////
 	// Worker Threads
 	//
-	
+
 	osx_thread_startup HighPriStartups[6] = {};
 	//OSXMakeQueue(&GameData->HighPriorityQueue, 6);
 	OSXMakeQueue(&GameData->HighPriorityQueue, ArrayCount(HighPriStartups), HighPriStartups);
@@ -241,14 +241,14 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 
 	GameData->GameMemory.PermanentStorageSize = Megabytes(256); //Megabytes(256);
 	GameData->GameMemory.TransientStorageSize = Gigabytes(1); //Gigabytes(1);
-	GameData->GameMemory.DebugStorageSize = Megabytes(256); //Megabytes(64);
+	//GameData->GameMemory.DebugStorageSize = Megabytes(256); //Megabytes(64);
 #if HANDMADE_INTERNAL
 	GameData->GameMemory.DebugTable = GlobalDebugTable;
 #endif
 
 	GameData->OSXState.TotalSize = GameData->GameMemory.PermanentStorageSize +
-	                      GameData->GameMemory.TransientStorageSize +
-	                      GameData->GameMemory.DebugStorageSize;
+	                      GameData->GameMemory.TransientStorageSize;
+	                      //GameData->GameMemory.DebugStorageSize;
 
 
 #ifndef HANDMADE_USE_VM_ALLOCATE
@@ -280,8 +280,8 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameData->GameMemory.PermanentStorage = GameData->OSXState.GameMemoryBlock;
 	GameData->GameMemory.TransientStorage = ((uint8*)GameData->GameMemory.PermanentStorage
 								   + GameData->GameMemory.PermanentStorageSize);
-	GameData->GameMemory.DebugStorage = (u8*)GameData->GameMemory.TransientStorage +
-								GameData->GameMemory.TransientStorageSize;
+	//GameData->GameMemory.DebugStorage = (u8*)GameData->GameMemory.TransientStorage +
+	//								GameData->GameMemory.TransientStorageSize;
 
 	GameData->GameMemory.HighPriorityQueue = &GameData->HighPriorityQueue;
 	GameData->GameMemory.LowPriorityQueue = &GameData->LowPriorityQueue;
@@ -309,7 +309,7 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 
 	u32 TextureOpCount = 1024;
 	platform_texture_op_queue* TextureOpQueue = &GameData->GameMemory.TextureOpQueue;
-	TextureOpQueue->FirstFree = 
+	TextureOpQueue->FirstFree =
 		(texture_op*)OSXAllocateMemory(TextureOpCount * sizeof(texture_op));
 	for (u32 TextureOpIndex = 0;
 		 TextureOpIndex < (TextureOpCount - 1);
@@ -913,7 +913,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 			ButtonIndex < ArrayCount(NewKeyboardController->Buttons);
 			++ButtonIndex)
 	{
-		NewKeyboardController->Buttons[ButtonIndex].EndedDown = 
+		NewKeyboardController->Buttons[ButtonIndex].EndedDown =
 			OldKeyboardController->Buttons[ButtonIndex].EndedDown;
 	}
 

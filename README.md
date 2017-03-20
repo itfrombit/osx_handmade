@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from handmade_hero_day_341.
+This repository works with Casey's source code from handmade_hero_day_346.
 
 
 Note 2016-09-30:
@@ -51,7 +51,7 @@ Once you clone or update this repository, copy (or clone, if you are
 using Casey's Github repository) Casey's .cpp
 and .h source files to the cpp/code subdirectory of this repository.
 
-Also, copy over the test, test2, and test3 asset folders, and the 
+Also, copy over the test, test2, and test3 asset folders, and the
 intro_art.hha file to the data subdirectory of this repository.
 
 Before you build the application for the first time, you need to
@@ -67,7 +67,7 @@ If you already have packed asset files, you can just copy them to the data
 subdirectory and skip building and running the osx_asset_builder.
 
 You can then either run 'handmade' directly, or 'open Handmade.app'.
-The advantage of running 'handmade' directly is that debug console output 
+The advantage of running 'handmade' directly is that debug console output
 (printf's, etc.) will be displayed in your terminal window instead
 of being logged to the System Console.
 

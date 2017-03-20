@@ -5,6 +5,7 @@
 // Copyright 2014-2016. All Rights Reserved.
 //
 
+extern osx_state GlobalOSXState;
 
 void OSXGetInputFileLocation(osx_state* State, bool32 InputStream, int SlotIndex, int DestCount, char* Dest)
 {
@@ -13,7 +14,7 @@ void OSXGetInputFileLocation(osx_state* State, bool32 InputStream, int SlotIndex
 	OSXBuildAppPathFilename(State, Temp, DestCount, Dest);
 }
 
-
+#if 0
 static osx_replay_buffer*
 OSXGetReplayBuffer(osx_state* State, int unsigned Index)
 {
@@ -22,46 +23,56 @@ OSXGetReplayBuffer(osx_state* State, int unsigned Index)
 
 	return Result;
 }
-
+#endif
 
 void OSXBeginRecordingInput(osx_state* State, int InputRecordingIndex)
 {
 	printf("beginning recording input\n");
 
-	osx_replay_buffer* ReplayBuffer = OSXGetReplayBuffer(State, InputRecordingIndex);
+	char Filename[FILENAME_MAX];
+	OSXGetInputFileLocation(State, false, InputRecordingIndex,
+							sizeof(Filename), Filename);
+	State->RecordingHandle = open(Filename, O_WRONLY | O_CREAT, 0644);
 
-	if (State->InputPlayingIndex == 1)
-	{
-		printf("...first stopping input playback\n");
-		OSXEndInputPlayback(State);
-	}
-
-	if (ReplayBuffer->MemoryBlock)
+	if (State->RecordingHandle != -1)
 	{
 		State->InputRecordingIndex = InputRecordingIndex;
+		osx_memory_block* Sentinel = &GlobalOSXState.MemorySentinel;
 
-		char Filename[FILENAME_MAX];
-		OSXGetInputFileLocation(State, true, InputRecordingIndex, sizeof(Filename), Filename);
-		State->RecordingHandle = open(Filename, O_WRONLY | O_CREAT, 0644);
-
-#if 0
-		uint32 BytesToWrite = State->TotalSize;
-		Assert(State->TotalSize == BytesToWrite);
-
-		if (State->RecordingHandle != -1)
+		for (osx_memory_block* SourceBlock = Sentinel->Next;
+				SourceBlock != Sentinel;
+				SourceBlock = SourceBlock->Next)
 		{
-			ssize_t BytesWritten = write(State->RecordingHandle, State->GameMemoryBlock, BytesToWrite);
-			bool Result = (BytesWritten == BytesToWrite);
-
-			if (!Result)
+			if (!(SourceBlock->Block.Flags & PlatformMemory_NotRestored))
 			{
-				// TODO(jeff): Logging
-				printf("write error recording input: %d: %s\n", errno, strerror(errno));
+				osx_saved_memory_block DestBlock;
+				void* BasePointer = SourceBlock->Block.Base;
+				DestBlock.BasePointer = (u64)BasePointer;
+				DestBlock.Size = SourceBlock->Block.Size;
+
+				ssize_t BytesWritten;
+				BytesWritten = write(State->RecordingHandle, &DestBlock, sizeof(DestBlock));
+
+				if (BytesWritten == sizeof(DestBlock))
+				{
+					Assert(DestBlock.Size <= U32Maximum);
+					BytesWritten = write(State->RecordingHandle, BasePointer,
+										(u32)DestBlock.Size);
+
+					if (BytesWritten != DestBlock.Size)
+					{
+						printf("OSXBeginRecordingInput: Could not write Block contents\n");
+					}
+				}
+				else
+				{
+					printf("OSXBeginRecordingInput: Could not write Block header\n");
+				}
 			}
 		}
-#endif
 
-		memcpy(ReplayBuffer->MemoryBlock, State->GameMemoryBlock, State->TotalSize);
+		osx_saved_memory_block DestBlock = {};
+		write(State->RecordingHandle, &DestBlock, sizeof(DestBlock));
 	}
 }
 
@@ -73,19 +84,58 @@ void OSXEndRecordingInput(osx_state* State)
 	printf("ended recording input\n");
 }
 
+void OSXClearBlocksByMask(osx_state* State, u64 Mask)
+{
+	for (osx_memory_block* BlockIter = State->MemorySentinel.Next;
+			BlockIter != &State->MemorySentinel;
+			)
+	{
+		osx_memory_block* Block = BlockIter;
+		BlockIter = BlockIter->Next;
+
+		if ((Block->LoopingFlags & Mask) == Mask)
+		{
+			OSXFreeMemoryBlock(Block);
+		}
+		else
+		{
+			Block->LoopingFlags = 0;
+		}
+	}
+}
 
 void OSXBeginInputPlayback(osx_state* State, int InputPlayingIndex)
 {
-	printf("beginning input playback\n");
+	OSXClearBlocksByMask(State, OSXMem_AllocatedDuringLooping);
 
-	osx_replay_buffer* ReplayBuffer = OSXGetReplayBuffer(State, InputPlayingIndex);
-	if (ReplayBuffer->MemoryBlock)
+	printf("beginning input playback\n");
+	char Filename[FILENAME_MAX];
+	OSXGetInputFileLocation(State, true, InputPlayingIndex, sizeof(Filename), Filename);
+	State->PlaybackHandle = open(Filename, O_RDONLY);
+
+	if (State->PlaybackHandle != -1)
 	{
 		State->InputPlayingIndex = InputPlayingIndex;
 
-		char Filename[FILENAME_MAX];
-		OSXGetInputFileLocation(State, true, InputPlayingIndex, sizeof(Filename), Filename);
-		State->PlaybackHandle = open(Filename, O_RDONLY);
+		for (;;)
+		{
+			osx_saved_memory_block Block = {};
+
+			ssize_t BytesRead;
+			BytesRead = read(State->PlaybackHandle, &Block, sizeof(Block));
+
+			if (Block.BasePointer != 0)
+			{
+				void* BasePointer = (void*)Block.BasePointer;
+				Assert(Block.Size <= U32Maximum);
+				BytesRead = read(State->PlaybackHandle, BasePointer, (u32)Block.Size);
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
 
 #if 0
 		uint32 BytesToRead = State->TotalSize;
@@ -104,13 +154,13 @@ void OSXBeginInputPlayback(osx_state* State, int InputPlayingIndex)
 		}
 #endif
 
-		memcpy(State->GameMemoryBlock, ReplayBuffer->MemoryBlock, State->TotalSize);
-	}
 }
 
 
 void OSXEndInputPlayback(osx_state* State)
 {
+	OSXClearBlocksByMask(State, OSXMem_FreedDuringLooping);
+
 	close(State->PlaybackHandle);
 	State->InputPlayingIndex = 0;
 

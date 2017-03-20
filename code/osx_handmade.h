@@ -86,18 +86,39 @@ void OSXStopCoreAudio(osx_sound_output* SoundOutput);
 
 struct osx_replay_buffer
 {
-	int FileHandle;
-	int MemoryMap;
 	char Filename[FILENAME_MAX];
-	void* MemoryBlock;
+};
+
+enum osx_memory_block_flag
+{
+	OSXMem_AllocatedDuringLooping = 0x1,
+	OSXMem_FreedDuringLooping = 0x2
+};
+
+struct osx_memory_block
+{
+	platform_memory_block Block;
+
+	osx_memory_block* Prev;
+	osx_memory_block* Next;
+	u64 LoopingFlags;
+	u64 TotalAllocatedSize;
+
+	u64 Pad[7];
+};
+
+
+struct osx_saved_memory_block
+{
+	u64 BasePointer;
+	u64 Size;
 };
 
 
 struct osx_state
 {
-	uint64 TotalSize;
-	void* GameMemoryBlock;
-	osx_replay_buffer ReplayBuffers[4];
+	ticket_mutex MemoryMutex;
+	osx_memory_block MemorySentinel;
 
 	int RecordingHandle;
 	int InputRecordingIndex;
@@ -108,6 +129,9 @@ struct osx_state
 	char AppFilename[FILENAME_MAX];
 	char* OnePastLastAppFilenameSlash;
 };
+
+
+//extern osx_state GlobalOSXState;
 
 
 #ifndef HANDMADE_USE_ASM_RDTSC
@@ -165,6 +189,7 @@ PLATFORM_OPEN_FILE(OSXOpenNextFile);
 PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile);
 PLATFORM_FILE_ERROR(OSXFileError);
 
+void OSXFreeMemoryBlock(osx_memory_block* Block);
 PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory);
 PLATFORM_DEALLOCATE_MEMORY(OSXDeallocateMemory);
 
@@ -202,7 +227,7 @@ struct platform_work_queue
 {
 	uint32 volatile CompletionGoal;
 	uint32 volatile CompletionCount;
-    
+
 	uint32 volatile NextEntryToWrite;
 	uint32 volatile NextEntryToRead;
 	dispatch_semaphore_t SemaphoreHandle;
@@ -243,8 +268,8 @@ typedef struct osx_game_data
 
 	char SourceGameCodeDLFullPath[FILENAME_MAX];
 
-	umm							FrameTempArenaSize;
-	memory_arena				FrameTempArena;
+	//umm							FrameTempArenaSize;
+	//memory_arena				FrameTempArena;
 
 	umm							CurrentSortMemorySize;
 	void*						SortMemory;
@@ -255,7 +280,7 @@ typedef struct osx_game_data
 	u32							PushBufferSize;
 	void*						PushBuffer;
 
-	game_memory					GameMemory;
+	//game_memory					GameMemory;
 	game_offscreen_buffer		RenderBuffer;
 
 	game_input					Input[2];
@@ -312,7 +337,7 @@ void OSXKeyProcessing(b32 IsDown, u32 Key,
 #if HANDMADE_INTERNAL
 #define OSXDebugLogOpenGLErrors(l) OSXDebugInternalLogOpenGLErrors(l)
 #else
-#define OSXDebugLogOpenGLErrors(l) {} 
+#define OSXDebugLogOpenGLErrors(l) {}
 #endif
 
 void OSXDebugInternalLogOpenGLErrors(const char* label);

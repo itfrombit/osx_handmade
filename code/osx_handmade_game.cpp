@@ -1,5 +1,6 @@
 
 
+osx_state GlobalOSXState;
 
 #if HANDMADE_INTERNAL
 global_variable debug_table GlobalDebugTable_;
@@ -125,8 +126,7 @@ void OSXSetPixelFormat()
 
 void OSXSetupOpenGL(osx_game_data* GameData)
 {
-	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL",
-						 RTLD_LAZY);
+	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)
 	{
 		glBindFramebuffer = (gl_bind_framebuffer*)dlsym(Image, "glBindFramebuffer");
@@ -161,12 +161,21 @@ void OSXSetupOpenGL(osx_game_data* GameData)
 // Game Code
 //
 
+memory_arena FrameTempArena;
+game_memory GameMemory;
+
+
 void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 {
 	if (GameData->SetupComplete)
 	{
 		return;
 	}
+
+
+	osx_state* OSXState = &GlobalOSXState;
+	OSXState->MemorySentinel.Prev = &OSXState->MemorySentinel;
+	OSXState->MemorySentinel.Next = &OSXState->MemorySentinel;
 
 
 	///////////////////////////////////////////////////////////////////
@@ -208,11 +217,11 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	///////////////////////////////////////////////////////////////////
 	// Get the game shared library paths
 	//
-	OSXGetAppFilename(&GameData->OSXState);
+	OSXGetAppFilename(OSXState);
 
-	OSXBuildAppPathFilename(&GameData->OSXState, (char*)"libhandmade.dylib",
-	                        sizeof(GameData->SourceGameCodeDLFullPath),
-	                        GameData->SourceGameCodeDLFullPath);
+	OSXBuildAppPathFilename(OSXState, (char*)"libhandmade.dylib",
+							sizeof(GameData->SourceGameCodeDLFullPath),
+							GameData->SourceGameCodeDLFullPath);
 
 	// NOTE(jeff): We don't have to create a temp file
 	GameData->Game = OSXLoadGameCode(GameData->SourceGameCodeDLFullPath);
@@ -221,14 +230,12 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	///////////////////////////////////////////////////////////////////
 	// Set up memory
 	//
-
-	GameData->FrameTempArenaSize = Megabytes(64);
-	InitializeArena(&GameData->FrameTempArena,
-					GameData->FrameTempArenaSize,
-					OSXAllocateMemory(GameData->FrameTempArenaSize));
+	//ZeroStruct(GameData->FrameTempArena);
+	//ZeroStruct(GameData->GameMemory);
 
 	GameData->PushBufferSize = Megabytes(64);
-	GameData->PushBuffer = OSXAllocateMemory(GameData->PushBufferSize);
+	GameData->PushBuffer = OSXAllocateMemory(GameData->PushBufferSize,
+											PlatformMemory_NotRestored);
 
 
 #if HANDMADE_INTERNAL
@@ -239,27 +246,25 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	uint32 AllocationFlags = MAP_PRIVATE|MAP_ANON;
 #endif
 
-	GameData->GameMemory.PermanentStorageSize = Megabytes(256); //Megabytes(256);
-	GameData->GameMemory.TransientStorageSize = Gigabytes(1); //Gigabytes(1);
-	//GameData->GameMemory.DebugStorageSize = Megabytes(256); //Megabytes(64);
+
 #if HANDMADE_INTERNAL
-	GameData->GameMemory.DebugTable = GlobalDebugTable;
+	GameMemory.DebugTable = GlobalDebugTable;
 #endif
 
-	GameData->OSXState.TotalSize = GameData->GameMemory.PermanentStorageSize +
-	                      GameData->GameMemory.TransientStorageSize;
-	                      //GameData->GameMemory.DebugStorageSize;
+	//OSXState->TotalSize = 0;
+	//OSXState->GameMemoryBlock = 0;
 
-
+#if 0
 #ifndef HANDMADE_USE_VM_ALLOCATE
 	// NOTE(jeff): I switched to mmap as the default, so unless the above
 	// HANDMADE_USE_VM_ALLOCATE is defined in the build/make process,
 	// we'll use the mmap version.
 
 	GameData->OSXState.GameMemoryBlock = mmap(RequestedAddress, GameData->OSXState.TotalSize,
-	                                 PROT_READ|PROT_WRITE,
-	                                 AllocationFlags,
-	                                 -1, 0);
+												PROT_READ|PROT_WRITE,
+												AllocationFlags,
+												-1,
+												0);
 	if (GameData->OSXState.GameMemoryBlock == MAP_FAILED)
 	{
 		printf("mmap error: %d  %s", errno, strerror(errno));
@@ -267,9 +272,9 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 
 #else
 	kern_return_t result = vm_allocate((vm_map_t)mach_task_self(),
-									   (vm_address_t*)&GameData->OSXState.GameMemoryBlock,
-									   GameData->OSXState.TotalSize,
-									   VM_FLAGS_ANYWHERE);
+										(vm_address_t*)&GameData->OSXState.GameMemoryBlock,
+										GameData->OSXState.TotalSize,
+										VM_FLAGS_ANYWHERE);
 	if (result != KERN_SUCCESS)
 	{
 		// TODO(jeff): Diagnostic
@@ -279,143 +284,53 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 
 	GameData->GameMemory.PermanentStorage = GameData->OSXState.GameMemoryBlock;
 	GameData->GameMemory.TransientStorage = ((uint8*)GameData->GameMemory.PermanentStorage
-								   + GameData->GameMemory.PermanentStorageSize);
-	//GameData->GameMemory.DebugStorage = (u8*)GameData->GameMemory.TransientStorage +
-	//								GameData->GameMemory.TransientStorageSize;
+											+ GameData->GameMemory.PermanentStorageSize);
+	//GameData->GameMemory.DebugStorage = (u8*)GameData->GameMemory.TransientStorage
+	//										+ GameData->GameMemory.TransientStorageSize;
+#endif
 
-	GameData->GameMemory.HighPriorityQueue = &GameData->HighPriorityQueue;
-	GameData->GameMemory.LowPriorityQueue = &GameData->LowPriorityQueue;
+	GameMemory.HighPriorityQueue = &GameData->HighPriorityQueue;
+	GameMemory.LowPriorityQueue = &GameData->LowPriorityQueue;
 
-	GameData->GameMemory.PlatformAPI.AddEntry = OSXAddEntry;
-	GameData->GameMemory.PlatformAPI.CompleteAllWork = OSXCompleteAllWork;
+	GameMemory.PlatformAPI.AddEntry = OSXAddEntry;
+	GameMemory.PlatformAPI.CompleteAllWork = OSXCompleteAllWork;
 
-	GameData->GameMemory.PlatformAPI.GetAllFilesOfTypeBegin = OSXGetAllFilesOfTypeBegin;
-	GameData->GameMemory.PlatformAPI.GetAllFilesOfTypeEnd = OSXGetAllFilesOfTypeEnd;
-	GameData->GameMemory.PlatformAPI.OpenNextFile = OSXOpenNextFile;
-	GameData->GameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
-	GameData->GameMemory.PlatformAPI.FileError = OSXFileError;
+	GameMemory.PlatformAPI.GetAllFilesOfTypeBegin = OSXGetAllFilesOfTypeBegin;
+	GameMemory.PlatformAPI.GetAllFilesOfTypeEnd = OSXGetAllFilesOfTypeEnd;
+	GameMemory.PlatformAPI.OpenNextFile = OSXOpenNextFile;
+	GameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
+	GameMemory.PlatformAPI.FileError = OSXFileError;
 
-	GameData->GameMemory.PlatformAPI.AllocateMemory = OSXAllocateMemory;
-	GameData->GameMemory.PlatformAPI.DeallocateMemory = OSXDeallocateMemory;
+	GameMemory.PlatformAPI.AllocateMemory = OSXAllocateMemory;
+	GameMemory.PlatformAPI.DeallocateMemory = OSXDeallocateMemory;
 
 #if HANDMADE_INTERNAL
-	GameData->GameMemory.PlatformAPI.DEBUGFreeFileMemory = DEBUGPlatformFreeFileMemory;
-	GameData->GameMemory.PlatformAPI.DEBUGReadEntireFile = DEBUGPlatformReadEntireFile;
-	GameData->GameMemory.PlatformAPI.DEBUGWriteEntireFile = DEBUGPlatformWriteEntireFile;
+	GameMemory.PlatformAPI.DEBUGFreeFileMemory = DEBUGPlatformFreeFileMemory;
+	GameMemory.PlatformAPI.DEBUGReadEntireFile = DEBUGPlatformReadEntireFile;
+	GameMemory.PlatformAPI.DEBUGWriteEntireFile = DEBUGPlatformWriteEntireFile;
 
-	GameData->GameMemory.PlatformAPI.DEBUGExecuteSystemCommand = DEBUGExecuteSystemCommand;
-	GameData->GameMemory.PlatformAPI.DEBUGGetProcessState = DEBUGGetProcessState;
+	GameMemory.PlatformAPI.DEBUGExecuteSystemCommand = DEBUGExecuteSystemCommand;
+	GameMemory.PlatformAPI.DEBUGGetProcessState = DEBUGGetProcessState;
 #endif
 
 	u32 TextureOpCount = 1024;
-	platform_texture_op_queue* TextureOpQueue = &GameData->GameMemory.TextureOpQueue;
-	TextureOpQueue->FirstFree =
-		(texture_op*)OSXAllocateMemory(TextureOpCount * sizeof(texture_op));
+	platform_texture_op_queue* TextureOpQueue = &GameMemory.TextureOpQueue;
+	TextureOpQueue->FirstFree = (texture_op*)malloc(TextureOpCount * sizeof(texture_op));
+		//(texture_op*)OSXAllocateMemory(TextureOpCount * sizeof(texture_op));
 	for (u32 TextureOpIndex = 0;
-		 TextureOpIndex < (TextureOpCount - 1);
-		 ++TextureOpIndex)
+			TextureOpIndex < (TextureOpCount - 1);
+			++TextureOpIndex)
 	{
 		texture_op* Op = TextureOpQueue->FirstFree + TextureOpIndex;
 		Op->Next = TextureOpQueue->FirstFree + TextureOpIndex + 1;
 	}
 
 
-	Platform = GameData->GameMemory.PlatformAPI;
+	Platform = GameMemory.PlatformAPI;
 
 	///////////////////////////////////////////////////////////////////
 	// Set up replay buffers
 
-	// TODO(jeff): The loop replay is broken. Disable for now...
-#if 0
-
-	for (int ReplayIndex = 0;
-	     ReplayIndex < ArrayCount(GameData->OSXState.ReplayBuffers);
-	     ++ReplayIndex)
-	{
-		osx_replay_buffer* ReplayBuffer = &GameData->OSXState.ReplayBuffers[ReplayIndex];
-
-		OSXGetInputFileLocation(&GameData->OSXState, false, ReplayIndex,
-		                        sizeof(ReplayBuffer->Filename), ReplayBuffer->Filename);
-
-		ReplayBuffer->FileHandle = open(ReplayBuffer->Filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
-
-		if (ReplayBuffer->FileHandle != -1)
-		{
-			int Result = ftruncate(ReplayBuffer->FileHandle, GameData->OSXState.TotalSize);
-
-			if (Result != 0)
-			{
-				printf("ftruncate error on ReplayBuffer[%d]: %d: %s\n",
-				       ReplayIndex, errno, strerror(errno));
-			}
-
-			ReplayBuffer->MemoryBlock = mmap(0, GameData->OSXState.TotalSize,
-			                                 PROT_READ|PROT_WRITE,
-			                                 MAP_PRIVATE,
-			                                 ReplayBuffer->FileHandle,
-			                                 0);
-
-			if (ReplayBuffer->MemoryBlock != MAP_FAILED)
-			{
-#if 0
-				fstore_t fstore = {};
-				fstore.fst_flags = F_ALLOCATECONTIG;
-				fstore.fst_posmode = F_PEOFPOSMODE;
-				fstore.fst_offset = 0;
-				fstore.fst_length = GameData->OSXState.TotalSize;
-
-				int Result = fcntl(ReplayBuffer->FileHandle, F_PREALLOCATE, &fstore);
-
-				if (Result != -1)
-				{
-					Result = ftruncate(ReplayBuffer->FileHandle, GameData->OSXState.TotalSize);
-
-					if (Result != 0)
-					{
-						printf("ftruncate error on ReplayBuffer[%d]: %d: %s\n",
-						       ReplayIndex, errno, strerror(errno));
-					}
-				}
-				else
-				{
-					printf("fcntl error on ReplayBuffer[%d]: %d: %s\n",
-					       ReplayIndex, errno, strerror(errno));
-				}
-
-				//memset(ReplayBuffer->MemoryBlock, 0, GameData->OSXState.TotalSize);
-				//memset(ReplayBuffer->MemoryBlock, 0, GameData->OSXState.TotalSize);
-				//memcpy(ReplayBuffer->MemoryBlock, 0, GameData->OSXState.TotalSize);
-#else
-				// NOTE(jeff): Tried out Filip's lseek suggestion to see if
-				// it is any faster than ftruncate. Seems about the same.
-				off_t SeekOffset = lseek(ReplayBuffer->FileHandle, GameData->OSXState.TotalSize - 1, SEEK_SET);
-
-				if (SeekOffset)
-				{
-					int BytesWritten = write(ReplayBuffer->FileHandle, "", 1);
-
-					if (BytesWritten != 1)
-					{
-						printf("Error writing to lseek offset of ReplayBuffer[%d]: %d: %s\n",
-							   ReplayIndex, errno, strerror(errno));
-					}
-				}
-#endif
-			}
-			else
-			{
-				printf("mmap error on ReplayBuffer[%d]: %d  %s",
-				       ReplayIndex, errno, strerror(errno));
-			}
-		}
-		else
-		{
-			printf("Error creating ReplayBuffer[%d] file %s: %d : %s\n",
-					ReplayIndex, ReplayBuffer->Filename, errno, strerror(errno));
-		}
-	}
-
-#endif
 
 	///////////////////////////////////////////////////////////////////
 	// Set up input
@@ -531,30 +446,32 @@ void OSXKeyProcessing(bool32 IsDown, u32 Key,
 			break;
 
 		case 'l':
-#if 0
+#if 1
 			if (IsDown)
 			{
+				osx_state* OSXState = &GameData->OSXState;
+
 				if (CommandKeyFlag)
 				{
-					OSXBeginInputPlayback(&GameData->OSXState, 1);
+					OSXBeginInputPlayback(OSXState, 1);
 				}
 				else
 				{
-					if (GameData->OSXState.InputPlayingIndex == 0)
+					if (OSXState->InputPlayingIndex == 0)
 					{
-						if (GameData->OSXState.InputRecordingIndex == 0)
+						if (OSXState->InputRecordingIndex == 0)
 						{
-							OSXBeginRecordingInput(&GameData->OSXState, 1);
+							OSXBeginRecordingInput(OSXState, 1);
 						}
 						else
 						{
-							OSXEndRecordingInput(&GameData->OSXState);
-							OSXBeginInputPlayback(&GameData->OSXState, 1);
+							OSXEndRecordingInput(OSXState);
+							OSXBeginInputPlayback(OSXState, 1);
 						}
 					}
 					else
 					{
-						OSXEndInputPlayback(&GameData->OSXState);
+						OSXEndInputPlayback(OSXState);
 					}
 				}
 			}
@@ -624,6 +541,10 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 		DEBUG_B32(GlobalSoftwareRendering);
 		DEBUG_B32(GlobalShowSortGroups);
 	}
+
+	osx_state* OSXState = &GlobalOSXState;
+
+	//printf("***** ProcessFrameAndRunGameLogic\n");
 
 	GameData->NewInput->dtForFrame = GameData->TargetSecondsPerFrame;
 
@@ -755,16 +676,16 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	if (!GlobalPause)
 	{
-		if (GameData->OSXState.InputRecordingIndex)
+		if (OSXState->InputRecordingIndex)
 		{
-			OSXRecordInput(&GameData->OSXState, GameData->NewInput);
+			OSXRecordInput(OSXState, GameData->NewInput);
 		}
 
-		if (GameData->OSXState.InputPlayingIndex)
+		if (OSXState->InputPlayingIndex)
 		{
 			game_input Temp = *GameData->NewInput;
 
-			OSXPlaybackInput(&GameData->OSXState, GameData->NewInput);
+			OSXPlaybackInput(OSXState, GameData->NewInput);
 
 			for (u32 MouseButtonIndex = 0;
 					MouseButtonIndex < PlatformMouseButton_Count;
@@ -779,7 +700,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 		if (GameData->Game.UpdateAndRender)
 		{
-			GameData->Game.UpdateAndRender(&GameData->GameMemory, GameData->NewInput, &RenderCommands);
+			GameData->Game.UpdateAndRender(&GameMemory, GameData->NewInput, &RenderCommands);
 
 			if (GameData->NewInput->QuitRequested)
 			{
@@ -809,7 +730,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 			// ^^^ calculate this. We might be running at 30 or 60 fps
 			GameData->SoundOutput.SoundBuffer.SampleCount = GameData->SoundOutput.SoundBuffer.SamplesPerSecond / GameData->TargetFramesPerSecond;
 
-			GameData->Game.GetSoundSamples(&GameData->GameMemory, &GameData->SoundOutput.SoundBuffer);
+			GameData->Game.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
 
 			int16* CurrentSample = GameData->SoundOutput.SoundBuffer.Samples;
 			for (int i = 0; i < GameData->SoundOutput.SoundBuffer.SampleCount; ++i)
@@ -831,7 +752,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 			{
 				firstTime = false;
 
-				GameData->Game.GetSoundSamples(&GameData->GameMemory, &GameData->SoundOutput.SoundBuffer);
+				GameData->Game.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
 
 				int16* CurrentSample = GameData->SoundOutput.SoundBuffer.Samples;
 				for (int i = 0; i < GameData->SoundOutput.SoundBuffer.SampleCount; ++i)
@@ -854,6 +775,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	//
 	//
 
+
 #if HANDMADE_INTERNAL
 	BEGIN_BLOCK("Debug Collation");
 
@@ -865,7 +787,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 		ExecutableNeedsToBeReloaded = true;
 	}
 
-	GameData->GameMemory.ExecutableReloaded = false;
+	GameMemory.ExecutableReloaded = false;
 
 	if (ExecutableNeedsToBeReloaded)
 	{
@@ -876,7 +798,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	if (GameData->Game.DEBUGFrameEnd)
 	{
-		GameData->Game.DEBUGFrameEnd(&GameData->GameMemory, GameData->NewInput, &RenderCommands);
+		GameData->Game.DEBUGFrameEnd(&GameMemory, GameData->NewInput, &RenderCommands);
 	}
 
 	if (ExecutableNeedsToBeReloaded)
@@ -891,7 +813,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 			usleep(100);
 		}
 
-		GameData->GameMemory.ExecutableReloaded = true;
+		GameMemory.ExecutableReloaded = true;
 		DEBUGSetEventRecording(GameData->Game.IsValid);
 	}
 
@@ -919,13 +841,12 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 
 
-
 	///////////////////////////////////////////////////////////////////
 	// Draw the latest frame to the screen
 
 	BEGIN_BLOCK("Frame Display");
 
-	platform_texture_op_queue* TextureOpQueue = &GameData->GameMemory.TextureOpQueue;
+	platform_texture_op_queue* TextureOpQueue = &GameMemory.TextureOpQueue;
 
 	BeginTicketMutex(&TextureOpQueue->Mutex);
 	texture_op* FirstTextureOp = TextureOpQueue->First;
@@ -950,7 +871,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 							 DrawRegion,
 							 WindowFrame.size.width,
 							 WindowFrame.size.height,
-							 &GameData->FrameTempArena,
+							 &FrameTempArena,
 							 GameData->TextureId);
 
 	END_BLOCK();

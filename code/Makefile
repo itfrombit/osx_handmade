@@ -19,7 +19,7 @@ COPTS		= -g -Wall -fno-inline $(HANDMADE_FLAGS)
 CPP11_FLAGS	= -std=c++11 -stdlib=libc++ -ggdb
 CPP11_LD_FLAGS = -lstdc++
 
-OSX_FLAGS = 
+OSX_FLAGS =
 OSX_LD_FLAGS = -framework Cocoa -framework QuartzCore -framework OpenGL -framework IOKit -framework AudioUnit
 OSX_CT_LD_FLAGS = -framework CoreText -framework CoreFoundation
 #OSX_LD_FLAGS = -framework Cocoa -framework QuartzCore -framework OpenGL -framework IOKit -framework AudioUnit -Wl,-syslibroot /Applications/Xcode-Beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk

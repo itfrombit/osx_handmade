@@ -90,11 +90,55 @@ global_variable GLuint OpenGLDefaultInternalTextureFormat;
 #include "osx_handmade_playback.cpp"
 #include "osx_handmade_game.cpp"
 
+
+DEBUG_PLATFORM_GET_MEMORY_STATS(OSXGetMemoryStats)
+{
+	debug_platform_memory_stats Stats = {};
+
+	BeginTicketMutex(&GlobalOSXState.MemoryMutex);
+	osx_memory_block* Sentinel = &GlobalOSXState.MemorySentinel;
+
+	for (osx_memory_block* SourceBlock = Sentinel->Next;
+			SourceBlock != Sentinel;
+			SourceBlock = SourceBlock->Next)
+	{
+		Assert(SourceBlock->Block.Size <= U32Maximum);
+
+		++Stats.BlockCount;
+		Stats.TotalSize += SourceBlock->Block.Size;
+		Stats.TotalUsed += SourceBlock->Block.Used;
+	}
+	EndTicketMutex(&GlobalOSXState.MemoryMutex);
+
+	return Stats;
+}
+
+
+void OSXVerifyMemoryListIntegrity()
+{
+	BeginTicketMutex(&GlobalOSXState.MemoryMutex);
+	local_persist u32 FailCounter;
+
+	osx_memory_block* Sentinel = &GlobalOSXState.MemorySentinel;
+
+	for (osx_memory_block* SourceBlock = Sentinel->Next;
+			SourceBlock != Sentinel;
+			SourceBlock = SourceBlock->Next)
+	{
+		Assert(SourceBlock->Block.Size <= U32Maximum);
+	}
+
+	++FailCounter;
+
+	EndTicketMutex(&GlobalOSXState.MemoryMutex);
+}
+
 inline b32x OSXIsInLoop(osx_state* State)
 {
 	b32x Result = (State->InputRecordingIndex || State->InputPlayingIndex);
 	return Result;
 }
+
 
 //#define PLATFORM_ALLOCATE_MEMORY(name) platform_memory_block* name(memory_index Size, u64 Flags)
 PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory)
@@ -114,8 +158,7 @@ PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory)
 		BaseOffset = 2 * PageSize;
 		ProtectOffset = PageSize;
 	}
-
-	if (Flags & PlatformMemory_OverflowCheck)
+	else if (Flags & PlatformMemory_OverflowCheck)
 	{
 		umm SizeRoundedUp = AlignPow2(Size, PageSize);
 		TotalSize += SizeRoundedUp + 2 * PageSize;

@@ -12,7 +12,7 @@ CatStrings(size_t SourceACount, char *SourceA,
            size_t DestCount, char *Dest)
 {
     // TODO(casey): Dest bounds checking!
-    
+
     for(int Index = 0;
         Index < SourceACount;
         ++Index)
@@ -102,7 +102,7 @@ DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile)
 			{
 				result = 0;
 			}
-#else	
+#else
 			kern_return_t kresult = vm_allocate((vm_map_t)mach_task_self(),
 									            (vm_address_t*)&Result.Contents,
 									            FileSize32,

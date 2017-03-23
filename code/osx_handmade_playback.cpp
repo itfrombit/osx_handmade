@@ -25,19 +25,24 @@ OSXGetReplayBuffer(osx_state* State, int unsigned Index)
 }
 #endif
 
+
 void OSXBeginRecordingInput(osx_state* State, int InputRecordingIndex)
 {
 	printf("beginning recording input\n");
 
 	char Filename[FILENAME_MAX];
-	OSXGetInputFileLocation(State, false, InputRecordingIndex,
+	OSXGetInputFileLocation(State, true, InputRecordingIndex,
 							sizeof(Filename), Filename);
-	State->RecordingHandle = open(Filename, O_WRONLY | O_CREAT, 0644);
+	State->RecordingHandle = open(Filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
 	if (State->RecordingHandle != -1)
 	{
+		// Test case: OSXVerifyMemoryListIntegrity();
+
 		State->InputRecordingIndex = InputRecordingIndex;
 		osx_memory_block* Sentinel = &GlobalOSXState.MemorySentinel;
+
+		BeginTicketMutex(&GlobalOSXState.MemoryMutex);
 
 		for (osx_memory_block* SourceBlock = Sentinel->Next;
 				SourceBlock != Sentinel;
@@ -71,6 +76,8 @@ void OSXBeginRecordingInput(osx_state* State, int InputRecordingIndex)
 			}
 		}
 
+		EndTicketMutex(&GlobalOSXState.MemoryMutex);
+
 		osx_saved_memory_block DestBlock = {};
 		write(State->RecordingHandle, &DestBlock, sizeof(DestBlock));
 	}
@@ -80,6 +87,7 @@ void OSXBeginRecordingInput(osx_state* State, int InputRecordingIndex)
 void OSXEndRecordingInput(osx_state* State)
 {
 	close(State->RecordingHandle);
+	State->RecordingHandle = -1;
 	State->InputRecordingIndex = 0;
 	printf("ended recording input\n");
 }
@@ -136,24 +144,10 @@ void OSXBeginInputPlayback(osx_state* State, int InputPlayingIndex)
 			}
 		}
 	}
-
-#if 0
-		uint32 BytesToRead = State->TotalSize;
-		Assert(State->TotalSize == BytesToRead);
-
-		if (State->PlaybackHandle != -1)
-		{
-			ssize_t BytesRead;
-
-			BytesRead = read(State->PlaybackHandle, State->GameMemoryBlock, BytesToRead);
-
-			if (BytesRead != BytesToRead)
-			{
-				printf("read error beginning input playback: %d: %s\n", errno, strerror(errno));
-			}
-		}
-#endif
-
+	else
+	{
+		printf("Could not open playback file %s\n", Filename);
+	}
 }
 
 
@@ -162,6 +156,7 @@ void OSXEndInputPlayback(osx_state* State)
 	OSXClearBlocksByMask(State, OSXMem_FreedDuringLooping);
 
 	close(State->PlaybackHandle);
+	State->PlaybackHandle = -1;
 	State->InputPlayingIndex = 0;
 
 	printf("ended input playback\n");

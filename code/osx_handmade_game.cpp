@@ -234,8 +234,9 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	//ZeroStruct(GameData->GameMemory);
 
 	GameData->PushBufferSize = Megabytes(64);
-	GameData->PushBuffer = OSXAllocateMemory(GameData->PushBufferSize,
-											PlatformMemory_NotRestored);
+	platform_memory_block* PushBufferBlock = OSXAllocateMemory(GameData->PushBufferSize,
+															PlatformMemory_NotRestored);
+	GameData->PushBuffer = PushBufferBlock->Base;
 
 
 #if HANDMADE_INTERNAL
@@ -311,6 +312,7 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 
 	GameMemory.PlatformAPI.DEBUGExecuteSystemCommand = DEBUGExecuteSystemCommand;
 	GameMemory.PlatformAPI.DEBUGGetProcessState = DEBUGGetProcessState;
+	GameMemory.PlatformAPI.DEBUGGetMemoryStats = OSXGetMemoryStats;
 #endif
 
 	u32 TextureOpCount = 1024;
@@ -449,7 +451,7 @@ void OSXKeyProcessing(bool32 IsDown, u32 Key,
 #if 1
 			if (IsDown)
 			{
-				osx_state* OSXState = &GameData->OSXState;
+				osx_state* OSXState = &GlobalOSXState;
 
 				if (CommandKeyFlag)
 				{
@@ -678,11 +680,13 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	{
 		if (OSXState->InputRecordingIndex)
 		{
+			printf("...Recording input...\n");
 			OSXRecordInput(OSXState, GameData->NewInput);
 		}
 
 		if (OSXState->InputPlayingIndex)
 		{
+			printf("...Playing back input...\n");
 			game_input Temp = *GameData->NewInput;
 
 			OSXPlaybackInput(OSXState, GameData->NewInput);

@@ -167,6 +167,7 @@ DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile);
 DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile);
 DEBUG_PLATFORM_EXECUTE_SYSTEM_COMMAND(DEBUGExecuteSystemCommand);
 DEBUG_PLATFORM_GET_PROCESS_STATE(DEBUGGetProcessState);
+DEBUG_PLATFORM_GET_MEMORY_STATS(OSXGetMemoryStats);
 #endif
 
 struct osx_platform_file_handle
@@ -278,7 +279,7 @@ typedef struct osx_game_data
 	void*						ClipMemory;
 
 	u32							PushBufferSize;
-	void*						PushBuffer;
+	u8*							PushBuffer;
 
 	//game_memory					GameMemory;
 	game_offscreen_buffer		RenderBuffer;
@@ -287,7 +288,7 @@ typedef struct osx_game_data
 	game_input*					NewInput;
 	game_input*					OldInput;
 
-	osx_state					OSXState;
+	//osx_state					OSXState;
 	osx_game_code				Game;
 
 	osx_sound_output			SoundOutput;

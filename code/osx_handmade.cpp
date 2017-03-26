@@ -91,6 +91,7 @@ global_variable GLuint OpenGLDefaultInternalTextureFormat;
 #include "osx_handmade_game.cpp"
 
 
+#if HANDMADE_INTERNAL
 DEBUG_PLATFORM_GET_MEMORY_STATS(OSXGetMemoryStats)
 {
 	debug_platform_memory_stats Stats = {};
@@ -112,7 +113,7 @@ DEBUG_PLATFORM_GET_MEMORY_STATS(OSXGetMemoryStats)
 
 	return Stats;
 }
-
+#endif
 
 void OSXVerifyMemoryListIntegrity()
 {

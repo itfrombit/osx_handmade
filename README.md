@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from handmade_hero_day_347.
+This repository works with Casey's source code from handmade_hero_day_351.
 
 
 Note 2016-09-30:

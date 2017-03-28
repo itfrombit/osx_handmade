@@ -3,45 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from handmade_hero_day_351.
-
-
-Note 2016-09-30:
-----------------
-
-The TIMED_FUNCTION() macro in handmade_debug_interface.h does not compile
-under clang. I've hacked a temporary fix for this, but hopefully Casey
-will address this in a not-too-distant episode.
-
-To fix the source code, run
-
-    sh fix_handmade_hero_source.sh
-
-after copying over Casey's source code, but before running 'make'
-for the first time. Run 'make' from the code subdirectory.
-
-Some things have changed from earlier versions. The directory
-structure has been cleaned up and is now more compatible with
-the Handmade Hero Github repository.
-
-The architecture of the platform layer has also changed. CVDisplayLink
-is no longer used. Instead, OpenGL vsync is used to update the frame.
-Also, a new manual run loop was implemented to be more compatible with
-the Windows platform layer.
-
-The platform layer no longer creates an explicit NSOpenGLView-derived object.
-This object was just extra boilerplate code. We now just create an OpenGLContext
-and assign it to the application's default contentView.
-
-Finally, I combined the two OS X Handmade Hero projects that I had been
-maintaining. I originally created two projects to show how to write an OS X
-program with and without Xcode. However, most of the code between the
-two projects was identical and there was no real reason to continue
-as two separate projects. This combined repository allows you to develop
-either way. If you wwant to use Xcode, open the Handmade Hero Xcode
-project in the xcode subdirectory and build it as before. If you do not
-want to use Xcode, run 'make' from the code subdirectory and it should
-also work as before.
+This repository works with Casey's source code from handmade_hero_day_358.
 
 
 Compiling and Running
@@ -60,16 +22,32 @@ create the packed asset files. To do this, run
     make osx_asset_builder
 
 and then execute the osx_asset_builder command line program. This will
-create the .hha files. From then on, you can just run 'make' from the code
-directory (Note: not the cpp/code directory!) to build the application bundle.
+create the .hha files.
 
 If you already have packed asset files, you can just copy them to the data
 subdirectory and skip building and running the osx_asset_builder.
+
+From then on, you can just run 'make' from the code
+directory (Note: not the cpp/code directory!) to build the application bundle.
+
+Once you have done a full build and have created the application
+bundles, you can run 'make quick' to just recompile the dynamic library and
+the executable. Most of the build time when running the default 'make'
+is spent copying over the large asset files, so 'make quick' avoids that step.
 
 You can then either run 'handmade' directly, or 'open Handmade.app'.
 The advantage of running 'handmade' directly is that debug console output
 (printf's, etc.) will be displayed in your terminal window instead
 of being logged to the System Console.
+
+I typically run the game from the command line like this:
+
+	./handmade
+
+I also use lldb to debug. lldb has a 'gui' command that will
+display a source code and variable view while debugging. It's not great,
+but it's almost always better than using Xcode, and is sometimes better than
+using the plain command line mode in lldb.
 
 Hot-loading is supported, so you can just run 'make' again (or have your
 favorite editor do it) while the application is running to build and

@@ -87,7 +87,7 @@ global_variable r32 GlobalAspectRatio;
 
 	NSRect WindowRect = [window frame];
 	NSRect ContentRect = [window contentRectForFrameRect:WindowRect];
-	
+
 	r32 WidthAdd = (WindowRect.size.width - ContentRect.size.width);
 	r32 HeightAdd = (WindowRect.size.height - ContentRect.size.height);
 
@@ -134,7 +134,7 @@ void OSXCreateMainMenu()
 	// Create the Menu. Two options right now:
 	//   Toggle Full Screen
 	//   Quit
-	NSMenu* menubar = [NSMenu new]; 
+    NSMenu* menubar = [NSMenu new];
 
 	NSMenuItem* appMenuItem = [NSMenuItem new];
 	[menubar addItem:appMenuItem];
@@ -149,14 +149,14 @@ void OSXCreateMainMenu()
 
     NSString* toggleFullScreenTitle = @"Toggle Full Screen";
     NSMenuItem* toggleFullScreenMenuItem = [[NSMenuItem alloc] initWithTitle:toggleFullScreenTitle
-    											 action:@selector(toggleFullScreen:)
-    									  keyEquivalent:@"f"];
+											action:@selector(toggleFullScreen:)
+											keyEquivalent:@"f"];
     [appMenu addItem:toggleFullScreenMenuItem];
 
     NSString* quitTitle = [@"Quit " stringByAppendingString:appName];
     NSMenuItem* quitMenuItem = [[NSMenuItem alloc] initWithTitle:quitTitle
-    											 action:@selector(terminate:)
-    									  keyEquivalent:@"q"];
+											action:@selector(terminate:)
+											keyEquivalent:@"q"];
     [appMenu addItem:quitMenuItem];
     [appMenuItem setSubmenu:appMenu];
 }
@@ -184,10 +184,10 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 				int AlternateKeyFlag = ModifierFlags & NSAlternateKeyMask;
 
 				int KeyDownFlag = 1;
-				
+
 				OSXKeyProcessing(KeyDownFlag, C,
-								 CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
-								 GameData->NewInput, GameData);
+								CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
+								GameData->NewInput, GameData);
 			} break;
 
 			case NSKeyUp:
@@ -201,8 +201,8 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 				int KeyDownFlag = 0;
 
 				OSXKeyProcessing(KeyDownFlag, C,
-								 CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
-								 GameData->NewInput, GameData);
+								CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
+								GameData->NewInput, GameData);
 			} break;
 
 			default:
@@ -247,10 +247,8 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 
 #if 0
 	printf("HandmadeView reshape: [%.0f, %.0f] [%.0f, %.0f]\n",
-		   bounds.origin.x,
-		   bounds.origin.y,
-		   bounds.size.width,
-		   bounds.size.height);
+			bounds.origin.x, bounds.origin.y,
+			bounds.size.width, bounds.size.height);
 
 	glLoadIdentity();
 	glClearColor(1.0, 0.0, 0.0, 1.0);
@@ -285,7 +283,7 @@ int main(int argc, const char* argv[])
 
 
 	///////////////////////////////////////////////////////////////////
-	// Set working directory 
+	// Set working directory
 	//
 	NSString *dir = [[NSFileManager defaultManager] currentDirectoryPath];
 	NSLog(@"working directory: %@", dir);
@@ -347,17 +345,17 @@ int main(int argc, const char* argv[])
 	GlobalAspectRatio = Width / Height;
 
 	NSRect InitialFrame = NSMakeRect((screenRect.size.width - Width) * 0.5,
-	                          (screenRect.size.height - Height) * 0.5,
-	                          Width,
-	                          Height);
+									(screenRect.size.height - Height) * 0.5,
+									Width,
+									Height);
 
 	NSWindow* window = [[NSWindow alloc] initWithContentRect:InitialFrame
-										 styleMask:NSTitledWindowMask
-											               | NSClosableWindowMask
-											               | NSMiniaturizableWindowMask
-											               | NSResizableWindowMask
-										   backing:NSBackingStoreBuffered
-										     defer:NO];
+									styleMask:NSTitledWindowMask
+												| NSClosableWindowMask
+												| NSMiniaturizableWindowMask
+												| NSResizableWindowMask
+									backing:NSBackingStoreBuffered
+									defer:NO];
 
 	[window setBackgroundColor: NSColor.blackColor];
 	[window setDelegate:appDelegate];
@@ -412,16 +410,14 @@ int main(int argc, const char* argv[])
 #if 0
 	// Default to full screen mode at startup...
     NSDictionary* fullScreenOptions =
-    	[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
-								    forKey:NSFullScreenModeSetting];
+		[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:NSFullScreenModeSetting];
 
-	[[window contentView] enterFullScreenMode:[NSScreen mainScreen]
-				                  withOptions:fullScreenOptions];
+	[[window contentView] enterFullScreenMode:[NSScreen mainScreen] withOptions:fullScreenOptions];
 #endif
 
 
 	///////////////////////////////////////////////////////////////////
-	// Run loop 
+	// Run loop
 	//
 	//uint tickCounter = 0;
 	u64 CurrentTime = mach_absolute_time();
@@ -442,13 +438,8 @@ int main(int argc, const char* argv[])
 		CGRect ContentViewFrame = [[window contentView] frame];
 
 #if 0
-		printf("WindowFrame: [%.0f, %.0f]",
-			   WindowFrame.size.width,
-			   WindowFrame.size.height);
-
-		printf("    ContentFrame: [%.0f, %.0f]\n",
-			   ContentViewFrame.size.width,
-			   ContentViewFrame.size.height);
+		printf("WindowFrame: [%.0f, %.0f]", WindowFrame.size.width, WindowFrame.size.height);
+		printf("    ContentFrame: [%.0f, %.0f]\n", ContentViewFrame.size.width, ContentViewFrame.size.height);
 #endif
 
 		CGPoint MouseLocationInScreen = [NSEvent mouseLocation];
@@ -463,8 +454,8 @@ int main(int argc, const char* argv[])
 			// We don't actually care what the mouse screen coordinates are, we just want the
 			// coordinates relative to the content view
 			NSRect RectInWindow = [window convertRectFromScreen:NSMakeRect(MouseLocationInScreen.x,
-																		   MouseLocationInScreen.y,
-																		   1, 1)];
+																			MouseLocationInScreen.y,
+																			1, 1)];
 			NSPoint PointInWindow = RectInWindow.origin;
 			MouseLocationInView = [[window contentView] convertPoint:PointInWindow fromView:nil];
 		}
@@ -472,8 +463,8 @@ int main(int argc, const char* argv[])
 		u32 MouseButtonMask = [NSEvent pressedMouseButtons];
 
 		OSXProcessFrameAndRunGameLogic(&GameData, ContentViewFrame,
-									   MouseInWindowFlag, MouseLocationInView,
-									   MouseButtonMask);
+										MouseInWindowFlag, MouseLocationInView,
+										MouseButtonMask);
 
 		// flushes and forces vsync
 #if HANDMADE_USE_VSYNC

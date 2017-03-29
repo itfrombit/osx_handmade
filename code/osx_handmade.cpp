@@ -65,7 +65,6 @@ platform_api Platform;
 global_variable b32 GlobalSoftwareRendering;
 global_variable b32 GlobalRunning = 1;
 global_variable b32 GlobalPause;
-global_variable b32 GlobalShowSortGroups;
 
 global_variable GLuint OpenGLDefaultInternalTextureFormat;
 

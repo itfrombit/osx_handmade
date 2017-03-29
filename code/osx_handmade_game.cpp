@@ -541,7 +541,6 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	{DEBUG_DATA_BLOCK("Platform/Controls");
 		DEBUG_B32(GlobalPause);
 		DEBUG_B32(GlobalSoftwareRendering);
-		DEBUG_B32(GlobalShowSortGroups);
 	}
 
 	osx_state* OSXState = &GlobalOSXState;

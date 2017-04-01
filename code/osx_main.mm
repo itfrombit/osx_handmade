@@ -312,8 +312,10 @@ int main(int argc, const char* argv[])
 #if HANDMADE_USE_VSYNC
         NSOpenGLPFADoubleBuffer, // Uses vsync
 #endif
+		NSOpenGLPFAColorSize, 24,
+		NSOpenGLPFAAlphaSize, 8,
         NSOpenGLPFADepthSize, 24,
-        //NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
+        NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
         0
     };
 	NSOpenGLPixelFormat* PixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:openGLAttributes];

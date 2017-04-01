@@ -281,6 +281,10 @@ typedef struct osx_game_data
 	u32							PushBufferSize;
 	u8*							PushBuffer;
 
+	u32							MaxVertexCount;
+	textured_vertex*			VertexArray;
+	loaded_bitmap**				BitmapArray;
+
 	//game_memory					GameMemory;
 	game_offscreen_buffer		RenderBuffer;
 

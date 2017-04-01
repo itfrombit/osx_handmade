@@ -3,7 +3,28 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from handmade_hero_day_363.
+This repository works with Casey's source code from handmade_hero_day_373.
+
+
+2017-04-01 Note:
+----------------
+While the code compiles as-is on OS X, you must first apply a patch to
+Casey's Handmade Hero source code to get the game to run properly. You can
+apply the patch by running:
+
+    sh fix_handmade_hero_source.sh
+
+This patches two problems in handmade_opengl.cpp.
+
+The first problem is that OpenGL Core Profile 3.0 and above no longer
+supports glGetString(GL_EXTENSIONS). There is a newer way to query extensions
+(see Github Issue #43 for details). For now, I've just set the Extension
+string to an empty string. Not ideal, but workable for the short term.
+
+The second problem is that Mac OS X supports an OpenGL 3.2 core profile,
+but not an OpenGL 3.0 core profile. The OpenGL C code works okay as-is, but
+the Handmde Hero GLSL shader language is set to 1.3, which Mac OS X refuses to
+compile. For now, simply changing the GLSL version to 1.5 fixes the issue.
 
 
 Compiling and Running

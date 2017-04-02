@@ -129,6 +129,13 @@ void OSXSetupOpenGL(osx_game_data* GameData)
 	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)
 	{
+#define OSXGetOpenGLFunction(Module, Name) Name = (type_##Name *)dlsym(Module, #Name)
+        OSXGetOpenGLFunction(Image, glDebugMessageCallbackARB);
+        OSXGetOpenGLFunction(Image, glBindVertexArray);
+        OSXGetOpenGLFunction(Image, glGenVertexArrays);
+        OSXGetOpenGLFunction(Image, glGetStringi);
+
+
 		opengl_info Info = OpenGLGetInfo(true);
 
 		glBindFramebuffer = (gl_bind_framebuffer*)dlsym(Image, "glBindFramebuffer");
@@ -151,13 +158,6 @@ void OSXSetupOpenGL(osx_game_data* GameData)
         glValidateProgram = (gl_validate_program *)dlsym("glValidateProgram");
         glGetProgramiv = (gl_get_program_iv *)dlsym("glGetProgramiv");
 #endif
-
-#define OSXGetOpenGLFunction(Module, Name) Name = (type_##Name *)dlsym(Module, #Name)
-        OSXGetOpenGLFunction(Image, glDebugMessageCallbackARB);
-        OSXGetOpenGLFunction(Image, glBindVertexArray);
-        OSXGetOpenGLFunction(Image, glGenVertexArrays);
-        OSXGetOpenGLFunction(Image, glGetStringi);
-
 
 		if (glBindFramebuffer)
 		{

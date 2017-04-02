@@ -1,0 +1,11 @@
+--- cpp/code/handmade_opengl.cpp	2017-04-01 22:11:32.000000000 -0700
++++ handmade_opengl.cpp	2017-04-01 22:13:05.000000000 -0700
+@@ -704,7 +704,7 @@
+     
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n",
+                  ShaderSimTexWriteSRGB,

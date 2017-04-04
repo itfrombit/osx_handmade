@@ -135,7 +135,6 @@ void OSXSetupOpenGL(osx_game_data* GameData)
         OSXGetOpenGLFunction(Image, glGenVertexArrays);
         OSXGetOpenGLFunction(Image, glGetStringi);
 
-
 		opengl_info Info = OpenGLGetInfo(true);
 
 		glBindFramebuffer = (gl_bind_framebuffer*)dlsym(Image, "glBindFramebuffer");
@@ -551,13 +550,11 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 {
 	temporary_memory TempMem = BeginTemporaryMemory(TempArena);
 
-	game_render_prep Prep = PrepForRender(Commands, TempArena);
-
 	if (!GlobalSoftwareRendering)
 	{
 		BEGIN_BLOCK("OpenGLRenderCommands");
 
-		OpenGLRenderCommands(Commands, &Prep, DrawRegion, WindowWidth, WindowHeight);
+		OpenGLRenderCommands(Commands, DrawRegion, WindowWidth, WindowHeight);
 		END_BLOCK();
 	}
 	else
@@ -569,7 +566,7 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 		OutputTarget.Pitch = RenderBuffer->Pitch;
 
 		//BEGIN_BLOCK("SoftwareRenderCommands");
-		SoftwareRenderCommands(RenderQueue, Commands, &Prep, &OutputTarget, TempArena);
+		SoftwareRenderCommands(RenderQueue, Commands, &OutputTarget, TempArena);
 		//END_BLOCK();
 
 		// We always display via hardware

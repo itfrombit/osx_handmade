@@ -60,7 +60,7 @@ void OSXBeginRecordingInput(osx_state* State, int InputRecordingIndex)
 
 				if (BytesWritten == sizeof(DestBlock))
 				{
-					Assert(DestBlock.Size <= U32Maximum);
+					Assert(DestBlock.Size <= U32Max);
 					BytesWritten = write(State->RecordingHandle, BasePointer,
 										(u32)DestBlock.Size);
 
@@ -135,7 +135,7 @@ void OSXBeginInputPlayback(osx_state* State, int InputPlayingIndex)
 			if (Block.BasePointer != 0)
 			{
 				void* BasePointer = (void*)Block.BasePointer;
-				Assert(Block.Size <= U32Maximum);
+				Assert(Block.Size <= U32Max);
 				BytesRead = read(State->PlaybackHandle, BasePointer, (u32)Block.Size);
 			}
 			else

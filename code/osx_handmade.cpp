@@ -152,7 +152,7 @@ DEBUG_PLATFORM_GET_MEMORY_STATS(OSXGetMemoryStats)
 			SourceBlock != Sentinel;
 			SourceBlock = SourceBlock->Next)
 	{
-		Assert(SourceBlock->Block.Size <= U32Maximum);
+		Assert(SourceBlock->Block.Size <= U32Max);
 
 		++Stats.BlockCount;
 		Stats.TotalSize += SourceBlock->Block.Size;
@@ -175,7 +175,7 @@ void OSXVerifyMemoryListIntegrity()
 			SourceBlock != Sentinel;
 			SourceBlock = SourceBlock->Next)
 	{
-		Assert(SourceBlock->Block.Size <= U32Maximum);
+		Assert(SourceBlock->Block.Size <= U32Max);
 	}
 
 	++FailCounter;

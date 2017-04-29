@@ -238,7 +238,8 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	// Rendering Frame Rate
 	//
 	GameData->RenderAtHalfSpeed = 0;
-
+	GameData->MonitorRefreshHz = 60;
+	GameData->GameUpdateHz = (f32)GameData->MonitorRefreshHz;
 	GameData->TargetFramesPerSecond = 60.0;
 	GameData->TargetSecondsPerFrame = 1.0 / 60.0;
 
@@ -400,6 +401,8 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	//
 	OSXSetupSound(GameData);
 
+	GameData->ExpectedFramesPerUpdate = 1;
+	GameData->TargetSecondsPerFrame = (f32)GameData->ExpectedFramesPerUpdate / (f32)GameData->GameUpdateHz;
 
 	printf("------------------------------ Game setup complete\n");
 
@@ -588,6 +591,9 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 									b32 MouseInWindowFlag, CGPoint MouseLocation,
 									int MouseButtonMask)
 {
+	{DEBUG_DATA_BLOCK("Platform");
+		DEBUG_VALUE(GameData->ExpectedFramesPerUpdate);
+	}
 	{DEBUG_DATA_BLOCK("Platform/Controls");
 		DEBUG_B32(GlobalPause);
 		DEBUG_B32(GlobalSoftwareRendering);

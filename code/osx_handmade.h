@@ -64,10 +64,10 @@ struct osx_game_code
 struct osx_sound_output
 {
 	game_sound_output_buffer SoundBuffer;
-	uint32 SoundBufferSize;
-	int16* CoreAudioBuffer;
-	int16* ReadCursor;
-	int16* WriteCursor;
+	u32 SoundBufferSize;
+	s16* CoreAudioBuffer;
+	s16* ReadCursor;
+	s16* WriteCursor;
 
 	AudioStreamBasicDescription AudioDescriptor;
 	AudioUnit AudioUnit;
@@ -141,8 +141,8 @@ struct osx_state
 internal inline uint64
 rdtsc()
 {
-	uint32 eax = 0;
-	uint32 edx;
+	u32 eax = 0;
+	u32 edx;
 
 	__asm__ __volatile__("cpuid;"
 			     "rdtsc;"
@@ -156,7 +156,7 @@ rdtsc()
 				:
 				: "%rax", "%rbx", "%rcx", "%rdx", "memory");
 
-	return (((uint64)edx << 32) | eax);
+	return (((u64)edx << 32) | eax);
 }
 #endif
 
@@ -226,11 +226,11 @@ struct platform_work_queue_entry
 
 struct platform_work_queue
 {
-	uint32 volatile CompletionGoal;
-	uint32 volatile CompletionCount;
+	u32 volatile CompletionGoal;
+	u32 volatile CompletionCount;
 
-	uint32 volatile NextEntryToWrite;
-	uint32 volatile NextEntryToRead;
+	u32 volatile NextEntryToWrite;
+	u32 volatile NextEntryToRead;
 	dispatch_semaphore_t SemaphoreHandle;
 
 	platform_work_queue_entry Entries[256];
@@ -265,7 +265,7 @@ typedef struct osx_game_data
 	IOHIDManagerRef				HIDManager;
 	int							HIDX;
 	int							HIDY;
-	uint8						HIDButtons[MAX_HID_BUTTONS];
+	u8							HIDButtons[MAX_HID_BUTTONS];
 
 	char SourceGameCodeDLFullPath[FILENAME_MAX];
 
@@ -302,10 +302,15 @@ typedef struct osx_game_data
 
 	//texture_op_queue			TextureOpQueue;
 
-	int32						TargetFramesPerSecond;
-	real32						TargetSecondsPerFrame;
+	u32							MonitorRefreshHz;
+	f32							GameUpdateHz;
 
-	real64						MachTimebaseConversionFactor;
+	u32							ExpectedFramesPerUpdate;
+
+	u32							TargetFramesPerSecond;
+	r32							TargetSecondsPerFrame;
+
+	r64							MachTimebaseConversionFactor;
 	int							SetupComplete;
 
 	int							RenderAtHalfSpeed;
@@ -326,7 +331,7 @@ void OSXStopGame();
 
 
 
-inline void OSXProcessKeyboardMessage(game_button_state *NewState, bool32 IsDown)
+inline void OSXProcessKeyboardMessage(game_button_state *NewState, b32 IsDown)
 {
 	if (NewState->EndedDown != IsDown)
 	{

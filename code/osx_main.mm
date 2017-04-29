@@ -20,7 +20,7 @@
 #import "handmade_memory.h"
 #import "osx_handmade.h"
 
-
+#import "handmade_intrinsics.h"
 
 // Let the command line override
 #ifndef HANDMADE_USE_VSYNC
@@ -479,9 +479,16 @@ int main(int argc, const char* argv[])
 
 		u64 EndCounter = mach_absolute_time();
 
-		FRAME_MARKER(OSXGetSecondsElapsed(GameData.LastCounter, EndCounter));
+		f32 MeasuredSecondsPerFrame = OSXGetSecondsElapsed(GameData.LastCounter, EndCounter);
+		f32 ExactTargetFramesPerUpdate = MeasuredSecondsPerFrame * (f32)GameData.MonitorRefreshHz;
+		u32 NewExpectedFramesPerUpdate = RoundReal32ToInt32(ExactTargetFramesPerUpdate);
+		GameData.ExpectedFramesPerUpdate = NewExpectedFramesPerUpdate;
 
-		frameTime += OSXGetSecondsElapsed(GameData.LastCounter, EndCounter);
+		GameData.TargetSecondsPerFrame = MeasuredSecondsPerFrame;
+
+		FRAME_MARKER(MeasuredSecondsPerFrame);
+
+		frameTime += MeasuredSecondsPerFrame;
 		GameData.LastCounter = EndCounter;
 
 #if 0

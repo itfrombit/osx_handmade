@@ -258,9 +258,6 @@ void OSXCompleteAllWork(platform_work_queue *Queue);
 
 typedef struct osx_game_data
 {
-	// graphics
-	uint						TextureId;
-
 	// input
 	IOHIDManagerRef				HIDManager;
 	int							HIDX;

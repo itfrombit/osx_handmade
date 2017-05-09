@@ -144,6 +144,7 @@ void OSXSetupOpenGL(osx_game_data* GameData)
         glTexImage2DMultisample = (gl_tex_image_2d_multisample *)dlsym(Image, "glTexImage2DMultisample");
         glBlitFramebuffer = (gl_blit_framebuffer *)dlsym(Image, "glBlitFramebuffer");
 
+		OSXGetOpenGLFunction(Image, glDeleteFramebuffers);
 #if 0
         glAttachShader = (gl_attach_shader *)dlsym("glAttachShader");
         glCompileShader = (gl_compile_shader *)dlsym("glCompileShader");
@@ -185,13 +186,14 @@ void OSXSetupOpenGL(osx_game_data* GameData)
         Assert(glValidateProgram);
         Assert(glGetProgramiv);
 
+		//OpenGL.SupportsSRGBFramebuffer = true;
 		OpenGLInit(Info, OpenGL.SupportsSRGBFramebuffer);
 
-		glGenTextures(1, &GameData->TextureId);
-
-		//OpenGLDefaultInternalTextureFormat = GL_RGBA8;
+#if 0
+		OpenGLDefaultInternalTextureFormat = GL_RGBA8;
 		//OpenGLDefaultInternalTextureFormat = GL_SRGB8_ALPHA8;
-		//glEnable(GL_FRAMEBUFFER_SRGB);
+		glEnable(GL_FRAMEBUFFER_SRGB);
+#endif
 	}
 	else
 	{
@@ -548,8 +550,7 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 							  rectangle2i DrawRegion,
 							  u32 WindowWidth,
 							  u32 WindowHeight,
-						      memory_arena* TempArena,
-						      GLuint TextureId)
+						      memory_arena* TempArena)
 {
 	temporary_memory TempMem = BeginTemporaryMemory(TempArena);
 
@@ -611,7 +612,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Input Processing");
 
-	game_render_commands RenderCommands = RenderCommandStruct(
+	game_render_commands RenderCommands = DefaultRenderCommands(
 											GameData->PushBufferSize,
 											GameData->PushBuffer,
 											(u32)GameData->RenderBuffer.Width,
@@ -621,7 +622,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 											GameData->BitmapArray,
 											&OpenGL.WhiteBitmap);
 
-	rectangle2i DrawRegion = AspectRatioFit(RenderCommands.Width, RenderCommands.Height,
+	rectangle2i DrawRegion = AspectRatioFit(RenderCommands.Settings.Width, RenderCommands.Settings.Height,
 											WindowFrame.size.width, WindowFrame.size.height);
 
 	game_controller_input* OldKeyboardController = GetController(GameData->OldInput, 0);
@@ -657,8 +658,8 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 		r32 MouseX = (r32)MouseLocation.x;
 		r32 MouseY = (r32)MouseLocation.y;
 
-		GameData->NewInput->MouseX = RenderCommands.Width * Clamp01MapToRange(DrawRegion.MinX, MouseX, DrawRegion.MaxX);
-		GameData->NewInput->MouseY = RenderCommands.Height * Clamp01MapToRange(DrawRegion.MinY, MouseY, DrawRegion.MaxY);
+		GameData->NewInput->MouseX = RenderCommands.Settings.Width * Clamp01MapToRange(DrawRegion.MinX, MouseX, DrawRegion.MaxX);
+		GameData->NewInput->MouseY = RenderCommands.Settings.Height * Clamp01MapToRange(DrawRegion.MinY, MouseY, DrawRegion.MaxY);
 
 
 		GameData->NewInput->MouseZ = 0; // TODO(casey): Support mousewheel?
@@ -934,8 +935,10 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 							 DrawRegion,
 							 WindowFrame.size.width,
 							 WindowFrame.size.height,
-							 &FrameTempArena,
-							 GameData->TextureId);
+							 &FrameTempArena);
+
+	RenderCommands.PushBufferDataAt = RenderCommands.PushBufferBase;
+	RenderCommands.VertexCount = 0;
 
 	END_BLOCK();
 }

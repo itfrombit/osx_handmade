@@ -64,6 +64,9 @@ typedef void gl_get_program_iv(GLuint program, GLenum pname, GLint *params);
 typedef void type_glBindVertexArray(GLuint array);
 typedef void type_glGenVertexArrays(GLsizei n, GLuint *arrays);
 typedef GLubyte* type_glGetStringi(GLenum name, GLuint index);
+typedef GLubyte* type_glGetStringi(GLenum name, GLuint index);
+
+typedef void type_glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers);
 
 global_variable gl_tex_image_2d_multisample *glTexImage2DMultisample;
 global_variable gl_bind_framebuffer* glBindFramebuffer;
@@ -96,6 +99,7 @@ global_variable gl_get_program_iv *glGetProgramiv;
 
 OpenGLGlobalFunction(glBindVertexArray);
 OpenGLGlobalFunction(glGenVertexArrays);
+OpenGLGlobalFunction(glDeleteFramebuffers);
 
 
 //#include "handmade_intrinsics.h"

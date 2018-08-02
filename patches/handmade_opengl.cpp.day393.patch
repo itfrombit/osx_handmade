@@ -1,0 +1,48 @@
+--- cpp/code/handmade_opengl.cpp	2018-08-02 02:20:00.000000000 -0400
++++ handmade_opengl.cpp	2018-08-02 02:19:53.000000000 -0400
+@@ -676,7 +676,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n"
+                  "#define DepthPeel %d\n",
+@@ -841,7 +841,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n"
+                  "#define DepthPeel %d\n",
+@@ -965,7 +965,8 @@
+     DepthMax = max(DepthMax, Depth);
+     }
+     
+-    gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    //gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    gl_FragDepth = DepthMax;
+     
+     v4 CombinedColor = V4(0, 0, 0, 0);
+     for(s32 SampleIndex = 0;
+@@ -1052,7 +1053,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n",
+                  OpenGL.ShaderSimTexWriteSRGB,
+@@ -1523,7 +1524,7 @@
+                              GL_STREAM_DRAW);
+                 
+                 zbias_program *Prog = &OpenGL.ZBiasNoDepthPeel;
+-                f32 AlphaThreshold = 0.0f;
++                f32 AlphaThreshold = 0.02f;
+                 if(Peeling)
+                 {
+                     opengl_framebuffer *PeelBuffer = GetDepthPeelReadBuffer(OnPeelIndex - 1);

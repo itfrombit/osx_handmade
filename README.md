@@ -6,7 +6,7 @@ A port of Handmade Hero (http://handmadehero.org) for OS X.
 This repository works with Casey's source code from handmade_hero_day_393.
 
 
-2018-08-01 Note:
+2018-08-02 Note:
 ----------------
 
 While the code compiles as-is on OS X, you must first apply a patch to
@@ -15,17 +15,22 @@ apply the patch by running:
 
     sh fix_handmade_hero_source.sh
 
-This patches a problem in handmade_opengl.cpp. Mac OS X supports an OpenGL 3.2
-core profile, but not an OpenGL 3.0 core profile. The OpenGL C code works okay
-as-is, but the Handmde Hero GLSL shader language is set to 1.3 ("130"), which Mac OS X
-refuses to compile under an OpenGL 3.2 core profile. For now, simply changing
-the GLSL version to 1.5 ("150") fixes the issue.
+This patches several problems in handmade_opengl.cpp:
 
-Also, Casey's final implementation for multisample depth peeling on Day 388
+1. Mac OS X supports an OpenGL 3.2 core profile, but not an OpenGL 3.0 core
+profile. The OpenGL C code works okay as-is, but the Handmde Hero GLSL shader
+language is set to 1.3 ("130"), which Mac OS X refuses to compile under an
+OpenGL 3.2 core profile. For now, simply changing the GLSL version to
+1.5 ("150") fixes the issue.
+
+2. Casey's final implementation for multisample depth peeling on Day 388
 causes undesirable artifacts on Mac OS X. Instead of averaging the Min and Max
 Depth values, I reverted to using the MaxDepth value in the shader with a
 threshold of 0.02. This still produces some minor artifacts, but it is a big
 improvement over the averaging method. I'll continue to look into this.
+
+3. gl_FragData is deprecated in the version of GLSL that the Mac supports.
+You must specify this array as an out variable.
 
 
 Compiling and Running

@@ -186,11 +186,12 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 				int CommandKeyFlag = ModifierFlags & NSCommandKeyMask;
 				int ControlKeyFlag = ModifierFlags & NSControlKeyMask;
 				int AlternateKeyFlag = ModifierFlags & NSAlternateKeyMask;
+				int ShiftKeyFlag = ModifierFlags & NSShiftKeyMask;
 
 				int KeyDownFlag = 1;
 
 				OSXKeyProcessing(KeyDownFlag, C,
-								CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
+								ShiftKeyFlag, CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
 								GameData->NewInput, GameData);
 			} break;
 
@@ -201,11 +202,12 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 				int CommandKeyFlag = ModifierFlags & NSCommandKeyMask;
 				int ControlKeyFlag = ModifierFlags & NSControlKeyMask;
 				int AlternateKeyFlag = ModifierFlags & NSAlternateKeyMask;
+				int ShiftKeyFlag = ModifierFlags & NSShiftKeyMask;
 
 				int KeyDownFlag = 0;
 
 				OSXKeyProcessing(KeyDownFlag, C,
-								CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
+								ShiftKeyFlag, CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
 								GameData->NewInput, GameData);
 			} break;
 

@@ -145,6 +145,7 @@ void OSXSetupOpenGL(osx_game_data* GameData)
         glBlitFramebuffer = (gl_blit_framebuffer *)dlsym(Image, "glBlitFramebuffer");
 
 		OSXGetOpenGLFunction(Image, glDeleteFramebuffers);
+		//OSXGetOpenGLFunction(Image, glDrawBuffers);
 #if 0
         glAttachShader = (gl_attach_shader *)dlsym("glAttachShader");
         glCompileShader = (gl_compile_shader *)dlsym("glCompileShader");
@@ -434,7 +435,7 @@ void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height
 
 
 void OSXKeyProcessing(bool32 IsDown, u32 Key,
-					  int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
+					  int ShiftKeyFlag, int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
 					  game_input* Input, osx_game_data* GameData)
 {
 	game_controller_input* Controller = GetController(Input, 0);
@@ -474,6 +475,33 @@ void OSXKeyProcessing(bool32 IsDown, u32 Key,
 
 		case ' ':
 			OSXProcessKeyboardMessage(&Controller->Start, IsDown);
+			break;
+
+		case '+':
+			if (IsDown)
+			{
+				OpenGL.DebugLightBufferTexIndex += 1;
+			}
+
+		case '=':
+			if (IsDown)
+			{
+				OpenGL.DebugLightBufferIndex += 1;
+			}
+			break;
+
+		case '_': // shifted '-'
+			if (IsDown)
+			{
+				OpenGL.DebugLightBufferTexIndex -= 1;
+			}
+			break;
+
+		case '-':
+			if (IsDown)
+			{
+				OpenGL.DebugLightBufferIndex -= 1;
+			}
 			break;
 
 		case 27:

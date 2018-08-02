@@ -68,6 +68,9 @@ typedef GLubyte* type_glGetStringi(GLenum name, GLuint index);
 
 typedef void type_glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers);
 
+typedef void type_glDrawBuffers(GLsizei n, const GLenum* bufs);
+
+
 global_variable gl_tex_image_2d_multisample *glTexImage2DMultisample;
 global_variable gl_bind_framebuffer* glBindFramebuffer;
 global_variable gl_gen_framebuffers* glGenFramebuffers;
@@ -101,6 +104,7 @@ OpenGLGlobalFunction(glBindVertexArray);
 OpenGLGlobalFunction(glGenVertexArrays);
 OpenGLGlobalFunction(glDeleteFramebuffers);
 
+//OpenGLGlobalFunction(glDrawBuffers);
 
 //#include "handmade_intrinsics.h"
 //#include "handmade_math.h"

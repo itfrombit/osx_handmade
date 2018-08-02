@@ -1,0 +1,113 @@
+--- cpp/code/handmade_opengl.cpp	2018-08-02 16:05:14.000000000 -0400
++++ handmade_opengl.cpp	2018-08-02 16:05:10.000000000 -0400
+@@ -709,7 +709,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n"
+                  "#define DepthPeel %d\n",
+@@ -874,7 +874,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n"
+                  "#define DepthPeel %d\n",
+@@ -998,7 +998,8 @@
+     DepthMax = max(DepthMax, Depth);
+     }
+     
+-    gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    //gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    gl_FragDepth = DepthMax;
+     
+     v4 CombinedColor = V4(0, 0, 0, 0);
+     for(s32 SampleIndex = 0;
+@@ -1085,7 +1086,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n",
+                  OpenGL.ShaderSimTexWriteSRGB,
+@@ -1137,6 +1138,7 @@
+     char *FragmentCode = R"FOO(
+     // Fragment code
+     uniform v3 LightP;
++	out vec4 FragData[4];
+     
+     v3 FrontEmit = V3(0, 0, 0);
+     v3 BackEmit = V3(0, 0, 0);
+@@ -1163,10 +1165,10 @@
+     {
+     Light(LightP.xy,             10.0f, V3(100.0f, 0, 0), V3(0, 100.0f, 0), V3(1, 0, 0));
+     Light(LightP.xy + V2(0.5f, 0.0f), 10.0f, V3(0, 10.0f, 0), V3(0, 0, 10.0f), V3(0, 1, 1));
+-    gl_FragData[0].rgb = FrontEmit;
+-    gl_FragData[1].rgb = BackEmit;
+-    gl_FragData[2].rgb = SurfaceColor;
+-    gl_FragData[3].rgb = NP;
++    FragData[0].rgb = FrontEmit;
++    FragData[1].rgb = BackEmit;
++    FragData[2].rgb = SurfaceColor;
++    FragData[3].rgb = NP;
+     }
+     )FOO";
+     
+@@ -1200,6 +1202,7 @@
+     uniform sampler2D SourceSurfaceColorTex;
+     uniform sampler2D SourceNPTex;
+     smooth in vec2 FragUV;
++	out vec4 FragData[4];
+     
+     v3 ManualSample(sampler2D Sampler)
+     {
+@@ -1219,10 +1222,10 @@
+     v3 SurfaceColor = SourceSurfaceColor;
+     v3 NP = SourceNP;
+     
+-    gl_FragData[0].rgb = FrontEmit;
+-    gl_FragData[1].rgb = BackEmit;
+-    gl_FragData[2].rgb = SurfaceColor;
+-    gl_FragData[3].rgb = NP;
++    FragData[0].rgb = FrontEmit;
++    FragData[1].rgb = BackEmit;
++    FragData[2].rgb = SurfaceColor;
++    FragData[3].rgb = NP;
+     }
+     )FOO";
+     
+@@ -1265,6 +1268,7 @@
+     uniform v2 UVStep;
+     
+     smooth in vec2 FragUV;
++	out vec4 FragData[2];
+     
+     struct light_value
+     {
+@@ -1325,8 +1329,8 @@
+     TransferLight(Up.P, Up.N, Up.BackEmit, RefP, RefN, RefC) +
+     TransferLight(Down.P, Down.N, Down.BackEmit, RefP, RefN, RefC));
+     
+-    gl_FragData[0].rgb = DestFrontEmit;
+-    gl_FragData[1].rgb = DestBackEmit;
++    FragData[0].rgb = DestFrontEmit;
++    FragData[1].rgb = DestBackEmit;
+     }
+     )FOO";
+     
+@@ -1895,7 +1899,7 @@
+                              GL_STREAM_DRAW);
+                 
+                 zbias_program *Prog = &OpenGL.ZBiasNoDepthPeel;
+-                f32 AlphaThreshold = 0.0f;
++                f32 AlphaThreshold = 0.02f;
+                 if(Peeling)
+                 {
+                     opengl_framebuffer *PeelBuffer = GetDepthPeelReadBuffer(OnPeelIndex - 1);

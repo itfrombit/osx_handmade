@@ -91,8 +91,12 @@ global_variable r32 GlobalAspectRatio;
 	r32 WidthAdd = (WindowRect.size.width - ContentRect.size.width);
 	r32 HeightAdd = (WindowRect.size.height - ContentRect.size.height);
 
-	r32 RenderWidth = 1920;
-	r32 RenderHeight = 1080;
+	//r32 RenderWidth = 1920;
+	//r32 RenderHeight = 1080;
+
+	r32 RenderWidth = 960;
+	r32 RenderHeight = 540;
+
 	//r32 RenderWidth = 2560;
 	//r32 RenderHeight = 1440;
 
@@ -338,10 +342,13 @@ int main(int argc, const char* argv[])
 	//float Height = 2160.0;
 	//float Width = 2560.0;
 	//float Height = 1440.0;
-	float Width = 1920.0;
-	float Height = 1080.0;
-	//float Width = 960.0;
-	//float Height = 540.0;
+
+	//float Width = 1920.0;
+	//float Height = 1080.0;
+
+	float Width = 960.0;
+	float Height = 540.0;
+
 	int BytesPerPixel = 4;
 
 	GlobalAspectRatio = Width / Height;

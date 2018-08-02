@@ -29,6 +29,7 @@ BINARIES = handmade libhandmade.dylib osx_asset_builder
 DYNAMIC_COMPILE_PATH=$(shell pwd)
 DYNAMIC_COMPILE_COMMAND=$(DYNAMIC_COMPILE_PATH)/dynamic_compile.sh
 
+#default: clean libhandmade.dylib handmade
 default: clean libhandmade.dylib handmade package
 
 quick: libhandmade.dylib handmade

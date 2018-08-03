@@ -1,0 +1,111 @@
+--- cpp/code/handmade_opengl.cpp	2018-08-03 02:12:46.000000000 -0400
++++ handmade_opengl.cpp	2018-08-03 02:12:41.000000000 -0400
+@@ -803,7 +803,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n"
+                  "#define DepthPeel %d\n",
+@@ -873,7 +873,7 @@
+     smooth in vec3 WorldP;
+     smooth in vec3 WorldN;
+     
+-    layout(location = 0) out v4 BlendUnitColor[3];
++    out v4 BlendUnitColor[3];
+     
+     void main(void)
+     {
+@@ -948,7 +948,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n"
+                  "#define DepthPeel %d\n",
+@@ -1118,7 +1118,7 @@
+     uniform sampler2DMS DepthSampler;
+     uniform s32 SampleCount;
+     
+-    layout(location = 0) out v4 BlendUnitColor[3];
++    out v4 BlendUnitColor[3];
+     void main(void)
+     {
+     
+@@ -1135,7 +1135,8 @@
+     DepthMax = max(DepthMax, Depth);
+     }
+     
+-    gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    //gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    gl_FragDepth = DepthMax;
+     
+     v4 CombinedColor = V4(0, 0, 0, 0);
+     v4 CombinedEmit = V4(0, 0, 0, 0);
+@@ -1227,7 +1228,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n"
++                 "#version 150\n"
+                  "#define ShaderSimTexWriteSRGB %d\n"
+                  "#define ShaderSimTexReadSRGB %d\n",
+                  OpenGL.ShaderSimTexWriteSRGB,
+@@ -1285,7 +1286,7 @@
+     // Fragment code
+     uniform v3 LightP;
+     
+-    layout(location = 0) out v4 BlendUnitColor[4];
++    out v4 BlendUnitColor[4];
+     
+     v3 FrontEmit = V3(0, 0, 0);
+     v3 BackEmit = V3(0, 0, 0);
+@@ -1328,7 +1329,7 @@
+ {
+     char Defines[1024];
+     FormatString(sizeof(Defines), Defines,
+-                 "#version 130\n");
++                 "#version 150\n");
+     
+     char *VertexCode = R"FOO(
+     // Vertex code
+@@ -1350,7 +1351,7 @@
+     uniform sampler2D EmitSampler;
+     uniform sampler2D NPLSampler;
+     
+-    layout(location = 0) out v4 BlendUnitColor[4];
++    out v4 BlendUnitColor[4];
+     
+     smooth in v2 FragUV;
+     
+@@ -1422,7 +1423,7 @@
+     uniform sampler2D SourceNPTex;
+     smooth in vec2 FragUV;
+     
+-    layout(location = 0) out v4 BlendUnitColor[4];
++    out v4 BlendUnitColor[4];
+     
+     v3 ManualSample(sampler2D Sampler)
+     {
+@@ -1486,7 +1487,7 @@
+     uniform v2 SourceUVStep;
+     
+     smooth in vec2 FragUV;
+-    layout(location = 0) out v4 BlendUnitColor[2];
++    out v4 BlendUnitColor[2];
+     
+     struct light_value
+     {
+@@ -2140,7 +2141,7 @@
+                              GL_STREAM_DRAW);
+                 
+                 zbias_program *Prog = &OpenGL.ZBiasNoDepthPeel;
+-                f32 AlphaThreshold = 0.0f;
++                f32 AlphaThreshold = 0.02f;
+                 if(Peeling)
+                 {
+                     opengl_framebuffer *PeelBuffer = GetDepthPeelReadBuffer(OnPeelIndex - 1);

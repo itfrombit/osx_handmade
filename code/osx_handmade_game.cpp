@@ -480,27 +480,28 @@ void OSXKeyProcessing(bool32 IsDown, u32 Key,
 		case '+':
 			if (IsDown)
 			{
-				OpenGL.DebugLightBufferTexIndex += 1;
+				OpenGL.DebugLightBufferIndex += 1;
 			}
+			break;
 
 		case '=':
 			if (IsDown)
 			{
-				OpenGL.DebugLightBufferIndex += 1;
+				OpenGL.DebugLightBufferTexIndex += 1;
 			}
 			break;
 
 		case '_': // shifted '-'
 			if (IsDown)
 			{
-				OpenGL.DebugLightBufferTexIndex -= 1;
+				OpenGL.DebugLightBufferIndex -= 1;
 			}
 			break;
 
 		case '-':
 			if (IsDown)
 			{
-				OpenGL.DebugLightBufferIndex -= 1;
+				OpenGL.DebugLightBufferTexIndex -= 1;
 			}
 			break;
 

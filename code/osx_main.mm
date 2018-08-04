@@ -97,11 +97,11 @@ global_variable r32 GlobalAspectRatio;
 	//r32 RenderWidth = 1920;
 	//r32 RenderHeight = 1080;
 
-	//r32 RenderWidth = 960;
-	//r32 RenderHeight = 540;
+	r32 RenderWidth = 960;
+	r32 RenderHeight = 540;
 
-	r32 RenderWidth = 480;
-	r32 RenderHeight = 270;
+	//r32 RenderWidth = 480;
+	//r32 RenderHeight = 270;
 
 	r32 NewCy = (RenderHeight * (frameSize.width - WidthAdd)) / RenderWidth;
 
@@ -353,11 +353,11 @@ int main(int argc, const char* argv[])
 	//float Width = 1920.0;
 	//float Height = 1080.0;
 
-	//float Width = 960.0;
-	//float Height = 540.0;
+	float Width = 960.0;
+	float Height = 540.0;
 
-	float Width = 480.0;
-	float Height = 270.0;
+	//float Width = 480.0;
+	//float Height = 270.0;
 
 	int BytesPerPixel = 4;
 

@@ -13,7 +13,7 @@ HANDMADE_WARNING_FLAGS = -Wno-unused-function -Wno-unused-variable -Wno-c++11-na
 #HANDMADE_FLAGS = -DHANDMADE_INTERNAL=1 -DHANDMADE_SLOW=1 -DHANDMADE_OSX=1 -DHANDMADE_MIN_OSX -Wno-null-dereference -isysroot /Applications/Xcode-Beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
 
 COPTS		= -g -Wall -fno-inline $(HANDMADE_FLAGS)
-#COPTS		= -O3 -Wall $(HANDMADE_FLAGS)
+COPTS		= -O3 -Wall $(HANDMADE_FLAGS)
 
 
 CPP11_FLAGS	= -std=c++11 -stdlib=libc++ -ggdb

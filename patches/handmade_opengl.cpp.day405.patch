@@ -1,0 +1,21 @@
+--- cpp/code/handmade_opengl.cpp	2018-08-04 03:28:43.000000000 -0400
++++ handmade_opengl.cpp	2018-08-04 03:28:38.000000000 -0400
+@@ -1174,7 +1174,8 @@
+     DepthMax = max(DepthMax, Depth);
+     }
+     
+-    gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    //gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    gl_FragDepth = DepthMax;
+     
+     v4 CombinedColor = V4(0, 0, 0, 0);
+     v4 CombinedEmit = V4(0, 0, 0, 0);
+@@ -2199,7 +2200,7 @@
+                              GL_STREAM_DRAW);
+                 
+                 zbias_program *Prog = &OpenGL.ZBiasNoDepthPeel;
+-                f32 AlphaThreshold = 0.0f;
++                f32 AlphaThreshold = 0.02f;
+                 if(Peeling)
+                 {
+                     opengl_framebuffer *PeelBuffer = GetDepthPeelReadBuffer(OnPeelIndex - 1);

@@ -3,10 +3,18 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 405.
+This repository works with Casey's source code from Day 410.
 
 
-2018-08-03 Note:
+This OS X platform layer code does not need to be updated for
+every episode of Handmade Hero, although I do test each day's code
+on OS X. If you see "missing" days in this OS X repository, it just
+means that the most recent version of the OS X platform layer will
+work. For example, day 405 of the OS X platform layer
+will work with Casey's Handmade Hero days 405 through 409.
+
+
+2018-08-04 Note:
 ----------------
 
 While the code compiles as-is on OS X, you must first apply a patch to

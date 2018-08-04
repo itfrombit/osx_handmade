@@ -505,6 +505,24 @@ void OSXKeyProcessing(bool32 IsDown, u32 Key,
 			}
 			break;
 
+		case 0xF704: // F1
+		case 0xF705:
+		case 0xF706:
+		case 0xF707:
+		case 0xF708:
+		case 0xF709:
+		case 0xF70A:
+		case 0xF70B:
+		case 0xF70C:
+		case 0xF70D:
+		case 0xF70E:
+		case 0xF70F: // F12
+			if (IsDown)
+			{
+				Input->FKeyPressed[Key - 0xF704 + 1] = true;
+			}
+			break;
+
 		case 27:
 			OSXProcessKeyboardMessage(&Controller->Back, IsDown);
 			break;

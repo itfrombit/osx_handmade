@@ -173,6 +173,8 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 {
 	NSEvent* Event;
 
+	ZeroStruct(GameData->NewInput->FKeyPressed);
+
 	do
 	{
 		Event = [NSApp nextEventMatchingMask:NSAnyEventMask

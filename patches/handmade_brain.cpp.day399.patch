@@ -1,0 +1,19 @@
+--- cpp/code/handmade_brain.cpp	2018-08-04 01:07:54.000000000 -0400
++++ handmade_brain.cpp	2018-08-04 01:07:24.000000000 -0400
+@@ -269,10 +269,15 @@
+ 
+                 ConHero->RecenterTimer = ClampAboveZero(ConHero->RecenterTimer - dt);
+                 
++				f32 ddPLen = Length(ddP);
++				if (ddPLen > 10.0f)
++				{
++					ddP *= (10.0f / ddPLen);
++				}
+                 Head->ddP = ddP;
+             }
+ 
+-            if(Body)
++            if (Head && Body)
+             {
+                 Body->FacingDirection = Head->FacingDirection;
+                 Body->dP = V3(0, 0, 0);

@@ -313,6 +313,10 @@ typedef struct osx_game_data
 	int							RenderAtHalfSpeed;
 
 	u64							LastCounter;
+
+	int							RenderCommandsInitialized;
+	game_render_commands		RenderCommands;
+
 } osx_game_data;
 
 

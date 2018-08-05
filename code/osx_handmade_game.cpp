@@ -659,6 +659,21 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Input Processing");
 
+	if (GameData->RenderCommandsInitialized == 0)
+	{
+		GameData->RenderCommands = DefaultRenderCommands(
+												GameData->PushBufferSize,
+												GameData->PushBuffer,
+												(u32)GameData->RenderBuffer.Width,
+												(u32)GameData->RenderBuffer.Height,
+												GameData->MaxVertexCount,
+												GameData->VertexArray,
+												GameData->BitmapArray,
+												&OpenGL.WhiteBitmap);
+		GameData->RenderCommandsInitialized = 1;
+	}
+
+#if 0
 	game_render_commands RenderCommands = DefaultRenderCommands(
 											GameData->PushBufferSize,
 											GameData->PushBuffer,
@@ -668,8 +683,9 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 											GameData->VertexArray,
 											GameData->BitmapArray,
 											&OpenGL.WhiteBitmap);
+#endif
 
-	rectangle2i DrawRegion = AspectRatioFit(RenderCommands.Settings.Width, RenderCommands.Settings.Height,
+	rectangle2i DrawRegion = AspectRatioFit(GameData->RenderCommands.Settings.Width, GameData->RenderCommands.Settings.Height,
 											WindowFrame.size.width, WindowFrame.size.height);
 
 	game_controller_input* OldKeyboardController = GetController(GameData->OldInput, 0);
@@ -705,8 +721,8 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 		r32 MouseX = (r32)MouseLocation.x;
 		r32 MouseY = (r32)MouseLocation.y;
 
-		GameData->NewInput->MouseX = RenderCommands.Settings.Width * Clamp01MapToRange(DrawRegion.MinX, MouseX, DrawRegion.MaxX);
-		GameData->NewInput->MouseY = RenderCommands.Settings.Height * Clamp01MapToRange(DrawRegion.MinY, MouseY, DrawRegion.MaxY);
+		GameData->NewInput->MouseX = GameData->RenderCommands.Settings.Width * Clamp01MapToRange(DrawRegion.MinX, MouseX, DrawRegion.MaxX);
+		GameData->NewInput->MouseY = GameData->RenderCommands.Settings.Height * Clamp01MapToRange(DrawRegion.MinY, MouseY, DrawRegion.MaxY);
 
 
 		GameData->NewInput->MouseZ = 0; // TODO(casey): Support mousewheel?
@@ -811,7 +827,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 		if (GameData->Game.UpdateAndRender)
 		{
-			GameData->Game.UpdateAndRender(&GameMemory, GameData->NewInput, &RenderCommands);
+			GameData->Game.UpdateAndRender(&GameMemory, GameData->NewInput, &GameData->RenderCommands);
 
 			if (GameData->NewInput->QuitRequested)
 			{
@@ -909,7 +925,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	if (GameData->Game.DEBUGFrameEnd)
 	{
-		GameData->Game.DEBUGFrameEnd(&GameMemory, GameData->NewInput, &RenderCommands);
+		GameData->Game.DEBUGFrameEnd(&GameMemory, GameData->NewInput, &GameData->RenderCommands);
 	}
 
 	if (ExecutableNeedsToBeReloaded)
@@ -978,14 +994,14 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	OSXDisplayBufferInWindow(&GameData->HighPriorityQueue,
 							 &GameData->RenderBuffer,
-							 &RenderCommands,
+							 &GameData->RenderCommands,
 							 DrawRegion,
 							 WindowFrame.size.width,
 							 WindowFrame.size.height,
 							 &FrameTempArena);
 
-	RenderCommands.PushBufferDataAt = RenderCommands.PushBufferBase;
-	RenderCommands.VertexCount = 0;
+	GameData->RenderCommands.PushBufferDataAt = GameData->RenderCommands.PushBufferBase;
+	GameData->RenderCommands.VertexCount = 0;
 
 	END_BLOCK();
 }

@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 415.
+This repository works with Casey's source code from Day 416.
 
 
 This OS X platform layer code does not need to be updated for
@@ -23,16 +23,13 @@ apply the patch by running:
 
     sh fix_handmade_hero_source.sh
 
-This patches two problems in handmade_opengl.cpp:
+This patches a problem in handmade_opengl.cpp:
 
-1. Casey's final implementation for multisample depth peeling on Day 388
+- Casey's final implementation for multisample depth peeling on Day 388
 causes undesirable artifacts on Mac OS X. Instead of averaging the Min and Max
 Depth values, I reverted to using the MaxDepth value in the shader with a
 threshold of 0.02. This still produces some minor artifacts, but it is a big
 improvement over the averaging method. I'll continue to look into this.
-
-2. Use of 'unsigned int' in GLSL variable declarations causes a reserved word error
-when compiling the ZBias shader. It should be 'uint' according to the GLSL spec.
 
 
 Compiling and Running

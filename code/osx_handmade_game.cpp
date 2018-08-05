@@ -146,6 +146,7 @@ void OSXSetupOpenGL(osx_game_data* GameData)
 
 		OSXGetOpenGLFunction(Image, glDeleteFramebuffers);
 		//OSXGetOpenGLFunction(Image, glDrawBuffers);
+		OSXGetOpenGLFunction(Image, glVertexAttribIPointer);
 #if 0
         glAttachShader = (gl_attach_shader *)dlsym("glAttachShader");
         glCompileShader = (gl_compile_shader *)dlsym("glCompileShader");

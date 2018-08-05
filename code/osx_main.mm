@@ -31,6 +31,20 @@
 global_variable NSOpenGLContext* GlobalGLContext;
 global_variable r32 GlobalAspectRatio;
 
+//const r32 GlobalRenderWidth = 2560.0f;
+//const r32 GlobalRenderHeight = 1600.0f;
+
+//const r32 GlobalRenderWidth = 2560.0f;
+//const r32 GlobalRenderHeight = 1440.0f;
+
+//const r32 GlobalRenderWidth = 1920.0f;
+//const r32 GlobalRenderHeight = 1080.0f;
+
+const r32 GlobalRenderWidth = 960;
+const r32 GlobalRenderHeight = 540;
+
+//const r32 GlobalRenderWidth = 480;
+//const r32 GlobalRenderHeight = 270;
 
 ///////////////////////////////////////////////////////////////////////
 // Application Delegate
@@ -91,19 +105,8 @@ global_variable r32 GlobalAspectRatio;
 	r32 WidthAdd = (WindowRect.size.width - ContentRect.size.width);
 	r32 HeightAdd = (WindowRect.size.height - ContentRect.size.height);
 
-	//r32 RenderWidth = 2560;
-	//r32 RenderHeight = 1440;
 
-	//r32 RenderWidth = 1920;
-	//r32 RenderHeight = 1080;
-
-	r32 RenderWidth = 960;
-	r32 RenderHeight = 540;
-
-	//r32 RenderWidth = 480;
-	//r32 RenderHeight = 270;
-
-	r32 NewCy = (RenderHeight * (frameSize.width - WidthAdd)) / RenderWidth;
+	r32 NewCy = (GlobalRenderHeight * (frameSize.width - WidthAdd)) / GlobalRenderWidth;
 
 	frameSize.height = NewCy + HeightAdd;
 
@@ -346,29 +349,31 @@ int main(int argc, const char* argv[])
 	// Create the main window and the content view
 	NSRect screenRect = [[NSScreen mainScreen] frame];
 
+#if 0
 	//float Width = 3840.0;
 	//float Height = 2160.0;
 
 	//float Width = 2560.0;
 	//float Height = 1440.0;
 
-	//float Width = 1920.0;
-	//float Height = 1080.0;
+	float Width = 1920.0;
+	float Height = 1080.0;
 
-	float Width = 960.0;
-	float Height = 540.0;
+	//float Width = 960.0;
+	//float Height = 540.0;
 
 	//float Width = 480.0;
 	//float Height = 270.0;
+#endif
 
 	int BytesPerPixel = 4;
 
-	GlobalAspectRatio = Width / Height;
+	GlobalAspectRatio = GlobalRenderWidth / GlobalRenderHeight;
 
-	NSRect InitialFrame = NSMakeRect((screenRect.size.width - Width) * 0.5,
-									(screenRect.size.height - Height) * 0.5,
-									Width,
-									Height);
+	NSRect InitialFrame = NSMakeRect((screenRect.size.width - GlobalRenderWidth) * 0.5,
+									(screenRect.size.height - GlobalRenderHeight) * 0.5,
+									GlobalRenderWidth,
+									GlobalRenderHeight);
 
 	NSWindow* window = [[NSWindow alloc] initWithContentRect:InitialFrame
 									styleMask:NSTitledWindowMask
@@ -402,7 +407,7 @@ int main(int argc, const char* argv[])
 	[window makeKeyAndOrderFront:nil];
 
 
-	OSXSetupGameRenderBuffer(&GameData, Width, Height, BytesPerPixel);
+	OSXSetupGameRenderBuffer(&GameData, GlobalRenderWidth, GlobalRenderHeight, BytesPerPixel);
 
 
 	///////////////////////////////////////////////////////////////////

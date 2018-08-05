@@ -70,6 +70,8 @@ typedef void type_glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers);
 
 typedef void type_glDrawBuffers(GLsizei n, const GLenum* bufs);
 
+typedef void type_glVertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer);
+
 
 global_variable gl_tex_image_2d_multisample *glTexImage2DMultisample;
 global_variable gl_bind_framebuffer* glBindFramebuffer;
@@ -103,6 +105,7 @@ global_variable gl_get_program_iv *glGetProgramiv;
 OpenGLGlobalFunction(glBindVertexArray);
 OpenGLGlobalFunction(glGenVertexArrays);
 OpenGLGlobalFunction(glDeleteFramebuffers);
+OpenGLGlobalFunction(glVertexAttribIPointer);
 
 //OpenGLGlobalFunction(glDrawBuffers);
 

@@ -1,0 +1,54 @@
+--- cpp/code/handmade_opengl.cpp	2018-08-05 12:35:48.000000000 -0400
++++ handmade_opengl.cpp	2018-08-05 12:35:46.000000000 -0400
+@@ -901,8 +901,8 @@
+     in v3 VertN;
+     in v2 VertUV;
+     in v4 VertColor;
+-    in unsigned int VertLightIndex;
+-    in unsigned int VertLightCount;
++    in uint VertLightIndex;
++    in uint VertLightCount;
+     
+     smooth out v2 FragUV;
+     smooth out v4 FragColor;
+@@ -910,8 +910,8 @@
+     smooth out v3 WorldP;
+     smooth out v3 WorldN;
+     
+-    flat out unsigned int FragLightIndex;
+-    flat out unsigned int FragLightCount;
++    flat out uint FragLightIndex;
++    flat out uint FragLightCount;
+     
+     void main(void)
+     {
+@@ -996,8 +996,8 @@
+     smooth in vec3 WorldP;
+     smooth in vec3 WorldN;
+     
+-    flat in unsigned int FragLightIndex;
+-    flat in unsigned int FragLightCount;
++    flat in uint FragLightIndex;
++    flat in uint FragLightCount;
+     
+     layout(location = 0) out v4 BlendUnitColor[3];
+     
+@@ -1377,7 +1377,8 @@
+     DepthMax = max(DepthMax, Depth);
+     }
+     
+-    gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    //gl_FragDepth = 0.5f*(DepthMin+DepthMax);
++    gl_FragDepth = DepthMax;
+     
+     v4 CombinedColor = V4(0, 0, 0, 0);
+     v4 CombinedEmit = V4(0, 0, 0, 0);
+@@ -2424,7 +2425,7 @@
+                              GL_STREAM_DRAW);
+                 
+                 zbias_program *Prog = &OpenGL.ZBiasNoDepthPeel;
+-                f32 AlphaThreshold = 0.0f;
++                f32 AlphaThreshold = 0.02f;
+                 if(Peeling)
+                 {
+                     opengl_framebuffer *PeelBuffer = GetDepthPeelReadBuffer(OnPeelIndex - 1);

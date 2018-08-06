@@ -317,6 +317,9 @@ typedef struct osx_game_data
 	int							RenderCommandsInitialized;
 	game_render_commands		RenderCommands;
 
+	lighting_surface*			Surfaces;
+	lighting_point*				LightPoints;
+	v3*							EmitC0;
 } osx_game_data;
 
 

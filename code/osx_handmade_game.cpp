@@ -282,19 +282,23 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	//ZeroStruct(GameData->GameMemory);
 
 	GameData->PushBufferSize = Megabytes(64);
-	platform_memory_block* PushBufferBlock = OSXAllocateMemory(GameData->PushBufferSize,
-															PlatformMemory_NotRestored);
-	GameData->PushBuffer = PushBufferBlock->Base;
+	GameData->PushBuffer = OSXAllocateMemory(GameData->PushBufferSize,
+										     PlatformMemory_NotRestored)->Base;
 
 	GameData->MaxVertexCount = 65536;
-	platform_memory_block* VertexArrayBlock = OSXAllocateMemory(GameData->MaxVertexCount * sizeof(textured_vertex),
-															PlatformMemory_NotRestored);
-	GameData->VertexArray = (textured_vertex*)VertexArrayBlock->Base;
+	GameData->VertexArray = (textured_vertex*)OSXAllocateMemory(GameData->MaxVertexCount * sizeof(textured_vertex),
+															          PlatformMemory_NotRestored)->Base;
 
-	platform_memory_block* BitmapArrayBlock = OSXAllocateMemory(GameData->MaxVertexCount * sizeof(loaded_bitmap*),
-															PlatformMemory_NotRestored);
-	GameData->BitmapArray = (loaded_bitmap**)BitmapArrayBlock->Base;
+	GameData->BitmapArray = (loaded_bitmap**)OSXAllocateMemory(GameData->MaxVertexCount * sizeof(loaded_bitmap*),
+															  PlatformMemory_NotRestored)->Base;
 
+	GameData->Surfaces = (lighting_surface*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(lighting_surface),
+	                                                          PlatformMemory_NotRestored)->Base;
+
+	GameData->LightPoints = (lighting_point*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(lighting_point),
+	                                                           PlatformMemory_NotRestored)->Base;
+
+	GameData->EmitC0 = (v3*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(v3), PlatformMemory_NotRestored)->Base;
 
 #if HANDMADE_INTERNAL
 	char* RequestedAddress = (char*)Gigabytes(8);
@@ -670,7 +674,10 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 												GameData->MaxVertexCount,
 												GameData->VertexArray,
 												GameData->BitmapArray,
-												&OpenGL.WhiteBitmap);
+												&OpenGL.WhiteBitmap,
+												GameData->Surfaces,
+												GameData->LightPoints,
+												GameData->EmitC0);
 		GameData->RenderCommandsInitialized = 1;
 	}
 
@@ -1003,6 +1010,8 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	GameData->RenderCommands.PushBufferDataAt = GameData->RenderCommands.PushBufferBase;
 	GameData->RenderCommands.VertexCount = 0;
+	GameData->RenderCommands.SurfaceCount = 0;
+	GameData->RenderCommands.LightPointCount = 0;
 
 	END_BLOCK();
 }

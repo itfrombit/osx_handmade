@@ -318,8 +318,6 @@ typedef struct osx_game_data
 	game_render_commands		RenderCommands;
 
 	lighting_box*				LightBoxes;
-	lighting_point*				LightPoints;
-	v3*							EmitC0;
 } osx_game_data;
 
 

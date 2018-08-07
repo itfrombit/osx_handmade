@@ -295,11 +295,6 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameData->LightBoxes = (lighting_box*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(lighting_box),
 	                                                          PlatformMemory_NotRestored)->Base;
 
-	GameData->LightPoints = (lighting_point*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(lighting_point),
-	                                                           PlatformMemory_NotRestored)->Base;
-
-	GameData->EmitC0 = (v3*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(v3), PlatformMemory_NotRestored)->Base;
-
 #if HANDMADE_INTERNAL
 	char* RequestedAddress = (char*)Gigabytes(8);
 	uint32 AllocationFlags = MAP_PRIVATE|MAP_ANON|MAP_FIXED;
@@ -675,23 +670,9 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 												GameData->VertexArray,
 												GameData->BitmapArray,
 												&OpenGL.WhiteBitmap,
-												GameData->LightBoxes,
-												GameData->LightPoints,
-												GameData->EmitC0);
+												GameData->LightBoxes);
 		GameData->RenderCommandsInitialized = 1;
 	}
-
-#if 0
-	game_render_commands RenderCommands = DefaultRenderCommands(
-											GameData->PushBufferSize,
-											GameData->PushBuffer,
-											(u32)GameData->RenderBuffer.Width,
-											(u32)GameData->RenderBuffer.Height,
-											GameData->MaxVertexCount,
-											GameData->VertexArray,
-											GameData->BitmapArray,
-											&OpenGL.WhiteBitmap);
-#endif
 
 	rectangle2i DrawRegion = AspectRatioFit(GameData->RenderCommands.Settings.Width, GameData->RenderCommands.Settings.Height,
 											WindowFrame.size.width, WindowFrame.size.height);
@@ -806,6 +787,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Game Update");
 
+	GameData->RenderCommands.LightPointIndex = 1;
 
 	if (!GlobalPause)
 	{
@@ -1011,7 +993,6 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	GameData->RenderCommands.PushBufferDataAt = GameData->RenderCommands.PushBufferBase;
 	GameData->RenderCommands.VertexCount = 0;
 	GameData->RenderCommands.LightBoxCount = 0;
-	GameData->RenderCommands.LightPointCount = 0;
 
 	END_BLOCK();
 }

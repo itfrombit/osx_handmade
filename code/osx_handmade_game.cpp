@@ -292,7 +292,7 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameData->BitmapArray = (loaded_bitmap**)OSXAllocateMemory(GameData->MaxVertexCount * sizeof(loaded_bitmap*),
 															  PlatformMemory_NotRestored)->Base;
 
-	GameData->Surfaces = (lighting_surface*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(lighting_surface),
+	GameData->LightBoxes = (lighting_box*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(lighting_box),
 	                                                          PlatformMemory_NotRestored)->Base;
 
 	GameData->LightPoints = (lighting_point*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(lighting_point),
@@ -675,7 +675,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 												GameData->VertexArray,
 												GameData->BitmapArray,
 												&OpenGL.WhiteBitmap,
-												GameData->Surfaces,
+												GameData->LightBoxes,
 												GameData->LightPoints,
 												GameData->EmitC0);
 		GameData->RenderCommandsInitialized = 1;
@@ -1010,7 +1010,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	GameData->RenderCommands.PushBufferDataAt = GameData->RenderCommands.PushBufferBase;
 	GameData->RenderCommands.VertexCount = 0;
-	GameData->RenderCommands.SurfaceCount = 0;
+	GameData->RenderCommands.LightBoxCount = 0;
 	GameData->RenderCommands.LightPointCount = 0;
 
 	END_BLOCK();

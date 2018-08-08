@@ -622,10 +622,12 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 
 		// We always display via hardware
 
+		v4 ClearColor = {};
+
 		OpenGLDisplayBitmap(RenderBuffer->Width, RenderBuffer->Height,
 							RenderBuffer->Memory, RenderBuffer->Pitch,
 							DrawRegion,
-							Commands->ClearColor,
+							ClearColor,
 							OpenGL.ReservedBlitTexture);
 		//SwapBuffers();
 	}

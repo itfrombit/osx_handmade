@@ -68,7 +68,7 @@ osx_asset_builder:	osx_asset_builder.o
 	$(CXX) $(COPTS) $(OSX_CT_LD_FLAGS) -o $@ $^
 
 osx_asset_builder.o:	osx_asset_builder.cpp
-	$(CXX) $(COPTS) -Wno-c++11-compat-deprecated-writable-strings -Wno-missing-braces -c $<
+	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_WARNING_FLAGS) -c $<
 
 
 #libhandmade.dylib: handmade.o handmade_optimized.o

@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 426.
+This repository works with Casey's source code from Day 430.
 
 
 This OS X platform layer code does not need to be updated for
@@ -14,7 +14,7 @@ work. For example, day 405 of the OS X platform layer
 will work with Casey's Handmade Hero days 405 through 409.
 
 
-2018-08-05 Note:
+2018-08-08 Note:
 ----------------
 
 While the code compiles as-is on OS X, you must first apply a patch to
@@ -42,13 +42,33 @@ and .h source files to the cpp/code subdirectory of this repository.
 Also, copy over the test, test2, and test3 asset folders, and the
 intro_art.hha file to the data subdirectory of this repository.
 
+Your file/directory structure should look like this:
+
+    .                      // root directory of this repository
+	code/Makefile          // and the rest of the OS X platform code
+	code/osx_handmade.cpp  // and the rest of the OS X platform code
+	cpp/code/handmade.cpp  // and the rest of Casey's code
+	data/intro_art.hha             // prebuilt art pack from the SendOwl site
+	data/test/test_background.bmp  // and the rest of test assets
+	data/test2/grass00.bmp         // and the rest of test2 assets
+	data/test3/bloop_00.wav        // and the rest of test3 assets
+	fonts/LiberationMono-Regular.ttf
+	fonts/LiberationSans-Regular.ttf
+	patches/                // patches to Casey's HH source code
+	xcode/                  // Xcode project files
+
+
 Before you build the application for the first time, you need to
 create the packed asset files. To do this, run
 
     make osx_asset_builder
 
-and then execute the osx_asset_builder command line program. This will
-create the .hha files.
+from the code directory and then execute the osx_asset_builder
+command line program. This will create the .hha files in the
+data subdirectory of this repository. This is where the Makefile
+looks for them when building the Handmade Hero app package. You only
+need to re-run the osx_asset_builder if the art assets change or if
+you decide to use a different font.
 
 If you already have packed asset files, you can just copy them to the data
 subdirectory and skip building and running the osx_asset_builder.
@@ -75,7 +95,7 @@ display a source code and variable view while debugging. It's not great,
 but it's almost always better than using Xcode, and is sometimes better than
 using the plain command line mode in lldb.
 
-Hot-loading is supported, so you can just run 'make' again (or have your
+Hot-loading is supported, so you can just run 'make quick' again (or have your
 favorite editor do it) while the application is running to build and
 reload the newest code.
 

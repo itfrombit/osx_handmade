@@ -9,6 +9,7 @@ xcode/handmade.xcodeproj/project.xcworkspace/*
 xcode/handmade.xcodeproj/xcuserdata
 handmade
 handmade.dSYM/
+osx_asset_builder
 test_asset_builder
 test_asset_builder.dSYM/
 *.dylib

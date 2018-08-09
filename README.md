@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 430.
+This repository works with Casey's source code from Day 434.
 
 
 This OS X platform layer code does not need to be updated for
@@ -14,7 +14,7 @@ work. For example, day 405 of the OS X platform layer
 will work with Casey's Handmade Hero days 405 through 409.
 
 
-2018-08-08 Note:
+2018-08-09 Note:
 ----------------
 
 While the code compiles as-is on OS X, you must first apply a patch to
@@ -30,6 +30,11 @@ causes undesirable artifacts on Mac OS X. Instead of averaging the Min and Max
 Depth values, I reverted to using the MaxDepth value in the shader with a
 threshold of 0.02. This still produces some minor artifacts, but it is a big
 improvement over the averaging method. I'll continue to look into this.
+
+It also fixes a problem in handmade_lighting.cpp where the BoxSurfaceIndex
+was getting a bad index value on edge cases and causing a crash. Casey ran
+into this same bug in Day 435 and fixed it, so I borrowed the solution from
+one day in the future. If only reality was this easy.
 
 
 Compiling and Running

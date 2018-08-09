@@ -1,0 +1,21 @@
+--- cpp/code/handmade_simd.h	2018-08-09 17:06:27.000000000 -0400
++++ handmade_simd.h	2018-08-09 17:06:23.000000000 -0400
+@@ -413,6 +413,18 @@
+     return(Result);
+ }
+ 
++
++inline f32_4x
++AndNot(f32_4x A, f32_4x B) // NOTE(casey): _B_ gets notted
++{
++    f32_4x Result;
++
++    Result.P = _mm_andnot_ps(B.P, A.P);
++
++    return(Result);
++}
++
++
+ inline f32_4x
+ Select(f32_4x A, f32_4x Mask, f32_4x B)
+ {

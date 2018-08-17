@@ -116,6 +116,7 @@ OpenGLGlobalFunction(glVertexAttribIPointer);
 #include "handmade_random.h"
 #include "handmade_lighting.h"
 
+#include "osx_handmade_events.h"
 #include "osx_handmade.h"
 
 platform_api Platform;

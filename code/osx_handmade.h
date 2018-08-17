@@ -318,6 +318,9 @@ typedef struct osx_game_data
 	game_render_commands		RenderCommands;
 
 	lighting_box*				LightBoxes;
+
+	u8							KeyboardState[255];
+	u8							OldKeyboardState[255];
 } osx_game_data;
 
 
@@ -333,7 +336,7 @@ void OSXStopGame();
 
 
 
-inline void OSXProcessKeyboardMessage(game_button_state *NewState, b32 IsDown)
+inline void OSXProcessKeyboardMessage(game_button_state* NewState, b32 IsDown)
 {
 	if (NewState->EndedDown != IsDown)
 	{
@@ -342,7 +345,7 @@ inline void OSXProcessKeyboardMessage(game_button_state *NewState, b32 IsDown)
 	}
 }
 
-void OSXKeyProcessing(b32 IsDown, u32 Key,
+void OSXKeyProcessing(b32 IsDown, u32 KeyCode, u32 Key,
 					  int ShiftKeyFlag, int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
 					  game_input* Input, osx_game_data* GameData);
 
@@ -358,6 +361,7 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext);
 void OSXSetupOpenGL(osx_game_data* GameData);
 void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height, int BytesPerPixel);
 
+void OSXInitializeGameInputForNewFrame(osx_game_data* GameData);
 void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 									b32 MouseInWindowFlag, CGPoint MouseLocation,
 									int MouseButtonMask);

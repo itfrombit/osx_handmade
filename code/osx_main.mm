@@ -18,6 +18,7 @@
 
 #import "handmade_platform.h"
 #import "handmade_memory.h"
+#import "osx_handmade_events.h"
 #import "osx_handmade.h"
 
 #import "handmade_intrinsics.h"
@@ -177,6 +178,7 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 	NSEvent* Event;
 
 	ZeroStruct(GameData->NewInput->FKeyPressed);
+	memcpy(GameData->OldKeyboardState, GameData->KeyboardState, sizeof(GameData->KeyboardState));
 
 	do
 	{
@@ -188,33 +190,86 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 		switch ([Event type])
 		{
 			case NSKeyDown:
+			case NSKeyUp:
 			{
+				u32 KeyCode = [Event keyCode];
 				unichar C = [[Event charactersIgnoringModifiers] characterAtIndex:0];
-				int ModifierFlags = [Event modifierFlags];
-				int CommandKeyFlag = ModifierFlags & NSCommandKeyMask;
-				int ControlKeyFlag = ModifierFlags & NSControlKeyMask;
-				int AlternateKeyFlag = ModifierFlags & NSAlternateKeyMask;
-				int ShiftKeyFlag = ModifierFlags & NSShiftKeyMask;
+				u32 ModifierFlags = [Event modifierFlags];
+				int CommandKeyFlag = (ModifierFlags & NSCommandKeyMask) > 0;
+				int ControlKeyFlag = (ModifierFlags & NSControlKeyMask) > 0;
+				int AlternateKeyFlag = (ModifierFlags & NSAlternateKeyMask) > 0;
+				int ShiftKeyFlag = (ModifierFlags & NSShiftKeyMask) > 0;
 
-				int KeyDownFlag = 1;
+				int KeyDownFlag = ([Event type] == NSKeyDown) ? 1 : 0;
+				GameData->KeyboardState[KeyCode] = KeyDownFlag;
 
-				OSXKeyProcessing(KeyDownFlag, C,
+				//printf("%s: keyCode: %d  unichar: %c\n", NSKeyDown ? "KeyDown" : "KeyUp", [Event keyCode], C);
+
+				OSXKeyProcessing(KeyDownFlag, KeyCode, C,
 								ShiftKeyFlag, CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
 								GameData->NewInput, GameData);
 			} break;
 
-			case NSKeyUp:
+			case NSFlagsChanged:
 			{
-				unichar C = [[Event charactersIgnoringModifiers] characterAtIndex:0];
-				int ModifierFlags = [Event modifierFlags];
-				int CommandKeyFlag = ModifierFlags & NSCommandKeyMask;
-				int ControlKeyFlag = ModifierFlags & NSControlKeyMask;
-				int AlternateKeyFlag = ModifierFlags & NSAlternateKeyMask;
-				int ShiftKeyFlag = ModifierFlags & NSShiftKeyMask;
+				u32 KeyCode = 0;
+				u32 ModifierFlags = [Event modifierFlags];
+				int CommandKeyFlag = (ModifierFlags & NSCommandKeyMask) > 0;
+				int ControlKeyFlag = (ModifierFlags & NSControlKeyMask) > 0;
+				int AlternateKeyFlag = (ModifierFlags & NSAlternateKeyMask) > 0;
+				int ShiftKeyFlag = (ModifierFlags & NSShiftKeyMask) > 0;
+
+				GameData->KeyboardState[kVK_Command] = CommandKeyFlag;
+				GameData->KeyboardState[kVK_Control] = ControlKeyFlag;
+				GameData->KeyboardState[kVK_Alternate] = AlternateKeyFlag;
+				GameData->KeyboardState[kVK_Shift] = ShiftKeyFlag;
 
 				int KeyDownFlag = 0;
 
-				OSXKeyProcessing(KeyDownFlag, C,
+				if (CommandKeyFlag != GameData->OldKeyboardState[kVK_Command])
+				{
+					KeyCode = kVK_Command;
+
+					if (CommandKeyFlag)
+					{
+						KeyDownFlag = 1;
+					}
+				}
+
+				if (ControlKeyFlag != GameData->OldKeyboardState[kVK_Control])
+				{
+					KeyCode = kVK_Control;
+
+					if (ControlKeyFlag)
+					{
+						KeyDownFlag = 1;
+					}
+				}
+
+				if (AlternateKeyFlag != GameData->OldKeyboardState[kVK_Alternate])
+				{
+					KeyCode = kVK_Option;
+
+					if (AlternateKeyFlag)
+					{
+						KeyDownFlag = 1;
+					}
+				}
+
+				if (ShiftKeyFlag != GameData->OldKeyboardState[kVK_Shift])
+				{
+					if (ShiftKeyFlag)
+					{
+						KeyDownFlag = 1;
+					}
+
+					KeyCode = kVK_Shift;
+				}
+
+				//printf("Keyboard flags changed: Cmd: %d  Ctrl: %d  Opt: %d  Shift: %d\n",
+			//			CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag, ShiftKeyFlag);
+
+				OSXKeyProcessing(-1, KeyCode, KeyCode,
 								ShiftKeyFlag, CommandKeyFlag, ControlKeyFlag, AlternateKeyFlag,
 								GameData->NewInput, GameData);
 			} break;
@@ -223,6 +278,7 @@ void OSXProcessPendingMessages(osx_game_data* GameData)
 				[NSApp sendEvent:Event];
 		}
 	} while (Event != nil);
+
 }
 
 
@@ -452,6 +508,8 @@ int main(int argc, const char* argv[])
 
 	while (OSXIsGameRunning())
 	{
+		OSXInitializeGameInputForNewFrame(&GameData);
+
 		OSXProcessPendingMessages(&GameData);
 
 		[GlobalGLContext makeCurrentContext];

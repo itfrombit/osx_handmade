@@ -398,6 +398,8 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 
 	OSXSetupGamepad(GameData);
 
+	ZeroStruct(GameData->KeyboardState);
+	ZeroStruct(GameData->OldKeyboardState);
 
 	///////////////////////////////////////////////////////////////////
 	// Set up sound buffers and CoreAudio
@@ -434,31 +436,38 @@ void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height
 }
 
 
-void OSXKeyProcessing(bool32 IsDown, u32 Key,
+void OSXKeyProcessing(bool32 IsKeyDown, u32 KeyCode, u32 Key,
 					  int ShiftKeyFlag, int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
 					  game_input* Input, osx_game_data* GameData)
 {
 	game_controller_input* Controller = GetController(Input, 0);
 
-	switch (Key)
+	b32 WasDown = GameData->OldKeyboardState[KeyCode];
+	b32 IsDown = GameData->KeyboardState[KeyCode];
+
+	//printf("KeyDown: %d  KeyCode: %d  Key: %c  WasDown: %d  IsDown: %d\n",
+	//		IsKeyDown, KeyCode, Key, WasDown, IsDown);
+
+	if (WasDown != IsDown)
 	{
-		case 'w':
+		if (KeyCode == kVK_ANSI_W)
+		{
 			OSXProcessKeyboardMessage(&Controller->MoveUp, IsDown);
-			break;
-
-		case 'a':
+		}
+		else if (KeyCode == kVK_ANSI_A)
+		{
 			OSXProcessKeyboardMessage(&Controller->MoveLeft, IsDown);
-			break;
-
-		case 's':
+		}
+		else if (KeyCode == kVK_ANSI_S)
+		{
 			OSXProcessKeyboardMessage(&Controller->MoveDown, IsDown);
-			break;
-
-		case 'd':
+		}
+		else if (KeyCode == kVK_ANSI_D)
+		{
 			OSXProcessKeyboardMessage(&Controller->MoveRight, IsDown);
-			break;
-
-		case 'q':
+		}
+		else if (KeyCode == kVK_ANSI_Q)
+		{
 			if (IsDown && CommandKeyFlag)
 			{
 				OSXStopGame();
@@ -467,92 +476,51 @@ void OSXKeyProcessing(bool32 IsDown, u32 Key,
 			{
 				OSXProcessKeyboardMessage(&Controller->LeftShoulder, IsDown);
 			}
-			break;
-
-		case 'e':
+		}
+		else if (KeyCode == kVK_ANSI_E)
+		{
 			OSXProcessKeyboardMessage(&Controller->RightShoulder, IsDown);
-			break;
-
-		case ' ':
-			OSXProcessKeyboardMessage(&Controller->Start, IsDown);
-			break;
-
-		case '+':
-			if (IsDown)
-			{
-				OpenGL.DebugLightBufferIndex += 1;
-			}
-			break;
-
-		case '=':
-			if (IsDown)
-			{
-				OpenGL.DebugLightBufferTexIndex += 1;
-			}
-			break;
-
-		case '_': // shifted '-'
-			if (IsDown)
-			{
-				OpenGL.DebugLightBufferIndex -= 1;
-			}
-			break;
-
-		case '-':
-			if (IsDown)
-			{
-				OpenGL.DebugLightBufferTexIndex -= 1;
-			}
-			break;
-
-		case 0xF704: // F1
-		case 0xF705:
-		case 0xF706:
-		case 0xF707:
-		case 0xF708:
-		case 0xF709:
-		case 0xF70A:
-		case 0xF70B:
-		case 0xF70C:
-		case 0xF70D:
-		case 0xF70E:
-		case 0xF70F: // F12
-			if (IsDown)
-			{
-				Input->FKeyPressed[Key - 0xF704 + 1] = true;
-			}
-			break;
-
-		case 27:
-			OSXProcessKeyboardMessage(&Controller->Back, IsDown);
-			break;
-
-		case 0xF700: //NSUpArrowFunctionKey
+		}
+		else if (KeyCode == kVK_UpArrow)
+		{
 			OSXProcessKeyboardMessage(&Controller->ActionUp, IsDown);
-			break;
-
-		case 0xF702: //NSLeftArrowFunctionKey
+		}
+		else if (KeyCode == kVK_LeftArrow)
+		{
 			OSXProcessKeyboardMessage(&Controller->ActionLeft, IsDown);
-			break;
-
-		case 0xF701: //NSDownArrowFunctionKey
+		}
+		else if (KeyCode == kVK_DownArrow)
+		{
 			OSXProcessKeyboardMessage(&Controller->ActionDown, IsDown);
-			break;
-
-		case 0xF703: //NSRightArrowFunctionKey
+		}
+		else if (KeyCode == kVK_RightArrow)
+		{
 			OSXProcessKeyboardMessage(&Controller->ActionRight, IsDown);
-			break;
-
+		}
+		else if (KeyCode == kVK_Escape)
+		{
+			OSXProcessKeyboardMessage(&Controller->Back, IsDown);
+		}
+		else if (KeyCode == kVK_Return)
+		{
+			OSXProcessKeyboardMessage(&Controller->Start, IsDown);
+		}
+		else if (KeyCode == kVK_Space || KeyCode == kVK_Shift)
+		{
+			b32 EitherDown = GameData->KeyboardState[kVK_Space] || ShiftKeyFlag;
+			Controller->ClutchMax = (EitherDown ? 1.0f : 0.0f);
+			printf("ClutchMax = %f\n", Controller->ClutchMax);
+		}
 #if HANDMADE_INTERNAL
-		case 'p':
+		else if (KeyCode == kVK_ANSI_P)
+		{
 			if (IsDown)
 			{
 				OSXToggleGlobalPause();
 			}
-			break;
-
-		case 'l':
-#if 1
+		}
+		else if (KeyCode == kVK_ANSI_L)
+		{
 			if (IsDown)
 			{
 				osx_state* OSXState = &GlobalOSXState;
@@ -581,12 +549,88 @@ void OSXKeyProcessing(bool32 IsDown, u32 Key,
 					}
 				}
 			}
+		}
 #endif
-			break;
-#endif
-		default:
-			return;
-			break;
+
+		if (IsDown)
+		{
+			if (KeyCode == '+')
+			{
+				if (IsDown)
+				{
+				}
+			}
+			else if (KeyCode == kVK_ANSI_Equal)
+			{
+				if (ShiftKeyFlag)
+				{
+					OpenGL.DebugLightBufferIndex += 1;
+				}
+				else
+				{
+					OpenGL.DebugLightBufferTexIndex += 1;
+				}
+			}
+			else if (KeyCode == kVK_ANSI_Minus)
+			{
+				if (ShiftKeyFlag)
+				{
+					OpenGL.DebugLightBufferIndex -= 1;
+				}
+				else
+				{
+					OpenGL.DebugLightBufferTexIndex -= 1;
+				}
+			}
+			else if (KeyCode == kVK_F1)
+			{
+				Input->FKeyPressed[1] = true;
+			}
+			else if (KeyCode == kVK_F2)
+			{
+				Input->FKeyPressed[2] = true;
+			}
+			else if (KeyCode == kVK_F3)
+			{
+				Input->FKeyPressed[3] = true;
+			}
+			else if (KeyCode == kVK_F4)
+			{
+				Input->FKeyPressed[4] = true;
+			}
+			else if (KeyCode == kVK_F5)
+			{
+				Input->FKeyPressed[5] = true;
+			}
+			else if (KeyCode == kVK_F6)
+			{
+				Input->FKeyPressed[6] = true;
+			}
+			else if (KeyCode == kVK_F7)
+			{
+				Input->FKeyPressed[7] = true;
+			}
+			else if (KeyCode == kVK_F8)
+			{
+				Input->FKeyPressed[8] = true;
+			}
+			else if (KeyCode == kVK_F9)
+			{
+				Input->FKeyPressed[9] = true;
+			}
+			else if (KeyCode == kVK_F10)
+			{
+				Input->FKeyPressed[10] = true;
+			}
+			else if (KeyCode == kVK_F11)
+			{
+				Input->FKeyPressed[11] = true;
+			}
+			else if (KeyCode == kVK_F12)
+			{
+				Input->FKeyPressed[12] = true;
+			}
+		}
 	}
 }
 
@@ -636,87 +680,42 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 }
 
 
-
-void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
-									b32 MouseInWindowFlag, CGPoint MouseLocation,
-									int MouseButtonMask)
+void OSXInitializeGameInputForNewFrame(osx_game_data* GameData)
 {
-	{DEBUG_DATA_BLOCK("Platform");
-		DEBUG_VALUE(GameData->ExpectedFramesPerUpdate);
-	}
-	{DEBUG_DATA_BLOCK("Platform/Controls");
-		DEBUG_B32(GlobalPause);
-		DEBUG_B32(GlobalSoftwareRendering);
-	}
-
-	osx_state* OSXState = &GlobalOSXState;
-
-	//printf("***** ProcessFrameAndRunGameLogic\n");
-
-	GameData->NewInput->dtForFrame = GameData->TargetSecondsPerFrame;
-
-	//
-	//
-	//
-
-	BEGIN_BLOCK("Input Processing");
-
-	if (GameData->RenderCommandsInitialized == 0)
-	{
-		GameData->RenderCommands = DefaultRenderCommands(
-												GameData->PushBufferSize,
-												GameData->PushBuffer,
-												(u32)GameData->RenderBuffer.Width,
-												(u32)GameData->RenderBuffer.Height,
-												GameData->MaxVertexCount,
-												GameData->VertexArray,
-												GameData->BitmapArray,
-												&OpenGL.WhiteBitmap,
-												GameData->LightBoxes);
-		GameData->RenderCommandsInitialized = 1;
-	}
-
-	rectangle2i DrawRegion = AspectRatioFit(GameData->RenderCommands.Settings.Width, GameData->RenderCommands.Settings.Height,
-											WindowFrame.size.width, WindowFrame.size.height);
-
 	game_controller_input* OldKeyboardController = GetController(GameData->OldInput, 0);
 	game_controller_input* NewKeyboardController = GetController(GameData->NewInput, 0);
+	*NewKeyboardController = {};
+	NewKeyboardController->IsConnected = true;
+
+	for (int ButtonIndex = 0;
+	     ButtonIndex < ArrayCount(NewKeyboardController->Buttons);
+		 ++ButtonIndex)
+	{
+		NewKeyboardController->Buttons[ButtonIndex].EndedDown =
+			OldKeyboardController->Buttons[ButtonIndex].EndedDown;
+	}
+
+	NewKeyboardController->ClutchMax = OldKeyboardController->ClutchMax;
+}
 
 
-	// TODO(jeff): Fix this for multiple controllers
-	game_controller_input* NewController = &GameData->NewInput->Controllers[0];
-
-	NewController->IsConnected = true;
-	NewController->StickAverageX = GameData->HIDX;
-	NewController->StickAverageY = GameData->HIDY;
-
-	NewController->ActionDown.EndedDown = GameData->NewInput->Controllers[0].ActionDown.EndedDown;
-	NewController->ActionUp.EndedDown = GameData->NewInput->Controllers[0].ActionUp.EndedDown;
-	NewController->ActionLeft.EndedDown = GameData->NewInput->Controllers[0].ActionLeft.EndedDown;
-	NewController->ActionRight.EndedDown = GameData->NewInput->Controllers[0].ActionRight.EndedDown;
-
-	NewController->MoveUp.EndedDown = GameData->NewInput->Controllers[0].MoveUp.EndedDown;
-	NewController->MoveDown.EndedDown = GameData->NewInput->Controllers[0].MoveDown.EndedDown;
-	NewController->MoveLeft.EndedDown = GameData->NewInput->Controllers[0].MoveLeft.EndedDown;
-	NewController->MoveRight.EndedDown = GameData->NewInput->Controllers[0].MoveRight.EndedDown;
-
-
-	GameData->NewInput->dtForFrame = GameData->TargetSecondsPerFrame;
+void OSXUpdateMouseInput(b32 MouseInWindowFlag, CGPoint MouseLocation, int MouseButtonMask,
+                         osx_game_data* GameData, rectangle2i DrawRegion)
+{
+	game_input* NewInput = GameData->NewInput;
+	game_input* OldInput = GameData->OldInput;
 
 	if (MouseInWindowFlag)
 	{
-		//GameData->NewInput->MouseX = (-0.5f * (r32)GameData->RenderBuffer.Width + 0.5f) + (r32)PointInView.x;
-		//GameData->NewInput->MouseY = (-0.5f * (r32)GameData->RenderBuffer.Height + 0.5f) + (r32)PointInView.y;
-		//GameData->NewInput->MouseY = (r32)((GameData->RenderBuffer.Height - 1) - PointInView.y);
-
 		r32 MouseX = (r32)MouseLocation.x;
 		r32 MouseY = (r32)MouseLocation.y;
 
-		GameData->NewInput->MouseX = GameData->RenderCommands.Settings.Width * Clamp01MapToRange(DrawRegion.MinX, MouseX, DrawRegion.MaxX);
-		GameData->NewInput->MouseY = GameData->RenderCommands.Settings.Height * Clamp01MapToRange(DrawRegion.MinY, MouseY, DrawRegion.MaxY);
+		NewInput->MouseX = GameData->RenderCommands.Settings.Width
+		                      * Clamp01MapToRange(DrawRegion.MinX, MouseX, DrawRegion.MaxX);
+		NewInput->MouseY = GameData->RenderCommands.Settings.Height
+		                      * Clamp01MapToRange(DrawRegion.MinY, MouseY, DrawRegion.MaxY);
 
-
-		GameData->NewInput->MouseZ = 0; // TODO(casey): Support mousewheel?
+		NewInput->MouseZ = 0; // TODO(jeff): Support mousewheel?
 
 		for (u32 ButtonIndex = 0;
 				ButtonIndex < PlatformMouseButton_Count;
@@ -738,28 +737,48 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 			if (ButtonIndex == 1) MouseButton = PlatformMouseButton_Right;
 			else if (ButtonIndex == 2) MouseButton = PlatformMouseButton_Middle;
 
-			GameData->NewInput->MouseButtons[MouseButton] = GameData->OldInput->MouseButtons[MouseButton];
-			GameData->NewInput->MouseButtons[MouseButton].HalfTransitionCount = 0;
+			NewInput->MouseButtons[MouseButton] = OldInput->MouseButtons[MouseButton];
+			NewInput->MouseButtons[MouseButton].HalfTransitionCount = 0;
 
-			OSXProcessKeyboardMessage(&GameData->NewInput->MouseButtons[MouseButton], IsDown);
+			OSXProcessKeyboardMessage(&NewInput->MouseButtons[MouseButton], IsDown);
 		}
 	}
 	else
 	{
-		GameData->NewInput->MouseX = GameData->OldInput->MouseX;
-		GameData->NewInput->MouseY = GameData->OldInput->MouseY;
-		GameData->NewInput->MouseZ = GameData->OldInput->MouseZ;
+		NewInput->MouseX = OldInput->MouseX;
+		NewInput->MouseY = OldInput->MouseY;
+		NewInput->MouseZ = OldInput->MouseZ;
 	}
 
-	//int ModifierFlags = [[NSApp currentEvent] modifierFlags];
-	//GameData->NewInput->ShiftDown = (ModifierFlags & NSShiftKeyMask);
-	//GameData->NewInput->AltDown = (ModifierFlags & NSAlternateKeyMask);
-	//GameData->NewInput->ControlDown = (ModifierFlags & NSControlKeyMask);
-
 	CGEventFlags ModifierFlags = CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState);
-	GameData->NewInput->ShiftDown = (ModifierFlags & kCGEventFlagMaskShift);
-	GameData->NewInput->AltDown = (ModifierFlags & kCGEventFlagMaskAlternate);
-	GameData->NewInput->ControlDown = (ModifierFlags & kCGEventFlagMaskControl);
+	NewInput->ShiftDown = (ModifierFlags & kCGEventFlagMaskShift);
+	NewInput->AltDown = (ModifierFlags & kCGEventFlagMaskAlternate);
+	NewInput->ControlDown = (ModifierFlags & kCGEventFlagMaskControl);
+}
+
+
+void OSXUpdateGameControllerInput(osx_game_data* GameData)
+{
+#if 0
+	// This is done in the HID callback in osx_handmade_hid.cpp
+	game_controller_input* OldController = GetController(GameData->OldInput, 0);
+	game_controller_input* NewController = GetController(GameData->NewInput, 0);
+
+	NewController->StickAverageX = GameData->HIDX;
+	NewController->StickAverageY = GameData->HIDY;
+
+	NewController->ActionDown.EndedDown = NewController->ActionDown.EndedDown;
+	NewController->ActionUp.EndedDown = NewController->ActionUp.EndedDown;
+	NewController->ActionLeft.EndedDown = NewController->ActionLeft.EndedDown;
+	NewController->ActionRight.EndedDown = NewController->ActionRight.EndedDown;
+
+	NewController->MoveUp.EndedDown = NewController->MoveUp.EndedDown;
+	NewController->MoveDown.EndedDown = NewController->MoveDown.EndedDown;
+	NewController->MoveLeft.EndedDown = NewController->MoveLeft.EndedDown;
+	NewController->MoveRight.EndedDown = NewController->MoveRight.EndedDown;
+
+	NewController->ClutchMax = NewController
+#endif
 
 #if 0
 	// NOTE(jeff): Support for multiple controllers here...
@@ -780,6 +799,104 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 		game_controller_input* NewController = GetController(GameData->NewInput, OurControllerIndex);
 	}
 #endif
+
+}
+
+
+void OSXUpdateAudio(osx_game_data* GameData)
+{
+	// TODO(jeff): Move this into the sound render code
+	//GameData->SoundOutput.Frequency = 440.0 + (15 * GameData->hidY);
+
+	if (GameData->Game.GetSoundSamples)
+	{
+		// Sample Count is SamplesPerSecond / GameRefreshRate
+		//GameData->SoundOutput.SoundBuffer.SampleCount = 1600; // (48000samples/sec) / (30fps)
+		// ^^^ calculate this. We might be running at 30 or 60 fps
+		GameData->SoundOutput.SoundBuffer.SampleCount = GameData->SoundOutput.SoundBuffer.SamplesPerSecond / GameData->TargetFramesPerSecond;
+
+		GameData->Game.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
+
+		int16* CurrentSample = GameData->SoundOutput.SoundBuffer.Samples;
+		for (int i = 0; i < GameData->SoundOutput.SoundBuffer.SampleCount; ++i)
+		{
+			*GameData->SoundOutput.WriteCursor++ = *CurrentSample++;
+			*GameData->SoundOutput.WriteCursor++ = *CurrentSample++;
+
+			if ((char*)GameData->SoundOutput.WriteCursor >= ((char*)GameData->SoundOutput.CoreAudioBuffer + GameData->SoundOutput.SoundBufferSize))
+			{
+				//printf("Write cursor wrapped!\n");
+				GameData->SoundOutput.WriteCursor  = GameData->SoundOutput.CoreAudioBuffer;
+			}
+		}
+
+		// Prime the pump to get the write cursor out in front of the read cursor...
+		static bool firstTime = true;
+
+		if (firstTime)
+		{
+			firstTime = false;
+
+			GameData->Game.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
+
+			int16* CurrentSample = GameData->SoundOutput.SoundBuffer.Samples;
+			for (int i = 0; i < GameData->SoundOutput.SoundBuffer.SampleCount; ++i)
+			{
+				*GameData->SoundOutput.WriteCursor++ = *CurrentSample++;
+				*GameData->SoundOutput.WriteCursor++ = *CurrentSample++;
+
+				if ((char*)GameData->SoundOutput.WriteCursor >= ((char*)GameData->SoundOutput.CoreAudioBuffer + GameData->SoundOutput.SoundBufferSize))
+				{
+					GameData->SoundOutput.WriteCursor  = GameData->SoundOutput.CoreAudioBuffer;
+				}
+			}
+		}
+	}
+}
+
+
+void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
+									b32 MouseInWindowFlag, CGPoint MouseLocation,
+									int MouseButtonMask)
+{
+	{DEBUG_DATA_BLOCK("Platform");
+		DEBUG_VALUE(GameData->ExpectedFramesPerUpdate);
+	}
+	{DEBUG_DATA_BLOCK("Platform/Controls");
+		DEBUG_B32(GlobalPause);
+		DEBUG_B32(GlobalSoftwareRendering);
+	}
+
+	osx_state* OSXState = &GlobalOSXState;
+
+	GameData->NewInput->dtForFrame = GameData->TargetSecondsPerFrame;
+
+
+	BEGIN_BLOCK("Input Processing");
+
+	if (GameData->RenderCommandsInitialized == 0)
+	{
+		GameData->RenderCommands = DefaultRenderCommands(
+												GameData->PushBufferSize,
+												GameData->PushBuffer,
+												(u32)GameData->RenderBuffer.Width,
+												(u32)GameData->RenderBuffer.Height,
+												GameData->MaxVertexCount,
+												GameData->VertexArray,
+												GameData->BitmapArray,
+												&OpenGL.WhiteBitmap,
+												GameData->LightBoxes);
+		GameData->RenderCommandsInitialized = 1;
+	}
+
+	rectangle2i DrawRegion = AspectRatioFit(GameData->RenderCommands.Settings.Width,
+	                                        GameData->RenderCommands.Settings.Height,
+											WindowFrame.size.width,
+											WindowFrame.size.height);
+
+	OSXUpdateMouseInput(MouseInWindowFlag, MouseLocation, MouseButtonMask, GameData, DrawRegion);
+
+	OSXUpdateGameControllerInput(GameData);
 
 	END_BLOCK();
 
@@ -839,53 +956,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	if (!GlobalPause)
 	{
-		// TODO(jeff): Move this into the sound render code
-		//GameData->SoundOutput.Frequency = 440.0 + (15 * GameData->hidY);
-
-		if (GameData->Game.GetSoundSamples)
-		{
-			// Sample Count is SamplesPerSecond / GameRefreshRate
-			//GameData->SoundOutput.SoundBuffer.SampleCount = 1600; // (48000samples/sec) / (30fps)
-			// ^^^ calculate this. We might be running at 30 or 60 fps
-			GameData->SoundOutput.SoundBuffer.SampleCount = GameData->SoundOutput.SoundBuffer.SamplesPerSecond / GameData->TargetFramesPerSecond;
-
-			GameData->Game.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
-
-			int16* CurrentSample = GameData->SoundOutput.SoundBuffer.Samples;
-			for (int i = 0; i < GameData->SoundOutput.SoundBuffer.SampleCount; ++i)
-			{
-				*GameData->SoundOutput.WriteCursor++ = *CurrentSample++;
-				*GameData->SoundOutput.WriteCursor++ = *CurrentSample++;
-
-				if ((char*)GameData->SoundOutput.WriteCursor >= ((char*)GameData->SoundOutput.CoreAudioBuffer + GameData->SoundOutput.SoundBufferSize))
-				{
-					//printf("Write cursor wrapped!\n");
-					GameData->SoundOutput.WriteCursor  = GameData->SoundOutput.CoreAudioBuffer;
-				}
-			}
-
-			// Prime the pump to get the write cursor out in front of the read cursor...
-			static bool firstTime = true;
-
-			if (firstTime)
-			{
-				firstTime = false;
-
-				GameData->Game.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
-
-				int16* CurrentSample = GameData->SoundOutput.SoundBuffer.Samples;
-				for (int i = 0; i < GameData->SoundOutput.SoundBuffer.SampleCount; ++i)
-				{
-					*GameData->SoundOutput.WriteCursor++ = *CurrentSample++;
-					*GameData->SoundOutput.WriteCursor++ = *CurrentSample++;
-
-					if ((char*)GameData->SoundOutput.WriteCursor >= ((char*)GameData->SoundOutput.CoreAudioBuffer + GameData->SoundOutput.SoundBufferSize))
-					{
-						GameData->SoundOutput.WriteCursor  = GameData->SoundOutput.CoreAudioBuffer;
-					}
-				}
-			}
-		}
+		OSXUpdateAudio(GameData);
 	}
 
 	END_BLOCK();
@@ -944,20 +1015,6 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	game_input* Temp = GameData->NewInput;
 	GameData->NewInput = GameData->OldInput;
 	GameData->OldInput = Temp;
-
-	NewKeyboardController = GetController(GameData->NewInput, 0);
-	OldKeyboardController = GetController(GameData->OldInput, 0);
-	memset(NewKeyboardController, 0, sizeof(game_controller_input));
-	NewKeyboardController->IsConnected = true;
-
-	for (int ButtonIndex = 0;
-			ButtonIndex < ArrayCount(NewKeyboardController->Buttons);
-			++ButtonIndex)
-	{
-		NewKeyboardController->Buttons[ButtonIndex].EndedDown =
-			OldKeyboardController->Buttons[ButtonIndex].EndedDown;
-	}
-
 
 
 	///////////////////////////////////////////////////////////////////

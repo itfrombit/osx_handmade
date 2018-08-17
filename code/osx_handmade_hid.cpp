@@ -292,8 +292,6 @@ void OSXHIDAction(void* Context, IOReturn Result, void* Sender, IOHIDValueRef Va
 		{
 			GameData->HIDButtons[Usage] = ElementValue;
 
-			if (ElementValue == 1) printf("Button %d pressed\n", Usage);
-
 			switch(Usage)
 			{
 				case 1:
@@ -310,6 +308,10 @@ void OSXHIDAction(void* Context, IOReturn Result, void* Sender, IOHIDValueRef Va
 
 				case 4:
 					OSXProcessKeyboardMessage(&Controller->ActionUp, ElementValue);
+					break;
+
+				case 6:
+					Controller->ClutchMax = ElementValue ? 1.0 : 0.0;
 					break;
 
 				case 9:

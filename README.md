@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 435.
+This repository works with Casey's source code from Day 443.
 
 
 This OS X platform layer code does not need to be updated for
@@ -14,7 +14,7 @@ work. For example, day 405 of the OS X platform layer
 will work with Casey's Handmade Hero days 405 through 409.
 
 
-2018-08-09 Note:
+2018-08-17 Note:
 ----------------
 
 While the code compiles as-is on OS X, you must first apply a patch to
@@ -30,6 +30,14 @@ causes undesirable artifacts on Mac OS X. Instead of averaging the Min and Max
 Depth values, I reverted to using the MaxDepth value in the shader with a
 threshold of 0.02. This still produces some minor artifacts, but it is a big
 improvement over the averaging method. I'll continue to look into this.
+
+
+Note on using joysticks: Casey added a Clutch control on Day 443. He
+uses an XBox controller's Left or Right "Trigger" buttons for the Clutch
+control. I currently have this mapped to HID Button 6 on OS X, which on a
+Logitech Dual Action controller, corresponds to the top right shoulder
+button. Your mileage may vary with other controllers. Let me know if you
+have problems.
 
 
 Compiling and Running

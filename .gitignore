@@ -55,7 +55,6 @@ win32_handmade.h
 loop_edit*.hmi
 build/
 Contents/
-test/
 test2/
 test3/
 test.hha

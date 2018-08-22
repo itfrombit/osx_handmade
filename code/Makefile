@@ -13,7 +13,7 @@ HANDMADE_WARNING_FLAGS = -Wno-unused-function -Wno-unused-variable -Wno-c++11-na
 #HANDMADE_FLAGS = -DHANDMADE_INTERNAL=1 -DHANDMADE_SLOW=1 -DHANDMADE_OSX=1 -DHANDMADE_MIN_OSX -Wno-null-dereference -isysroot /Applications/Xcode-Beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
 
 COPTS = -g -Wall -fno-inline $(HANDMADE_FLAGS)
-COPTS = -O3 -Wall $(HANDMADE_FLAGS)
+#COPTS = -O3 -Wall $(HANDMADE_FLAGS)
 
 
 CPP11_FLAGS	= -std=c++11 -stdlib=libc++ -ggdb
@@ -24,7 +24,7 @@ OSX_LD_FLAGS = -framework Cocoa -framework QuartzCore -framework OpenGL -framewo
 OSX_CT_LD_FLAGS = -framework CoreText -framework CoreFoundation
 #OSX_LD_FLAGS = -framework Cocoa -framework QuartzCore -framework OpenGL -framework IOKit -framework AudioUnit -Wl,-syslibroot /Applications/Xcode-Beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
 
-BINARIES = handmade libhandmade.dylib osx_asset_builder
+BINARIES = handmade libhandmade.dylib osx_asset_builder test_png
 
 DYNAMIC_COMPILE_PATH=$(shell pwd)
 DYNAMIC_COMPILE_COMMAND=$(DYNAMIC_COMPILE_PATH)/dynamic_compile.sh
@@ -34,7 +34,7 @@ default: clean libhandmade.dylib handmade package
 
 quick: libhandmade.dylib handmade
 
-all: clean libhandmade.dylib handmade package osx_asset_builder handmade_png
+all: clean libhandmade.dylib handmade package osx_asset_builder test_png
 
 handmade:	osx_main.o osx_handmade.o
 	$(CXX) $(COPTS) $(OSX_LD_FLAGS) $(CPP11_LD_FLAGS) -o $@ $^
@@ -70,10 +70,10 @@ osx_asset_builder:	osx_asset_builder.o
 osx_asset_builder.o:	osx_asset_builder.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_WARNING_FLAGS) -c $<
 
-handmade_png:	$(HANDMADE_CODE_PATH)/handmade_png.o
+test_png:	test_png.o
 	$(CXX) $(COPTS) $(OSX_CT_LD_FLAGS) -o $@ $^
 
-handmade_png.o:	$(HANDMADE_CODE_PATH)/handmade_png.cpp
+test_png.o:	$(HANDMADE_CODE_PATH)/test_png.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_WARNING_FLAGS) -c $<
 
 

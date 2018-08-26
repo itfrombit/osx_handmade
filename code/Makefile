@@ -1,7 +1,9 @@
-CXX			= clang
+CXX	= clang
 
 HANDMADE_CODE_PATH = ../cpp/code
 HANDMADE_ASSETS_PATH = ../data
+HANDMADE_ART_PATH = ../art
+HANDMADE_SOUND_PATH = ../sound
 
 HANDMADE_FLAGS = -DHANDMADE_PROFILE=1 -DHANDMADE_INTERNAL=1 -DHANDMADE_SLOW=1 -DHANDMADE_OSX=1 -DHANDMADE_MIN_OSX
 
@@ -13,7 +15,7 @@ HANDMADE_WARNING_FLAGS = -Wno-unused-function -Wno-unused-variable -Wno-c++11-na
 #HANDMADE_FLAGS = -DHANDMADE_INTERNAL=1 -DHANDMADE_SLOW=1 -DHANDMADE_OSX=1 -DHANDMADE_MIN_OSX -Wno-null-dereference -isysroot /Applications/Xcode-Beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
 
 COPTS = -g -Wall -fno-inline $(HANDMADE_FLAGS)
-#COPTS = -O3 -Wall $(HANDMADE_FLAGS)
+COPTS = -O3 -Wall $(HANDMADE_FLAGS)
 
 
 CPP11_FLAGS	= -std=c++11 -stdlib=libc++ -ggdb
@@ -43,25 +45,29 @@ package:
 	rm -rf ../build/Handmade.app
 	rm -rf ./Contents/Resources
 	mkdir -p Handmade.app/Contents/MacOS
-	mkdir -p Handmade.app/Contents/Resources
+	mkdir -p Handmade.app/Contents/Resources/data
+	mkdir -p Handmade.app/Contents/Resources/art
+	mkdir -p Handmade.app/Contents/Resources/sound
 	mkdir -p Handmade.app/Contents/code
 	cp handmade Handmade.app/Contents/MacOS/Handmade
-	cp $(HANDMADE_ASSETS_PATH)/test1.hha Handmade.app/Contents/Resources/test1.hha
-	cp $(HANDMADE_ASSETS_PATH)/test2.hha Handmade.app/Contents/Resources/test2.hha
-	cp $(HANDMADE_ASSETS_PATH)/test3.hha Handmade.app/Contents/Resources/test3.hha
-	cp $(HANDMADE_ASSETS_PATH)/testfonts.hha Handmade.app/Contents/Resources/testfonts.hha
-	cp $(HANDMADE_ASSETS_PATH)/intro_art.hha Handmade.app/Contents/Resources/intro_art.hha
+	cp $(HANDMADE_ASSETS_PATH)/test1.hha Handmade.app/Contents/Resources/data/test1.hha
+	cp $(HANDMADE_ASSETS_PATH)/test2.hha Handmade.app/Contents/Resources/data/test2.hha
+	cp $(HANDMADE_ASSETS_PATH)/test3.hha Handmade.app/Contents/Resources/data/test3.hha
+	cp $(HANDMADE_ASSETS_PATH)/testfonts.hha Handmade.app/Contents/Resources/data/testfonts.hha
+	cp $(HANDMADE_ASSETS_PATH)/intro_art.hha Handmade.app/Contents/Resources/data/intro_art.hha
 	cp libhandmade.dylib Handmade.app/Contents/MacOS/libhandmade.dylib
 	mv Handmade.app ../build/
 	# The 'local' bundle for convenient debugging with lldb
 	mkdir -p ./Contents/MacOS
-	mkdir -p ./Contents/Resources
+	mkdir -p ./Contents/Resources/data
+	mkdir -p ./Contents/Resources/art
+	mkdir -p ./Contents/Resources/sound
 	mkdir -p ./Contents/code
-	cp $(HANDMADE_ASSETS_PATH)/test1.hha ./Contents/Resources/test1.hha
-	cp $(HANDMADE_ASSETS_PATH)/test2.hha ./Contents/Resources/test2.hha
-	cp $(HANDMADE_ASSETS_PATH)/test3.hha ./Contents/Resources/test3.hha
-	cp $(HANDMADE_ASSETS_PATH)/testfonts.hha ./Contents/Resources/testfonts.hha
-	cp $(HANDMADE_ASSETS_PATH)/intro_art.hha ./Contents/Resources/intro_art.hha
+	cp $(HANDMADE_ASSETS_PATH)/test1.hha ./Contents/Resources/data/test1.hha
+	cp $(HANDMADE_ASSETS_PATH)/test2.hha ./Contents/Resources/data/test2.hha
+	cp $(HANDMADE_ASSETS_PATH)/test3.hha ./Contents/Resources/data/test3.hha
+	cp $(HANDMADE_ASSETS_PATH)/testfonts.hha ./Contents/Resources/data/testfonts.hha
+	cp $(HANDMADE_ASSETS_PATH)/intro_art.hha ./Contents/Resources/data/intro_art.hha
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
 
 osx_asset_builder:	osx_asset_builder.o

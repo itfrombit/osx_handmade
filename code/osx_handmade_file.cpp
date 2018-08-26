@@ -5,7 +5,6 @@
 // Copyright 2014-2016. All Rights Reserved.
 //
 
-
 static void
 CatStrings(size_t SourceACount, char *SourceA,
            size_t SourceBCount, char *SourceB,
@@ -183,39 +182,101 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 {
 	platform_file_group Result = {};
 
-	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)mmap(0,
-											  sizeof(osx_platform_file_group),
-											  PROT_READ | PROT_WRITE,
-											  MAP_PRIVATE | MAP_ANON,
-											  -1,
-											  0);
+	osx_platform_file_group* OSXFileGroup = BootstrapPushStruct(osx_platform_file_group, Memory);
 	Result.Platform = OSXFileGroup;
 
+	const char* Stem = "";
 	const char* WildCard = "*.*";
+
 	switch (Type)
 	{
 		case PlatformFileType_AssetFile:
-			{
-				WildCard = "*.hha";
-			}
-			break;
+		{
+			Stem = "data/";
+			WildCard = "data/*.hha";
+		} break;
 
 		case PlatformFileType_SavedGameFile:
-			{
-				WildCard = "*.hhs";
-			}
-			break;
+		{
+			Stem = "data/";
+			WildCard = "data/*.hhs";
+		} break;
+
+		case PlatformFileType_PNG:
+		{
+			Stem = "art/";
+			WildCard = "art/*.png";
+		} break;
+
+		case PlatformFileType_WAV:
+		{
+			Stem = "sound/";
+			WildCard = "sound/*.wav";
+		} break;
 
 		InvalidDefaultCase;
 	}
 
-	Result.FileCount = 0;
-
-	if (glob(WildCard, 0, 0, &OSXFileGroup->GlobResults) == 0)
+	u32 StemSize = 0;
+	for (const char* Scan = Stem; *Scan; ++Scan)
 	{
-		Result.FileCount = OSXFileGroup->GlobResults.gl_pathc;
-		OSXFileGroup->CurrentIndex = 0;
+		++StemSize;
 	}
+
+	glob_t GlobResults;
+
+	if (glob(WildCard, 0, 0, &GlobResults) == 0)
+	{
+		Result.FileCount = GlobResults.gl_pathc;
+
+		for (u32 CurrentIndex = 0; CurrentIndex < Result.FileCount; ++CurrentIndex)
+		{
+			const char* GlobFilename = *(GlobResults.gl_pathv + CurrentIndex);
+
+			struct stat FileStat;
+			int StatStatus = stat(GlobFilename, &FileStat);
+			assert(StatStatus == 0);
+
+			platform_file_info* Info = PushStruct(&OSXFileGroup->Memory, platform_file_info);
+
+			Info->Next = Result.FirstFileInfo;
+			Info->FileDate = FileStat.st_mtimespec.tv_sec;
+			Info->FileSize = FileStat.st_size;
+
+			const char* BaseNameBegin = GlobFilename;
+			const char* BaseNameEnd = 0;
+			const char* Scan = BaseNameBegin;
+
+			while (*Scan)
+			{
+				if (Scan[0] == '/')
+				{
+					BaseNameBegin = Scan + 1;
+				}
+
+				if (Scan[0] == '.')
+				{
+					BaseNameEnd = Scan;
+				}
+
+				++Scan;
+			}
+
+			if (!BaseNameEnd)
+			{
+				BaseNameEnd = Scan;
+			}
+
+
+			u32 BaseNameSize = (u32)(BaseNameEnd - BaseNameBegin);
+			Info->BaseName = PushAndNullTerminate(&OSXFileGroup->Memory, BaseNameSize, (char*)BaseNameBegin);
+			Info->Platform = PushString(&OSXFileGroup->Memory, (char*)GlobFilename);
+
+			Result.FirstFileInfo = Info;
+		}
+	}
+
+	globfree(&GlobResults);
 
 	return Result;
 }
@@ -225,63 +286,33 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 PLATFORM_GET_ALL_FILE_OF_TYPE_END(OSXGetAllFilesOfTypeEnd)
 {
 	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
+
 	if (OSXFileGroup)
 	{
-		globfree(&OSXFileGroup->GlobResults);
-
-		munmap(OSXFileGroup, sizeof(osx_platform_file_group));
+		Clear(&OSXFileGroup->Memory);
 	}
 }
 
 
 //#define PLATFORM_OPEN_FILE(name) platform_file_handle *name(platform_file_group *FileGroup)
-PLATFORM_OPEN_FILE(OSXOpenNextFile)
+PLATFORM_OPEN_FILE(OSXOpenFile)
 {
-	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
+	//osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
 	platform_file_handle Result = {};
 
-	if (OSXFileGroup->CurrentIndex < FileGroup->FileCount)
+	const char* Filename = (const char*)Info->Platform;
+
+	int OSXFileHandle = open(Filename, O_RDONLY);
+	Result.NoErrors = (OSXFileHandle != -1);
+	*(int*)&Result.Platform = OSXFileHandle;
+
+	if (OSXFileHandle != -1)
 	{
-		osx_platform_file_handle *OSXFileHandle = (osx_platform_file_handle*)mmap(0,
-												 sizeof(osx_platform_file_handle),
-												 PROT_READ | PROT_WRITE,
-												 MAP_PRIVATE | MAP_ANON,
-												 -1,
-												 0);
-		Result.Platform = OSXFileHandle;
-
-		if (OSXFileHandle)
-		{
-			char* Filename = *(OSXFileGroup->GlobResults.gl_pathv + OSXFileGroup->CurrentIndex);
-
-			int i = 0;
-			while (i < sizeof(OSXFileHandle->Filename) && (Filename[i] != '\0'))
-			{
-				OSXFileHandle->Filename[i] = Filename[i];
-				++i;
-			}
-			OSXFileHandle->Filename[i] = '\0';
-
-			//strncpy(OSXFileHandle->Filename, Filename, sizeof(OSXFileHandle->Filename));
-			OSXFileHandle->OSXFileHandle = open(Filename, O_RDONLY);
-			Result.NoErrors = (OSXFileHandle->OSXFileHandle != -1);
-
-			if (OSXFileHandle->OSXFileHandle != -1)
-			{
-				printf("Loading asset %s\n", Filename);
-			}
-			else
-			{
-				printf("Error opening asset file %s\n", Filename);
-			}
-
-		}
-
-		++OSXFileGroup->CurrentIndex;
+		printf("Loading asset %s\n", Filename);
 	}
 	else
 	{
-		printf("Ran out of assets to load.\n");
+		printf("Error opening asset file %s\n", Filename);
 	}
 
 	return Result;
@@ -291,14 +322,14 @@ PLATFORM_OPEN_FILE(OSXOpenNextFile)
 //#define PLATFORM_READ_DATA_FROM_FILE(name) void name(platform_file_handle *Source, u64 Offset, u64 Size, void *Dest)
 PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile)
 {
-	osx_platform_file_handle* OSXFileHandle = (osx_platform_file_handle*)Source->Platform;
-
 	if (PlatformNoFileErrors(Source))
 	{
+		int OSXFileHandle = *(int*)&Source->Platform;
+
 		// TODO(jeff): Consider mmap instead of open/read for overlapped IO.
 		// TODO(jeff): If sticking with read, make sure to handle interrupted read.
 
-		u64 BytesRead = pread(OSXFileHandle->OSXFileHandle, Dest, Size, Offset);
+		u64 BytesRead = pread(OSXFileHandle, Dest, Size, Offset);
 
 		if (BytesRead == Size)
 		{
@@ -312,7 +343,18 @@ PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile)
 	}
 	else
 	{
-		printf("OSXReadDataFromFile had pre-existing file errors on file: %s\n", OSXFileHandle->Filename);
+		printf("OSXReadDataFromFile had pre-existing file errors\n");
+	}
+}
+
+
+PLATFORM_CLOSE_FILE(OSXCloseFile)
+{
+	int OSXFileHandle = *(int*)&Handle->Platform;
+
+	if (OSXFileHandle != -1)
+	{
+		close(OSXFileHandle);
 	}
 }
 
@@ -340,20 +382,6 @@ OSXGetLastWriteTime(const char* Filename)
 	{
 		LastWriteTime = FileStat.st_mtimespec.tv_sec;
 	}
-
-#if 0
-	int fd = open(Filename, O_RDONLY);
-	if (fd != -1)
-	{
-		struct stat FileStat;
-		if (fstat(fd, &FileStat) == 0)
-		{
-			LastWriteTime = FileStat.st_mtimespec.tv_sec;
-		}
-
-		close(fd);
-	}
-#endif
 
 	return LastWriteTime;
 }

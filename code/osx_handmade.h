@@ -170,23 +170,16 @@ DEBUG_PLATFORM_GET_PROCESS_STATE(DEBUGGetProcessState);
 DEBUG_PLATFORM_GET_MEMORY_STATS(OSXGetMemoryStats);
 #endif
 
-struct osx_platform_file_handle
-{
-	int OSXFileHandle;
-	char Filename[FILENAME_MAX];
-};
-
 
 struct osx_platform_file_group
 {
-	glob_t GlobResults;
-	int CurrentIndex;
+	memory_arena Memory;
 };
 
 
 PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin);
 PLATFORM_GET_ALL_FILE_OF_TYPE_END(OSXGetAllFilesOfTypeEnd);
-PLATFORM_OPEN_FILE(OSXOpenNextFile);
+PLATFORM_OPEN_FILE(OSXOpenFile);
 PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile);
 PLATFORM_FILE_ERROR(OSXFileError);
 

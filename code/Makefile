@@ -55,6 +55,7 @@ package:
 	cp $(HANDMADE_ASSETS_PATH)/test3.hha Handmade.app/Contents/Resources/data/test3.hha
 	cp $(HANDMADE_ASSETS_PATH)/testfonts.hha Handmade.app/Contents/Resources/data/testfonts.hha
 	cp $(HANDMADE_ASSETS_PATH)/intro_art.hha Handmade.app/Contents/Resources/data/intro_art.hha
+	cp $(HANDMADE_ART_PATH)/*.png Handmade.app/Contents/Resources/art
 	cp libhandmade.dylib Handmade.app/Contents/MacOS/libhandmade.dylib
 	mv Handmade.app ../build/
 	# The 'local' bundle for convenient debugging with lldb
@@ -68,6 +69,7 @@ package:
 	cp $(HANDMADE_ASSETS_PATH)/test3.hha ./Contents/Resources/data/test3.hha
 	cp $(HANDMADE_ASSETS_PATH)/testfonts.hha ./Contents/Resources/data/testfonts.hha
 	cp $(HANDMADE_ASSETS_PATH)/intro_art.hha ./Contents/Resources/data/intro_art.hha
+	cp $(HANDMADE_ART_PATH)/*.png ./Contents/Resources/art
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
 
 osx_asset_builder:	osx_asset_builder.o

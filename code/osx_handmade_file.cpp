@@ -270,6 +270,12 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 
 			u32 BaseNameSize = (u32)(BaseNameEnd - BaseNameBegin);
 			Info->BaseName = PushAndNullTerminate(&OSXFileGroup->Memory, BaseNameSize, (char*)BaseNameBegin);
+
+			for (char* Lower = Info->BaseName; *Lower; ++Lower)
+			{
+				*Lower = ToLowercase(*Lower);
+			}
+
 			Info->Platform = PushString(&OSXFileGroup->Memory, (char*)GlobFilename);
 
 			Result.FirstFileInfo = Info;

@@ -303,9 +303,21 @@ PLATFORM_OPEN_FILE(OSXOpenFile)
 	//osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
 	platform_file_handle Result = {};
 
+	int FileOpenFlags = 0;
+
+	if (ModeFlags & OpenFile_Write)
+	{
+		FileOpenFlags |= O_RDWR;
+		FileOpenFlags |= O_CREAT;
+	}
+	else
+	{
+		FileOpenFlags |= O_RDONLY;
+	}
+
 	const char* Filename = (const char*)Info->Platform;
 
-	int OSXFileHandle = open(Filename, O_RDONLY);
+	int OSXFileHandle = open(Filename, FileOpenFlags);
 	Result.NoErrors = (OSXFileHandle != -1);
 	*(int*)&Result.Platform = OSXFileHandle;
 
@@ -356,7 +368,7 @@ PLATFORM_WRITE_DATA_TO_FILE(OSXWriteDataToFile)
 	{
 		int OSXFileHandle = *(int*)&Handle->Platform;
 
-		u64 BytesWritten = pread(OSXFileHandle, Source, Size, Offset);
+		u64 BytesWritten = pwrite(OSXFileHandle, Source, Size, Offset);
 
 		if (BytesWritten == Size)
 		{

@@ -36,7 +36,7 @@ default: clean libhandmade.dylib handmade package
 
 quick: libhandmade.dylib handmade
 
-all: clean libhandmade.dylib handmade package osx_asset_builder test_png
+all: clean libhandmade.dylib handmade package osx_asset_builder test_png hhaedit
 
 handmade:	osx_main.o osx_handmade.o
 	$(CXX) $(COPTS) $(OSX_LD_FLAGS) $(CPP11_LD_FLAGS) -o $@ $^
@@ -82,6 +82,12 @@ test_png:	test_png.o
 	$(CXX) $(COPTS) $(OSX_CT_LD_FLAGS) -o $@ $^
 
 test_png.o:	$(HANDMADE_CODE_PATH)/test_png.cpp
+	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_WARNING_FLAGS) -c $<
+
+hhaedit:	hhaedit.o
+	$(CXX) $(COPTS) $(OSX_CT_LD_FLAGS) -o $@ $^
+
+hhaedit.o:	$(HANDMADE_CODE_PATH)/hhaedit.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_WARNING_FLAGS) -c $<
 
 

@@ -356,6 +356,7 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameMemory.PlatformAPI.GetAllFilesOfTypeEnd = OSXGetAllFilesOfTypeEnd;
 	GameMemory.PlatformAPI.OpenFile = OSXOpenFile;
 	GameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
+	GameMemory.PlatformAPI.WriteDataToFile = OSXWriteDataToFile;
 	GameMemory.PlatformAPI.FileError = OSXFileError;
 
 	GameMemory.PlatformAPI.AllocateMemory = OSXAllocateMemory;

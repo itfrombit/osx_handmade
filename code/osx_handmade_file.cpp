@@ -177,7 +177,6 @@ DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile)
 #endif
 
 
-//#define PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(name) platform_file_group *name(char *Type)
 PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 {
 	platform_file_group Result = {};
@@ -288,7 +287,6 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 }
 
 
-//#define PLATFORM_GET_ALL_FILE_OF_TYPE_END(name) void name(platform_file_group *FileGroup)
 PLATFORM_GET_ALL_FILE_OF_TYPE_END(OSXGetAllFilesOfTypeEnd)
 {
 	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
@@ -300,7 +298,6 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_END(OSXGetAllFilesOfTypeEnd)
 }
 
 
-//#define PLATFORM_OPEN_FILE(name) platform_file_handle *name(platform_file_group *FileGroup)
 PLATFORM_OPEN_FILE(OSXOpenFile)
 {
 	//osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
@@ -325,12 +322,11 @@ PLATFORM_OPEN_FILE(OSXOpenFile)
 }
 
 
-//#define PLATFORM_READ_DATA_FROM_FILE(name) void name(platform_file_handle *Source, u64 Offset, u64 Size, void *Dest)
 PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile)
 {
-	if (PlatformNoFileErrors(Source))
+	if (PlatformNoFileErrors(Handle))
 	{
-		int OSXFileHandle = *(int*)&Source->Platform;
+		int OSXFileHandle = *(int*)&Handle->Platform;
 
 		// TODO(jeff): Consider mmap instead of open/read for overlapped IO.
 		// TODO(jeff): If sticking with read, make sure to handle interrupted read.
@@ -344,12 +340,37 @@ PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile)
 		}
 		else
 		{
-			OSXFileError(Source, "Read file failed.");
+			OSXFileError(Handle, "Read file failed.");
 		}
 	}
 	else
 	{
 		printf("OSXReadDataFromFile had pre-existing file errors\n");
+	}
+}
+
+
+PLATFORM_WRITE_DATA_TO_FILE(OSXWriteDataToFile)
+{
+	if (PlatformNoFileErrors(Handle))
+	{
+		int OSXFileHandle = *(int*)&Handle->Platform;
+
+		u64 BytesWritten = pread(OSXFileHandle, Source, Size, Offset);
+
+		if (BytesWritten == Size)
+		{
+			// NOTE(jeff): File read succeeded
+			//printf("Wrote file: %s wrote %ld bytes.\n", OSXFileHandle->Filename, BytesWritten);
+		}
+		else
+		{
+			OSXFileError(Handle, "Write file failed.");
+		}
+	}
+	else
+	{
+		printf("OSXWriteDataToFile had pre-existing file errors\n");
 	}
 }
 
@@ -365,7 +386,6 @@ PLATFORM_CLOSE_FILE(OSXCloseFile)
 }
 
 
-//#define PLATFORM_FILE_ERROR(name) void name(platform_file_handle *Handle, char *Message)
 PLATFORM_FILE_ERROR(OSXFileError)
 {
 #if HANDMADE_INTERNAL

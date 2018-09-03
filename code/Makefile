@@ -26,7 +26,7 @@ OSX_LD_FLAGS = -framework Cocoa -framework QuartzCore -framework OpenGL -framewo
 OSX_CT_LD_FLAGS = -framework CoreText -framework CoreFoundation
 #OSX_LD_FLAGS = -framework Cocoa -framework QuartzCore -framework OpenGL -framework IOKit -framework AudioUnit -Wl,-syslibroot /Applications/Xcode-Beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
 
-BINARIES = handmade libhandmade.dylib osx_asset_builder test_png
+BINARIES = handmade libhandmade.dylib osx_asset_builder test_png HandmadeTabView
 
 DYNAMIC_COMPILE_PATH=$(shell pwd)
 DYNAMIC_COMPILE_COMMAND=$(DYNAMIC_COMPILE_PATH)/dynamic_compile.sh
@@ -72,6 +72,7 @@ package:
 	cp $(HANDMADE_ART_PATH)/*.png ./Contents/Resources/art
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
 
+
 osx_asset_builder:	osx_asset_builder.o
 	$(CXX) $(COPTS) $(OSX_CT_LD_FLAGS) -o $@ $^
 
@@ -109,6 +110,17 @@ osx_handmade.o: osx_handmade.cpp osx_handmade.h osx_handmade_debug.cpp osx_handm
 osx_main.o: osx_main.mm osx_handmade.cpp osx_handmade.h $(HANDMADE_CODE_PATH)/handmade.h $(HANDMADE_CODE_PATH)/handmade.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) -Wno-writable-strings -Wno-deprecated-declarations -Wno-null-dereference -Wno-c++11-compat-deprecated-writable-strings -Wno-unused-function -Wno-unused-variable -c $<
 
+
+HandmadeTabView:	osx_tabview.o
+	$(CXX) $(COPTS) -framework Cocoa $(CPP11_LD_FLAGS) -o $@ $^
+	rm -rf ./HandmadeTabView.app
+	mkdir -p ./HandmadeTabView.app/Contents/MacOS
+	cp HandmadeTabView HandmadeTabView.app/Contents/MacOS/HandmadeTabView
+	cp osx_tabview.info.plist HandmadeTabView.app/Contents/Info.plist
+
+osx_tabview.o: osx_tabview.mm
+	$(CXX) $(COPTS) $(CPP11_FLAGS) -c $<
+
 clean:
-	rm -rf *.o $(BINARIES) Handmade.app
+	rm -rf *.o $(BINARIES) Handmade.app HandmadeTabView.app
 

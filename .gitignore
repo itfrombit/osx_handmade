@@ -63,4 +63,5 @@ test2.hha
 test3.hha
 test_asset_builder.cpp
 test_asset_builder.h
-
+HandmadeTabView
+*.dump

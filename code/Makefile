@@ -50,11 +50,11 @@ package:
 	mkdir -p Handmade.app/Contents/Resources/sound
 	mkdir -p Handmade.app/Contents/code
 	cp handmade Handmade.app/Contents/MacOS/Handmade
-	cp $(HANDMADE_ASSETS_PATH)/test1.hha Handmade.app/Contents/Resources/data/test1.hha
-	cp $(HANDMADE_ASSETS_PATH)/test2.hha Handmade.app/Contents/Resources/data/test2.hha
-	cp $(HANDMADE_ASSETS_PATH)/test3.hha Handmade.app/Contents/Resources/data/test3.hha
-	cp $(HANDMADE_ASSETS_PATH)/testfonts.hha Handmade.app/Contents/Resources/data/testfonts.hha
-	cp $(HANDMADE_ASSETS_PATH)/intro_art.hha Handmade.app/Contents/Resources/data/intro_art.hha
+	cp $(HANDMADE_ASSETS_PATH)/test1_v1.hha Handmade.app/Contents/Resources/data/test1_v1.hha
+	cp $(HANDMADE_ASSETS_PATH)/test2_v1.hha Handmade.app/Contents/Resources/data/test2_v1.hha
+	cp $(HANDMADE_ASSETS_PATH)/test3_v1.hha Handmade.app/Contents/Resources/data/test3_v1.hha
+	cp $(HANDMADE_ASSETS_PATH)/testfonts_v1.hha Handmade.app/Contents/Resources/data/testfonts_v1.hha
+	cp $(HANDMADE_ASSETS_PATH)/intro_art_v1.hha Handmade.app/Contents/Resources/data/intro_art_v1.hha
 	cp $(HANDMADE_ART_PATH)/*.png Handmade.app/Contents/Resources/art
 	cp libhandmade.dylib Handmade.app/Contents/MacOS/libhandmade.dylib
 	mv Handmade.app ../build/
@@ -64,11 +64,11 @@ package:
 	mkdir -p ./Contents/Resources/art
 	mkdir -p ./Contents/Resources/sound
 	mkdir -p ./Contents/code
-	cp $(HANDMADE_ASSETS_PATH)/test1.hha ./Contents/Resources/data/test1.hha
-	cp $(HANDMADE_ASSETS_PATH)/test2.hha ./Contents/Resources/data/test2.hha
-	cp $(HANDMADE_ASSETS_PATH)/test3.hha ./Contents/Resources/data/test3.hha
-	cp $(HANDMADE_ASSETS_PATH)/testfonts.hha ./Contents/Resources/data/testfonts.hha
-	cp $(HANDMADE_ASSETS_PATH)/intro_art.hha ./Contents/Resources/data/intro_art.hha
+	cp $(HANDMADE_ASSETS_PATH)/test1_v1.hha ./Contents/Resources/data/test1_v1.hha
+	cp $(HANDMADE_ASSETS_PATH)/test2_v1.hha ./Contents/Resources/data/test2_v1.hha
+	cp $(HANDMADE_ASSETS_PATH)/test3_v1.hha ./Contents/Resources/data/test3_v1.hha
+	cp $(HANDMADE_ASSETS_PATH)/testfonts_v1.hha ./Contents/Resources/data/testfonts_v1.hha
+	cp $(HANDMADE_ASSETS_PATH)/intro_art_v1.hha ./Contents/Resources/data/intro_art_v1.hha
 	cp $(HANDMADE_ART_PATH)/*.png ./Contents/Resources/art
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
 

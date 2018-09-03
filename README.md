@@ -3,8 +3,11 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 466.
+This repository works with Casey's source code from Day 467.
+Day 467 started using version 1 assets, so don't forget to
+rewrite the .hha files! You can rewrite an .hha file like this:
 
+    hhaedit -rewrite ../data/intro_art.hha ../data/intro_art_v1.hha
 
 This OS X platform layer code does not need to be updated for
 every episode of Handmade Hero, although I do test each day's code
@@ -28,12 +31,12 @@ Some notes:
 
 - Create .hha dump files for viewing like this:
 
-    hhaedit -dump ../data/intro_art.hha > intro_art.hha.dump
+      hhaedit -dump ../data/intro_art_v1.hha > intro_art_v1.hha.dump
 
 - Run HandmadeTabView.app. Either double-click the .app file in the Finder,
   or run it from a shell prompt like this:
 
-    open HandmadeTabView.app
+      open HandmadeTabView.app
 
 - The application launches with an empty document. You can drag and drop
 a dump file from the Finder onto any existing window (empty or not) and it

@@ -12,8 +12,10 @@
 #include <memory.h>
 #include "handmade_platform.h"
 #include "handmade_file_formats.h"
+#include "handmade_file_formats_v0.h"
 #include "handmade_intrinsics.h"
 #include "handmade_math.h"
+
 
 #define ONE_PAST_MAX_FONT_CODEPOINT (0x10FFFF + 1)
 
@@ -32,7 +34,7 @@ global_variable HDC GlobalFontDeviceContext;
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 #endif
- 
+
 struct loaded_bitmap
 {
     int32 Width;
@@ -70,7 +72,7 @@ struct loaded_font
 
     u32 MinCodePoint;
     u32 MaxCodePoint;
-    
+
     u32 MaxGlyphCount;
     u32 GlyphCount;
 
@@ -131,13 +133,13 @@ struct game_assets
     hha_tag Tags[VERY_LARGE_NUMBER];
 
     u32 AssetTypeCount;
-    hha_asset_type AssetTypes[Asset_Count];
+    hha_asset_type_v0 AssetTypes[Asset_Count];
 
     u32 AssetCount;
     asset_source AssetSources[VERY_LARGE_NUMBER];
     hha_asset Assets[VERY_LARGE_NUMBER];
 
-    hha_asset_type *DEBUGAssetType;
+    hha_asset_type_v0 *DEBUGAssetType;
     u32 AssetIndex;
 };
 

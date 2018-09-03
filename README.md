@@ -3,13 +3,8 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 468.
+This repository works with Casey's source code from Day 469.
 
-
-Day 467 started using version 1 assets, so don't forget to
-rewrite the .hha files! You can rewrite an .hha file like this:
-
-    hhaedit -rewrite ../data/intro_art.hha ../data/intro_art_v1.hha
 
 This OS X platform layer code does not need to be updated for
 every episode of Handmade Hero, although I do test each day's code
@@ -17,6 +12,20 @@ on OS X. If you see "missing" days in this OS X repository, it just
 means that the most recent version of the OS X platform layer will
 work. For example, day 405 of the OS X platform layer
 will work with Casey's Handmade Hero days 405 through 409.
+
+
+2018-09-03 Note:
+----------------
+Day 467 started using version 1 assets, so don't forget to
+rewrite the .hha files! You can rewrite an .hha file like this:
+
+    hhaedit -rewrite ../data/intro_art.hha ../data/intro_art_v1.hha
+
+Day 468 started using local.hha to dynamically import .png resources
+at runtime. Make sure you create a local.hha file before compiling
+the application bundle if you want this functionality at runtime.
+
+    hhaedit -create ../data/local.hha
 
 
 2018-09-02 Note:

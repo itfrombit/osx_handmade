@@ -43,22 +43,23 @@ handmade:	osx_main.o osx_handmade.o
 	$(CXX) $(COPTS) $(OSX_LD_FLAGS) $(CPP11_LD_FLAGS) -o $@ $^
 
 package:
-	rm -rf ../build/Handmade.app
-	rm -rf ./Contents/Resources
-	mkdir -p Handmade.app/Contents/MacOS
-	mkdir -p Handmade.app/Contents/Resources/data
-	mkdir -p Handmade.app/Contents/Resources/art
-	mkdir -p Handmade.app/Contents/Resources/sound
-	mkdir -p Handmade.app/Contents/code
-	cp handmade Handmade.app/Contents/MacOS/Handmade
-	cp $(HANDMADE_ASSETS_PATH)/test1_v1.hha Handmade.app/Contents/Resources/data/test1_v1.hha
-	cp $(HANDMADE_ASSETS_PATH)/test2_v1.hha Handmade.app/Contents/Resources/data/test2_v1.hha
-	cp $(HANDMADE_ASSETS_PATH)/test3_v1.hha Handmade.app/Contents/Resources/data/test3_v1.hha
-	cp $(HANDMADE_ASSETS_PATH)/testfonts_v1.hha Handmade.app/Contents/Resources/data/testfonts_v1.hha
-	cp $(HANDMADE_ASSETS_PATH)/intro_art_v1.hha Handmade.app/Contents/Resources/data/intro_art_v1.hha
-	cp $(HANDMADE_ART_PATH)/*.png Handmade.app/Contents/Resources/art
-	cp libhandmade.dylib Handmade.app/Contents/MacOS/libhandmade.dylib
-	mv Handmade.app ../build/
+	#rm -rf ../build/Handmade.app
+	#rm -rf ./Contents/Resources
+	#mkdir -p Handmade.app/Contents/MacOS
+	#mkdir -p Handmade.app/Contents/Resources/data
+	#mkdir -p Handmade.app/Contents/Resources/art
+	#mkdir -p Handmade.app/Contents/Resources/sound
+	#mkdir -p Handmade.app/Contents/code
+	#cp handmade Handmade.app/Contents/MacOS/Handmade
+	#cp $(HANDMADE_ASSETS_PATH)/test1_v1.hha Handmade.app/Contents/Resources/data/test1_v1.hha
+	#cp $(HANDMADE_ASSETS_PATH)/test2_v1.hha Handmade.app/Contents/Resources/data/test2_v1.hha
+	#cp $(HANDMADE_ASSETS_PATH)/test3_v1.hha Handmade.app/Contents/Resources/data/test3_v1.hha
+	#cp $(HANDMADE_ASSETS_PATH)/testfonts_v1.hha Handmade.app/Contents/Resources/data/testfonts_v1.hha
+	#cp $(HANDMADE_ASSETS_PATH)/intro_art_v1.hha Handmade.app/Contents/Resources/data/intro_art_v1.hha
+	#cp $(HANDMADE_ART_PATH)/*.png Handmade.app/Contents/Resources/art
+	#cp libhandmade.dylib Handmade.app/Contents/MacOS/libhandmade.dylib
+	#mv Handmade.app ../build/
+	#
 	# The 'local' bundle for convenient debugging with lldb
 	mkdir -p ./Contents/MacOS
 	mkdir -p ./Contents/Resources/data
@@ -70,9 +71,21 @@ package:
 	cp $(HANDMADE_ASSETS_PATH)/test3_v1.hha ./Contents/Resources/data/test3_v1.hha
 	cp $(HANDMADE_ASSETS_PATH)/testfonts_v1.hha ./Contents/Resources/data/testfonts_v1.hha
 	cp $(HANDMADE_ASSETS_PATH)/intro_art_v1.hha ./Contents/Resources/data/intro_art_v1.hha
+	@if [ -f $(HANDMADE_ASSETS_PATH)/local.hha ]; then \
+		cp $(HANDMADE_ASSETS_PATH)/local.hha ./Contents/Resources/data/local.hha; \
+	else \
+		echo ""; \
+		echo "WARNING: no local.hha exists!!"; \
+		echo ""; \
+	fi
 	cp $(HANDMADE_ART_PATH)/*.png ./Contents/Resources/art
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
-
+	# The "official" app bundle
+	rm -rf ../build/Handmade.app
+	mkdir Handmade.app
+	cp -R ./Contents ./Handmade.app/
+	cp handmade ./Handmade.app/Contents/MacOS/Handmade
+	mv Handmade.app ../build
 
 osx_asset_builder:	osx_asset_builder.o
 	$(CXX) $(COPTS) $(OSX_CT_LD_FLAGS) -o $@ $^

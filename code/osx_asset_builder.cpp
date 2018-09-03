@@ -772,7 +772,7 @@ LoadWAV(char *FileName, u32 SectionFirstSampleIndex, u32 SectionSampleCount)
 }
 
 internal void
-BeginAssetType(game_assets *Assets, asset_type_id TypeID)
+BeginAssetType(game_assets *Assets, asset_type_id_v0 TypeID)
 {
     Assert(Assets->DEBUGAssetType == 0);
 
@@ -913,7 +913,7 @@ WriteHHA(game_assets *Assets, char *FileName)
     FILE *Out = fopen(FileName, "wb");
     if(Out)
     {
-        hha_header Header = {};
+        hha_header_v0 Header = {};
         Header.MagicValue = HHA_MAGIC_VALUE;
         Header.Version = HHA_VERSION;
         Header.TagCount = Assets->TagCount;

@@ -36,7 +36,8 @@ default: clean libhandmade.dylib handmade package
 
 quick: libhandmade.dylib handmade
 
-all: clean libhandmade.dylib handmade package osx_asset_builder test_png hhaedit
+#all: clean libhandmade.dylib handmade package test_png hhaedit HandmadeTabView
+all: clean libhandmade.dylib handmade package osx_asset_builder test_png hhaedit HandmadeTabView
 
 handmade:	osx_main.o osx_handmade.o
 	$(CXX) $(COPTS) $(OSX_LD_FLAGS) $(CPP11_LD_FLAGS) -o $@ $^

@@ -275,7 +275,7 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 				*Lower = ToLowercase(*Lower);
 			}
 
-			Info->Platform = PushString(&OSXFileGroup->Memory, (char*)GlobFilename);
+			Info->Platform = PushStringZ(&OSXFileGroup->Memory, (char*)GlobFilename);
 
 			Result.FirstFileInfo = Info;
 		}

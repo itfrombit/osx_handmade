@@ -3,7 +3,9 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 467.
+This repository works with Casey's source code from Day 468.
+
+
 Day 467 started using version 1 assets, so don't forget to
 rewrite the .hha files! You can rewrite an .hha file like this:
 

@@ -187,6 +187,7 @@ void OSXFreeMemoryBlock(osx_memory_block* Block);
 PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory);
 PLATFORM_DEALLOCATE_MEMORY(OSXDeallocateMemory);
 
+void* OSXSimpleAllocateMemory(umm Size);
 
 
 void OSXGetAppFilename(osx_state *State);
@@ -273,7 +274,7 @@ typedef struct osx_game_data
 
 	u32							MaxVertexCount;
 	textured_vertex*			VertexArray;
-	loaded_bitmap**				BitmapArray;
+	renderer_texture*			BitmapArray;
 
 	//game_memory					GameMemory;
 	game_offscreen_buffer		RenderBuffer;
@@ -351,7 +352,7 @@ void OSXKeyProcessing(b32 IsDown, u32 KeyCode, u32 Key,
 void OSXDebugInternalLogOpenGLErrors(const char* label);
 void OSXSetupSound(osx_game_data* GameData);
 void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext);
-void OSXSetupOpenGL(osx_game_data* GameData);
+void OSXInitOpenGL();
 void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height, int BytesPerPixel);
 
 void OSXInitializeGameInputForNewFrame(osx_game_data* GameData);

@@ -3,7 +3,7 @@
 osx_state GlobalOSXState;
 
 #if HANDMADE_INTERNAL
-global_variable debug_table GlobalDebugTable_;
+global debug_table GlobalDebugTable_;
 debug_table* GlobalDebugTable = &GlobalDebugTable_;
 #endif
 
@@ -31,55 +31,6 @@ void OSXStopGame()
 	GlobalRunning = 0;
 }
 
-
-
-void OSXDebugInternalLogOpenGLErrors(const char* label)
-{
-	GLenum err = glGetError();
-	const char* errString = "No error";
-
-	while (err != GL_NO_ERROR)
-	{
-		switch(err)
-		{
-			case GL_INVALID_ENUM:
-				errString = "Invalid Enum";
-				break;
-
-			case GL_INVALID_VALUE:
-				errString = "Invalid Value";
-				break;
-
-			case GL_INVALID_OPERATION:
-				errString = "Invalid Operation";
-				break;
-
-/*
-			case GL_INVALID_FRAMEBUFFER_OPERATION:
-				errString = "Invalid Framebuffer Operation";
-				break;
-*/
-			case GL_OUT_OF_MEMORY:
-				errString = "Out of Memory";
-				break;
-
-			case GL_STACK_UNDERFLOW:
-				errString = "Stack Underflow";
-				break;
-
-			case GL_STACK_OVERFLOW:
-				errString = "Stack Overflow";
-				break;
-
-			default:
-				errString = "Unknown Error";
-				break;
-		}
-		printf("glError on %s: %s\n", label, errString);
-
-		err = glGetError();
-	}
-}
 
 
 void OSXSetupSound(osx_game_data* GameData)
@@ -124,85 +75,6 @@ void OSXSetPixelFormat()
 }
 
 
-void OSXSetupOpenGL(osx_game_data* GameData)
-{
-	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
-	if (Image)
-	{
-#define OSXGetOpenGLFunction(Module, Name) Name = (type_##Name *)dlsym(Module, #Name)
-        OSXGetOpenGLFunction(Image, glDebugMessageCallbackARB);
-        OSXGetOpenGLFunction(Image, glBindVertexArray);
-        OSXGetOpenGLFunction(Image, glGenVertexArrays);
-        OSXGetOpenGLFunction(Image, glGetStringi);
-
-		opengl_info Info = OpenGLGetInfo(true);
-
-		glBindFramebuffer = (gl_bind_framebuffer*)dlsym(Image, "glBindFramebuffer");
-		glGenFramebuffers = (gl_gen_framebuffers*)dlsym(Image, "glGenFramebuffers");
-		glFramebufferTexture2D = (gl_framebuffer_texture_2D*)dlsym(Image, "glFramebufferTexture2D");
-		glCheckFramebufferStatus = (gl_check_framebuffer_status*)dlsym(Image, "glCheckFramebufferStatus");
-        glTexImage2DMultisample = (gl_tex_image_2d_multisample *)dlsym(Image, "glTexImage2DMultisample");
-        glBlitFramebuffer = (gl_blit_framebuffer *)dlsym(Image, "glBlitFramebuffer");
-
-		OSXGetOpenGLFunction(Image, glDeleteFramebuffers);
-		//OSXGetOpenGLFunction(Image, glDrawBuffers);
-		OSXGetOpenGLFunction(Image, glVertexAttribIPointer);
-#if 0
-        glAttachShader = (gl_attach_shader *)dlsym("glAttachShader");
-        glCompileShader = (gl_compile_shader *)dlsym("glCompileShader");
-        glCreateProgram = (gl_create_program *)dlsym("glCreateProgram");
-        glCreateShader = (gl_create_shader *)dlsym("glCreateShader");
-        glLinkProgram = (gl_link_program *)dlsym("glLinkProgram");
-        glShaderSource = (gl_shader_source *)dlsym("glShaderSource");
-        glUseProgram = (gl_use_program *)dlsym("glUseProgram");
-        glGetProgramInfoLog = (gl_get_program_info_log *)dlsym("glGetProgramInfoLog");
-        glGetShaderInfoLog = (gl_get_shader_info_log *)dlsym("glGetShaderInfoLog");
-        glValidateProgram = (gl_validate_program *)dlsym("glValidateProgram");
-        glGetProgramiv = (gl_get_program_iv *)dlsym("glGetProgramiv");
-#endif
-
-		if (glBindFramebuffer)
-		{
-			printf("OpenGL extension functions loaded\n");
-		}
-		else
-		{
-			printf("Could not dynamically load glBindFramebuffer\n");
-		}
-
-		Assert(glBindFramebuffer);
-		Assert(glGenFramebuffers);
-		Assert(glFramebufferTexture2D);
-		Assert(glCheckFramebufferStatus);
-		Assert(glTexImage2DMultisample);
-		Assert(glBlitFramebuffer);
-        Assert(glAttachShader);
-        Assert(glCompileShader);
-        Assert(glCreateProgram);
-        Assert(glCreateShader);
-        Assert(glLinkProgram);
-        Assert(glShaderSource);
-        Assert(glUseProgram);
-        Assert(glGetProgramInfoLog);
-        Assert(glGetShaderInfoLog);
-        Assert(glValidateProgram);
-        Assert(glGetProgramiv);
-
-		//OpenGL.SupportsSRGBFramebuffer = true;
-		OpenGLInit(Info, OpenGL.SupportsSRGBFramebuffer);
-
-#if 0
-		OpenGLDefaultInternalTextureFormat = GL_RGBA8;
-		//OpenGLDefaultInternalTextureFormat = GL_SRGB8_ALPHA8;
-		glEnable(GL_FRAMEBUFFER_SRGB);
-#endif
-	}
-	else
-	{
-		printf("Could not dynamically load OpenGL\n");
-	}
-
-}
 
 ///////////////////////////////////////////////////////////////////////
 // Game Code
@@ -289,11 +161,9 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	GameData->VertexArray = (textured_vertex*)OSXAllocateMemory(GameData->MaxVertexCount * sizeof(textured_vertex),
 															          PlatformMemory_NotRestored)->Base;
 
-	GameData->BitmapArray = (loaded_bitmap**)OSXAllocateMemory(GameData->MaxVertexCount * sizeof(loaded_bitmap*),
+	GameData->BitmapArray = (renderer_texture*)OSXAllocateMemory(GameData->MaxVertexCount * sizeof(renderer_texture),
 															  PlatformMemory_NotRestored)->Base;
 
-	GameData->LightBoxes = (lighting_box*)OSXAllocateMemory(LIGHT_DATA_WIDTH * sizeof(lighting_box),
-	                                                          PlatformMemory_NotRestored)->Base;
 
 #if HANDMADE_INTERNAL
 	char* RequestedAddress = (char*)Gigabytes(8);
@@ -374,15 +244,16 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 #endif
 
 	u32 TextureOpCount = 1024;
-	platform_texture_op_queue* TextureOpQueue = &GameMemory.TextureOpQueue;
-	TextureOpQueue->FirstFree = (texture_op*)malloc(TextureOpCount * sizeof(texture_op));
-		//(texture_op*)OSXAllocateMemory(TextureOpCount * sizeof(texture_op));
+	GameMemory.TextureQueue = (renderer_texture_queue*)OSXSimpleAllocateMemory(sizeof(renderer_texture_queue));
+	ZeroStruct(*GameMemory.TextureQueue);
+	GameMemory.TextureQueue->FirstFree = (texture_op*)OSXSimpleAllocateMemory(sizeof(texture_op) * TextureOpCount);
+
 	for (u32 TextureOpIndex = 0;
 			TextureOpIndex < (TextureOpCount - 1);
 			++TextureOpIndex)
 	{
-		texture_op* Op = TextureOpQueue->FirstFree + TextureOpIndex;
-		Op->Next = TextureOpQueue->FirstFree + TextureOpIndex + 1;
+		texture_op* Op = GameMemory.TextureQueue->FirstFree + TextureOpIndex;
+		Op->Next = GameMemory.TextureQueue->FirstFree + TextureOpIndex + 1;
 	}
 
 
@@ -656,7 +527,7 @@ void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
 	}
 	else
 	{
-		loaded_bitmap OutputTarget;
+		software_texture OutputTarget;
 		OutputTarget.Memory = RenderBuffer->Memory;
 		OutputTarget.Width = RenderBuffer->Width;
 		OutputTarget.Height = RenderBuffer->Height;
@@ -879,15 +750,13 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	if (GameData->RenderCommandsInitialized == 0)
 	{
 		GameData->RenderCommands = DefaultRenderCommands(
-												GameData->PushBufferSize,
-												GameData->PushBuffer,
-												(u32)GameData->RenderBuffer.Width,
-												(u32)GameData->RenderBuffer.Height,
-												GameData->MaxVertexCount,
-												GameData->VertexArray,
-												GameData->BitmapArray,
-												&OpenGL.WhiteBitmap,
-												GameData->LightBoxes);
+										GameData->PushBufferSize, GameData->PushBuffer,
+										(u32)GameData->RenderBuffer.Width,
+										(u32)GameData->RenderBuffer.Height,
+										GameData->MaxVertexCount,
+										GameData->VertexArray,
+										GameData->BitmapArray,
+										OpenGL.WhiteBitmap);
 		GameData->RenderCommandsInitialized = 1;
 	}
 
@@ -907,8 +776,6 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	//
 
 	BEGIN_BLOCK("Game Update");
-
-	GameData->RenderCommands.LightPointIndex = 1;
 
 	if (!GlobalPause)
 	{
@@ -1024,7 +891,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Frame Display");
 
-	platform_texture_op_queue* TextureOpQueue = &GameMemory.TextureOpQueue;
+	renderer_texture_queue* TextureOpQueue = GameMemory.TextureQueue;
 
 	BeginTicketMutex(&TextureOpQueue->Mutex);
 	texture_op* FirstTextureOp = TextureOpQueue->First;
@@ -1053,7 +920,6 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	GameData->RenderCommands.PushBufferDataAt = GameData->RenderCommands.PushBufferBase;
 	GameData->RenderCommands.VertexCount = 0;
-	GameData->RenderCommands.LightBoxCount = 0;
 
 	END_BLOCK();
 }

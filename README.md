@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 469.
+This repository works with Casey's source code from Day 471.
 
 
 This OS X platform layer code does not need to be updated for
@@ -12,6 +12,21 @@ on OS X. If you see "missing" days in this OS X repository, it just
 means that the most recent version of the OS X platform layer will
 work. For example, day 405 of the OS X platform layer
 will work with Casey's Handmade Hero days 405 through 409.
+
+
+2018-09-05 Note:
+----------------
+I added an OS X version of the HandmadeRendererTest application.
+You can build this by running:
+
+    make HandmadeRendererTest
+
+in the code subdirectory. This will create the HandmadeRendererTest.app
+bundle. You can run the application from the Finder or by launching it
+from a shell prompt like this:
+
+    open HandmadeRendererTest.app
+
 
 
 2018-09-03 Note:

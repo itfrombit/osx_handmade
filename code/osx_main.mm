@@ -7,21 +7,28 @@
 
 #include <Cocoa/Cocoa.h>
 
+#define GL_GLEXT_LEGACY
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl.h>
-#import <OpenGL/glext.h>
-#import <OpenGL/glu.h>
 
 #include <mach/mach_time.h>
+#include <dlfcn.h>
 
 #define Maximum(A, B) ((A > B) ? (A) : (B))
 
 #import "handmade_platform.h"
+
+#import "handmade_shared.h"
 #import "handmade_memory.h"
+#import "handmade_renderer.h"
+#import "handmade_renderer_opengl.h"
+
 #import "osx_handmade_events.h"
 #import "osx_handmade.h"
 
 #import "handmade_intrinsics.h"
+
+#import "osx_handmade.cpp"
 
 // Let the command line override
 #ifndef HANDMADE_USE_VSYNC
@@ -29,8 +36,8 @@
 #endif
 
 
-global_variable NSOpenGLContext* GlobalGLContext;
-global_variable r32 GlobalAspectRatio;
+global NSOpenGLContext* GlobalGLContext;
+global r32 GlobalAspectRatio;
 
 //const r32 GlobalRenderWidth = 2560.0f;
 //const r32 GlobalRenderHeight = 1600.0f;
@@ -348,9 +355,7 @@ int main(int argc, const char* argv[])
 	NSApplication* app = [NSApplication sharedApplication];
 	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 
-
 	OSXCreateMainMenu();
-
 
 	///////////////////////////////////////////////////////////////////
 	// Set working directory
@@ -365,7 +370,6 @@ int main(int argc, const char* argv[])
 	{
 		Assert(0);
 	}
-
 
 	HandmadeAppDelegate* appDelegate = [[HandmadeAppDelegate alloc] init];
 	[app setDelegate:appDelegate];
@@ -432,10 +436,10 @@ int main(int argc, const char* argv[])
 									GlobalRenderHeight);
 
 	NSWindow* window = [[NSWindow alloc] initWithContentRect:InitialFrame
-									styleMask:NSTitledWindowMask
-												| NSClosableWindowMask
-												| NSMiniaturizableWindowMask
-												| NSResizableWindowMask
+									styleMask:NSWindowStyleMaskTitled
+												| NSWindowStyleMaskClosable
+												| NSWindowStyleMaskMiniaturizable
+												| NSWindowStyleMaskResizable
 									backing:NSBackingStoreBuffered
 									defer:NO];
 
@@ -486,7 +490,7 @@ int main(int argc, const char* argv[])
 	///////////////////////////////////////////////////////////////////
 	// Non-Cocoa OpenGL
 	//
-	OSXSetupOpenGL(&GameData);
+	OSXInitOpenGL();
 
 
 #if 0

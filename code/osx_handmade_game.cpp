@@ -244,18 +244,10 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 #endif
 
 	u32 TextureOpCount = 1024;
-	GameMemory.TextureQueue = (renderer_texture_queue*)OSXSimpleAllocateMemory(sizeof(renderer_texture_queue));
-	ZeroStruct(*GameMemory.TextureQueue);
-	GameMemory.TextureQueue->FirstFree = (texture_op*)OSXSimpleAllocateMemory(sizeof(texture_op) * TextureOpCount);
+	GameMemory.TextureQueue = &OpenGL.TextureQueue;
 
-	for (u32 TextureOpIndex = 0;
-			TextureOpIndex < (TextureOpCount - 1);
-			++TextureOpIndex)
-	{
-		texture_op* Op = GameMemory.TextureQueue->FirstFree + TextureOpIndex;
-		Op->Next = GameMemory.TextureQueue->FirstFree + TextureOpIndex + 1;
-	}
-
+	InitTextureQueue(&OpenGL.TextureQueue, TextureOpCount,
+	                 (texture_op*)OSXSimpleAllocateMemory(sizeof(texture_op) * TextureOpCount));
 
 	Platform = GameMemory.PlatformAPI;
 
@@ -891,24 +883,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Frame Display");
 
-	renderer_texture_queue* TextureOpQueue = GameMemory.TextureQueue;
-
-	BeginTicketMutex(&TextureOpQueue->Mutex);
-	texture_op* FirstTextureOp = TextureOpQueue->First;
-	texture_op* LastTextureOp = TextureOpQueue->Last;
-	TextureOpQueue->First = 0;
-	TextureOpQueue->Last = 0;
-	EndTicketMutex(&TextureOpQueue->Mutex);
-
-	if (FirstTextureOp)
-	{
-		Assert(LastTextureOp);
-		OpenGLManageTextures(FirstTextureOp);
-		BeginTicketMutex(&TextureOpQueue->Mutex);
-		LastTextureOp->Next = TextureOpQueue->FirstFree;
-		TextureOpQueue->FirstFree = FirstTextureOp;
-		EndTicketMutex(&TextureOpQueue->Mutex);
-	}
+	OpenGLManageTextures();
 
 	OSXDisplayBufferInWindow(&GameData->HighPriorityQueue,
 							 &GameData->RenderBuffer,

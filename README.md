@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 471.
+This repository works with Casey's source code from Day 472.
 
 
 This OS X platform layer code does not need to be updated for
@@ -14,8 +14,8 @@ work. For example, day 405 of the OS X platform layer
 will work with Casey's Handmade Hero days 405 through 409.
 
 
-2018-09-05 Note:
-----------------
+Day 471 Note:
+-------------
 I added an OS X version of the HandmadeRendererTest application.
 You can build this by running:
 
@@ -29,8 +29,8 @@ from a shell prompt like this:
 
 
 
-2018-09-03 Note:
-----------------
+Day 467 Note:
+-------------
 Day 467 started using version 1 assets, so don't forget to
 rewrite the .hha files! You can rewrite an .hha file like this:
 
@@ -43,8 +43,8 @@ the application bundle if you want this functionality at runtime.
     hhaedit -create ../data/local.hha
 
 
-2018-09-02 Note:
-----------------
+Day 466 Note:
+-------------
 I added an OS X version of the TabView utility. You can build this
 by running:
 

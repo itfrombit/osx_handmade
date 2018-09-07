@@ -141,8 +141,10 @@ HandmadeRendererTest:	osx_renderer_test.o
 	rm -rf ./HandmadeRendererTest.app
 	mkdir -p ./HandmadeRendererTest.app/Contents/MacOS
 	mkdir -p ./HandmadeRendererTest.app/Contents/Resources
-	cp $(HANDMADE_ASSETS_PATH)/renderer_test/cube_test.bmp ./HandmadeRendererTest.app/Contents/Resources
-	cp $(HANDMADE_ASSETS_PATH)/renderer_test/sprite_test.bmp ./HandmadeRendererTest.app/Contents/Resources
+	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_cube_grass.bmp ./HandmadeRendererTest.app/Contents/Resources
+	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_cube_wall.bmp ./HandmadeRendererTest.app/Contents/Resources
+	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_sprite_tree.bmp ./HandmadeRendererTest.app/Contents/Resources
+	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_sprite_head.bmp ./HandmadeRendererTest.app/Contents/Resources
 	mv HandmadeRendererTest HandmadeRendererTest.app/Contents/MacOS/HandmadeRendererTest
 	#cp osx_tabview.info.plist HandmadeTabView.app/Contents/Info.plist
 

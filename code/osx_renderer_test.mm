@@ -131,8 +131,7 @@ ReadEntireFile(char *FileName)
 }
 
 
-internal loaded_bitmap
-LoadBMP(char *FileName)
+internal renderer_texture LoadBMP(char *FileName)
 {
 	loaded_bitmap Result = {};
 
@@ -205,8 +204,20 @@ LoadBMP(char *FileName)
 	}
 
 	Result.Pitch = Result.Width*4;
-	return(Result);
+
+	renderer_texture CubeTexture = {};
+	texture_op CubeOp = {};
+	CubeOp.IsAllocate = true;
+	CubeOp.Allocate.Width = Result.Width;
+	CubeOp.Allocate.Height = Result.Height;
+	CubeOp.Allocate.Data = Result.Memory;
+	CubeOp.Allocate.ResultTexture = &CubeTexture;
+	AddOp(&OpenGL.TextureQueue, &CubeOp);
+	OpenGLManageTextures();
+
+	return CubeTexture;
 }
+
 
 ///////////////////////////////////////////////////////////////////////
 // Application Delegate
@@ -359,7 +370,115 @@ void OSXProcessPendingMessages()
 
 
 ///////////////////////////////////////////////////////////////////////
-// Startup
+
+enum test_scene_element
+{
+	Element_Grass,
+	Element_Tree,
+	Element_Wall,
+};
+
+#define TEST_SCENE_DIM_X 40
+#define TEST_SCENE_DIM_Y 50
+
+struct test_scene
+{
+	v3 MinP;
+	test_scene_element Elements[TEST_SCENE_DIM_Y][TEST_SCENE_DIM_X];
+
+	renderer_texture GrassTexture;
+	renderer_texture WallTexture;
+	renderer_texture TreeTexture;
+	renderer_texture HeadTexture;
+};
+
+
+internal void PlaceRandom(test_scene* Scene, test_scene_element Element, u32 Count)
+{
+	u32 Placed = 0;
+
+	while(Placed < Count)
+	{
+		u32 X = 1 + (rand() % (TEST_SCENE_DIM_X - 1));
+		u32 Y = 1 + (rand() % (TEST_SCENE_DIM_Y - 1));
+
+		u32 Occ = 0;
+
+		for(u32 TestY = (Y - 1); TestY <= (Y + 1); ++TestY)
+		{
+			for(u32 TestX = (X - 1); TestX <= (X + 1); ++TestX)
+			{
+				if(Scene->Elements[TestY][TestX])
+				{
+					++Occ;
+				}
+			}
+		}
+
+		if(Occ == 0)
+		{
+			Scene->Elements[Y][X] = Element;
+			++Placed;
+		}
+	}
+}
+
+
+internal void InitTestScene(test_scene* Scene)
+{
+	Scene->GrassTexture = LoadBMP("test_cube_grass.bmp");
+	Scene->WallTexture = LoadBMP("test_cube_wall.bmp");
+	Scene->TreeTexture = LoadBMP("test_sprite_tree.bmp");
+	Scene->HeadTexture = LoadBMP("test_sprite_head.bmp");
+
+	Scene->MinP = V3(-0.5f*(f32)TEST_SCENE_DIM_X,
+					 -0.5f*(f32)TEST_SCENE_DIM_Y,
+					 0.0f);
+
+	PlaceRandom(Scene, Element_Tree, 90);
+	PlaceRandom(Scene, Element_Wall, 50);
+}
+
+
+internal void PushSimpleScene(render_group* Group, test_scene* Scene)
+{
+	srand(1234);
+
+	for(s32 Y = 0; Y < TEST_SCENE_DIM_Y; ++Y)
+	{
+		for(s32 X = 0; X <= TEST_SCENE_DIM_X; ++X)
+		{
+			test_scene_element Elem = Scene->Elements[Y][X];
+
+			f32 Z = 0.4f*((f32)rand() / (f32)RAND_MAX);
+			f32 R = 0.5f + 0.5f*((f32)rand() / (f32)RAND_MAX);
+			f32 ZRadius = 2.0f;
+			v4 Color = V4(R, 1, 1, 1);
+			v3 P = Scene->MinP + V3((f32)X, (f32)Y, Z);
+
+			PushCube(Group, Scene->GrassTexture, P, V3(0.5f, 0.5f, ZRadius), Color, 0.0f);
+
+			v3 GroundP = P + V3(0, 0, ZRadius);
+
+			if(Elem == Element_Tree)
+			{
+				PushSprite(Group, Scene->TreeTexture, true, GroundP,
+				           V2(2.0f, 2.5f), V2(0, 0), V2(1, 1));
+			}
+			else if(Elem == Element_Wall)
+			{
+				f32 WallRadius = 1.0f;
+
+				PushCube(Group, Scene->WallTexture, GroundP + V3(0, 0, WallRadius),
+				         V3(0.5f, 0.5f, WallRadius), Color, 0.0f);
+			}
+		}
+	}
+
+	PushSprite(Group, Scene->HeadTexture, true, V3(0, 2.0f, 3.0f),
+	           V2(4.0f, 4.0f), V2(0, 0), V2(1, 1));
+}
+
 
 int main(int argc, const char* argv[])
 {
@@ -491,10 +610,33 @@ int main(int argc, const char* argv[])
 	u8* PushBuffer = (u8*)OSXAllocateMemory(PushBufferSize);
 
 	u32 MaxVertexCount = 65536;
-	textured_vertex* VertexArray = (textured_vertex*)OSXAllocateMemory(MaxVertexCount * sizeof(textured_vertex));
-	renderer_texture* BitmapArray = (renderer_texture*)OSXAllocateMemory(MaxVertexCount * sizeof(renderer_texture));
+	textured_vertex* VertexArray = (textured_vertex*)OSXAllocateMemory(MaxVertexCount
+																	   * sizeof(textured_vertex));
+	renderer_texture* BitmapArray = (renderer_texture*)OSXAllocateMemory(MaxVertexCount
+	                                                                     * sizeof(renderer_texture));
 
-	loaded_bitmap CubeTexture = LoadBMP("cube_test.bmp");
+	u32 TextureOpCount = 1024;
+	InitTextureQueue(&OpenGL.TextureQueue,
+	                 TextureOpCount,
+					 (texture_op*)OSXAllocateMemory(sizeof(texture_op) * TextureOpCount));
+
+	test_scene Scene = {};
+	InitTestScene(&Scene);
+
+	f32 CameraPitch = 0.3f*Pi32;
+	f32 CameraOrbit = 0;
+	f32 CameraDolly = 20.0f;
+	f32 CameraDropShift = -1.0f;
+	f32 CameraFocalLength = 3.0f;
+
+	f32 NearClipPlane = 0.2f;
+	f32 FarClipPlane = 1000.0f;
+
+	f32 tCameraShift = 0.0f;
+
+	f32 MinSPF = F32Max;
+	f32 MaxSPF = 0.0f;
+	u32 DisplayCounter = 0;
 
 	while (GlobalRunning)
 	{
@@ -512,6 +654,7 @@ int main(int argc, const char* argv[])
 		float DrawWidth = ContentViewFrame.size.width;
 		float DrawHeight = ContentViewFrame.size.height;
 
+#if 0
 		CGPoint MouseLocationInScreen = [NSEvent mouseLocation];
 		BOOL MouseInWindowFlag = NSPointInRect(MouseLocationInScreen, WindowFrame);
 		CGPoint MouseLocationInView = {};
@@ -528,25 +671,32 @@ int main(int argc, const char* argv[])
 		}
 
 		u32 MouseButtonMask = [NSEvent pressedMouseButtons];
+#endif
+
+		b32x Fog = false;
 
 		rectangle2i DrawRegion = AspectRatioFit(16, 9, DrawWidth, DrawHeight);
+		camera_params Camera = GetStandardCameraParams(GetWidth(DrawRegion), CameraFocalLength);
+
+		if (tCameraShift > Tau32)
+		{
+			tCameraShift -= Tau32;
+		}
+
+		v3 CameraOffset = {0, 0, CameraDropShift};
+
+#if 0
+		CameraOffset += 10.0f * V3(cosf(tCameraShift), -0.2f + sinf(tCameraShift), 0.0f);
+#else
+		CameraOrbit = tCameraShift;
+#endif
 
 		game_render_commands RenderCommands = DefaultRenderCommands(
 				PushBufferSize, PushBuffer,
-				(u32)DrawWidth,
-				(u32)DrawHeight,
+				(u32)GetWidth(DrawRegion),
+				(u32)GetHeight(DrawRegion),
 				MaxVertexCount, VertexArray, BitmapArray,
 				OpenGL.WhiteBitmap);
-
-		camera_params Camera = GetStandardCameraParams(GetWidth(DrawRegion), 1.0f);
-
-		v3 CameraOffset = {};
-		f32 CameraPitch = 0.1f*Pi32;
-		f32 CameraOrbit = 0;
-		f32 CameraDolly = 10.0f;
-
-		f32 NearClipPlane = 0.2f;
-		f32 FarClipPlane = 1000.0f;
 
 		m4x4 CameraO = ZRotation(CameraOrbit)*XRotation(CameraPitch);
 		v3 CameraOt = CameraO*(V3(0, 0, CameraDolly));
@@ -558,17 +708,17 @@ int main(int argc, const char* argv[])
 		SetCameraTransform(&Group, 0, Camera.FocalLength, GetColumn(CameraO, 0),
 						   GetColumn(CameraO, 1),
 						   GetColumn(CameraO, 2),
-						   CameraOt, NearClipPlane, FarClipPlane, true);
+						   CameraOt + CameraOffset, NearClipPlane, FarClipPlane, Fog);
 
 		v4 BackgroundColor = V4(0.15f, 0.15f, 0.15f, 0.0f);
 		BeginDepthPeel(&Group, BackgroundColor);
-		PushCube(&Group, OpenGL.WhiteBitmap, V3(0, 0, 0), V3(1.0f, 1.0f, 2.0f),
-				 V4(1, 1, 1, 1), 0.0f);
+
+		PushSimpleScene(&Group, &Scene);
+
 		EndDepthPeel(&Group);
 		EndRenderGroup(&Group);
 
 		OpenGLRenderCommands(&RenderCommands, DrawRegion, DrawWidth, DrawHeight);
-
 
 
 		// flushes and forces vsync
@@ -582,7 +732,27 @@ int main(int argc, const char* argv[])
 		f32 MeasuredSecondsPerFrame = OSXGetSecondsElapsed(LastCounter, EndCounter);
 		LastCounter = EndCounter;
 
-#if 1
+		tCameraShift += 0.1f * MeasuredSecondsPerFrame;
+
+#if 0
+		if (MinSPF > MeasuredSecondsPerFrame)
+		{
+			MinSPF = MeasuredSecondsPerFrame;
+		}
+
+		if (MaxSPF < MeasuredSecondsPerFrame)
+		{
+			MaxSPF = MeasuredSecondsPerFrame;
+		}
+
+		if (DisplayCounter++ == 300)
+		{
+			NSLog(@"Min: %.02fms  Max: %.02fms", 1000.0f * MinSPF, 1000.0f * MaxSPF);
+			MinSPF = F32Max;
+			MaxSPF = 0.0f;
+			DisplayCounter = 0;
+		}
+#else
 		frameTime += MeasuredSecondsPerFrame;
 		++tickCounter;
 		if (tickCounter == 60)
@@ -590,7 +760,7 @@ int main(int argc, const char* argv[])
 			float avgFrameTime = frameTime / 60.0f;
 			tickCounter = 0;
 			frameTime = 0.0f;
-			printf("frame time = %f\n", avgFrameTime);
+			printf("frame time = %.02fms\n", 1000.0f * avgFrameTime);
 		}
 #endif
 	}

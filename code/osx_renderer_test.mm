@@ -14,56 +14,230 @@
 #include <mach/mach_time.h>
 #include <dlfcn.h>
 
-#define Maximum(A, B) ((A > B) ? (A) : (B))
-
-#define FormatString(Size, Dest, ...) snprintf(Dest, Size, __VA_ARGS__)
-#define S32FromZ(String) atoi(String)
-#define MemoryIsEqual(Size, A, B) (memcmp(A, B, Size) == 0)
-#define IsWhitespace(A) isspace(A)
-
 #include "handmade_types.h"
-
-
-internal b32x StringsAreEqual(char *A, char *B) {return(strcmp(A, B) == 0);}
-internal b32x StringsAreEqual(umm Count, char *A, char *B) {return(strncmp(A, B, Count) == 0);}
-
-#import "handmade_intrinsics.h"
-#import "handmade_math.h"
-#import "handmade_renderer.h"
-#import "handmade_renderer_opengl.h"
+#include "handmade_intrinsics.h"
+#include "handmade_math.h"
+#include "handmade_shared.h"
+#include "handmade_renderer.h"
+#include "handmade_renderer_opengl.h"
 
 global open_gl OpenGL;
 
-#import "osx_handmade_events.h"
-#import "osx_handmade_debug.cpp"
-#import "osx_handmade_opengl.cpp"
-#import "handmade_renderer_opengl.cpp"
-#import "handmade_renderer.cpp"
+#include "osx_handmade_events.h"
+#include "osx_handmade_opengl.cpp"
+#include "handmade_renderer_opengl.cpp"
+#include "handmade_renderer.cpp"
 
-global b32x GlobalRunning;
+volatile global b32x GlobalRunning;
 
 // Let the command line override
 #ifndef HANDMADE_USE_VSYNC
 #define HANDMADE_USE_VSYNC 1
 #endif
 
+internal renderer_texture LoadBMP(char* FileName);
+
 global NSOpenGLContext* GlobalGLContext;
-global r32 GlobalAspectRatio;
 
 const r32 GlobalRenderWidth = 960;
 const r32 GlobalRenderHeight = 540;
 
-void* OSXAllocateMemory(umm size)
-{
-	void* p = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
 
-	if (p == MAP_FAILED)
+///////////////////////////////////////////////////////////////////////
+// Sample Renderer Scene
+
+enum test_scene_element
+{
+	Element_Grass,
+	Element_Tree,
+	Element_Wall,
+};
+
+#define TEST_SCENE_DIM_X 40
+#define TEST_SCENE_DIM_Y 50
+
+struct test_scene
+{
+	v3 MinP;
+	test_scene_element Elements[TEST_SCENE_DIM_Y][TEST_SCENE_DIM_X];
+
+	renderer_texture GrassTexture;
+	renderer_texture WallTexture;
+	renderer_texture TreeTexture;
+	renderer_texture HeadTexture;
+	renderer_texture CoverTexture;
+};
+
+
+internal b32x IsEmpty(test_scene* Scene, u32 X, u32 Y)
+{
+	b32x Result = (Scene->Elements[Y][X] == Element_Grass);
+	return Result;
+}
+
+
+internal u32x CountOccupantsIn3x3(test_scene* Scene, u32 CenterX, u32 CenterY)
+{
+	u32 OccupantCount = 0;
+
+	for (u32 Y = (CenterY - 1); Y <= (CenterY + 1); ++Y)
 	{
-		printf("OSXAllocateMemory: mmap error: %d: %s\n", errno, strerror(errno));
+		for (u32 X = (CenterX - 1); X <= (CenterX + 1); ++X)
+		{
+			if (!IsEmpty(Scene, X, Y))
+			{
+				++OccupantCount;
+			}
+		}
 	}
 
-	return p;
+	return OccupantCount;
 }
+
+
+internal void PlaceRandomInUnoccupied(test_scene* Scene, test_scene_element Element, u32 Count)
+{
+	u32 Placed = 0;
+
+	while (Placed < Count)
+	{
+		u32 X = 1 + (rand() % (TEST_SCENE_DIM_X - 1));
+		u32 Y = 1 + (rand() % (TEST_SCENE_DIM_Y - 1));
+
+		if (CountOccupantsIn3x3(Scene, X, Y) == 0)
+		{
+			Scene->Elements[Y][X] = Element;
+			++Placed;
+		}
+	}
+}
+
+
+internal b32x PlaceRectangularWall(test_scene* Scene, u32 MinX, u32 MinY, u32 MaxX, u32 MaxY)
+{
+	b32x Placed = true;
+
+	for (u32 Pass = 0; Placed && (Pass <= 1); ++Pass)
+	{
+		for (u32 X = MinX; X <= MaxX; ++X)
+		{
+			if (Pass == 0)
+			{
+				if (!(IsEmpty(Scene, X, MinY) && IsEmpty(Scene, X, MaxY)))
+				{
+					Placed = false;
+					break;
+				}
+			}
+			else
+			{
+				Scene->Elements[MinY][X] = Scene->Elements[MaxY][X] =
+				Element_Wall;
+			}
+		}
+
+		for (u32 Y = (MinY + 1); Y < MaxY; ++Y)
+		{
+			if (Pass == 0)
+			{
+				if (!(IsEmpty(Scene, MinX, Y) && IsEmpty(Scene, MaxX, Y)))
+				{
+					Placed = false;
+					break;
+				}
+			}
+			else
+			{
+				Scene->Elements[Y][MinX] = Scene->Elements[Y][MaxX] =
+				Element_Wall;
+			}
+		}
+	}
+
+	return Placed;
+}
+
+
+internal void InitTestScene(test_scene* Scene)
+{
+	Scene->GrassTexture = LoadBMP("test_cube_grass.bmp");
+	Scene->WallTexture = LoadBMP("test_cube_wall.bmp");
+	Scene->TreeTexture = LoadBMP("test_sprite_tree.bmp");
+	Scene->HeadTexture = LoadBMP("test_sprite_head.bmp");
+	Scene->CoverTexture = LoadBMP("test_cover_grass.bmp");
+
+	Scene->MinP = V3(-0.5f*(f32)TEST_SCENE_DIM_X,
+	                 -0.5f*(f32)TEST_SCENE_DIM_Y,
+					 0.0f);
+
+	for (u32 WallIndex = 0; WallIndex < 8; ++WallIndex)
+	{
+		u32 X = 1 + (rand() % (TEST_SCENE_DIM_X - 10));
+		u32 Y = 1 + (rand() % (TEST_SCENE_DIM_Y - 10));
+
+		u32 DimX = 2 + (rand() % 6);
+		u32 DimY = 2 + (rand() % 6);
+
+		PlaceRectangularWall(Scene, X, Y, X + DimX, Y + DimY);
+	}
+
+	u32 TotalSquareCount = TEST_SCENE_DIM_X*TEST_SCENE_DIM_Y;
+	PlaceRandomInUnoccupied(Scene, Element_Tree, TotalSquareCount/15);
+}
+
+
+internal void PushSimpleScene(render_group* Group, test_scene* Scene)
+{
+	srand(1234);
+
+	for(s32 Y = 0; Y < TEST_SCENE_DIM_Y; ++Y)
+	{
+		for(s32 X = 0; X <= TEST_SCENE_DIM_X; ++X)
+		{
+			test_scene_element Elem = Scene->Elements[Y][X];
+
+			f32 Z = 0.4f*((f32)rand() / (f32)RAND_MAX);
+			f32 R = 0.5f + 0.5f*((f32)rand() / (f32)RAND_MAX);
+			f32 ZRadius = 2.0f;
+			v4 Color = V4(R, 1, 1, 1);
+			v3 P = Scene->MinP + V3((f32)X, (f32)Y, Z);
+
+			PushCube(Group, Scene->GrassTexture, P, V3(0.5f, 0.5f, ZRadius), Color, 0.0f);
+
+			v3 GroundP = P + V3(0, 0, ZRadius);
+
+			if(Elem == Element_Tree)
+			{
+				PushSprite(Group, Scene->TreeTexture, true, GroundP,
+				           V2(2.0f, 2.5f), V2(0, 0), V2(1, 1));
+			}
+			else if(Elem == Element_Wall)
+			{
+				f32 WallRadius = 1.0f;
+
+				PushCube(Group, Scene->WallTexture, GroundP + V3(0, 0, WallRadius),
+				         V3(0.5f, 0.5f, WallRadius), Color, 0.0f);
+			}
+			else
+			{
+				for (u32 CoverIndex = 0; CoverIndex < 5; ++CoverIndex)
+				{
+					v2 Disp = 0.8f*V2((f32)rand() / (f32)RAND_MAX,
+									  (f32)rand() / (f32)RAND_MAX) - V2(0.4f, 0.4f);
+					PushSprite(Group, Scene->CoverTexture, true, GroundP + V3(Disp, 0.0f),
+					           V2(0.4f, 0.4f), V2(0, 0), V2(1, 1));
+				}
+			}
+		}
+	}
+
+	PushSprite(Group, Scene->HeadTexture, true, V3(0, 2.0f, 3.0f),
+	           V2(4.0f, 4.0f), V2(0, 0), V2(1, 1));
+}
+
+
+///////////////////////////////////////////////////////////////////////
+// Platform Layer Support
 
 #pragma pack(push, 1)
 struct bitmap_header
@@ -91,6 +265,7 @@ struct bitmap_header
 };
 #pragma pack(pop)
 
+
 struct loaded_bitmap
 {
 	void *Memory;
@@ -99,39 +274,16 @@ struct loaded_bitmap
 	s32 Pitch;
 };
 
+
 struct entire_file
 {
 	u32 ContentsSize;
 	void *Contents;
 };
 
-entire_file
-ReadEntireFile(char *FileName)
-{
-	entire_file Result = {};
+entire_file ReadEntireFile(char* FileName);
 
-	FILE *In = fopen(FileName, "rb");
-
-	if(In)
-	{
-		fseek(In, 0, SEEK_END);
-		Result.ContentsSize = ftell(In);
-		fseek(In, 0, SEEK_SET);
-
-		Result.Contents = OSXAllocateMemory(Result.ContentsSize);
-		fread(Result.Contents, Result.ContentsSize, 1, In);
-		fclose(In);
-	}
-	else
-	{
-		printf("ERROR: Cannot open file %s.\n", FileName);
-	}
-
-	return Result;
-}
-
-
-internal renderer_texture LoadBMP(char *FileName)
+internal renderer_texture LoadBMP(char* FileName)
 {
 	loaded_bitmap Result = {};
 
@@ -220,6 +372,113 @@ internal renderer_texture LoadBMP(char *FileName)
 
 
 ///////////////////////////////////////////////////////////////////////
+// OS X Platform Support
+//
+struct frame_stats
+{
+	mach_timebase_info_data_t Timebase;
+	f32 TimeScale;
+
+	u64 LastCounter;
+
+	f32 MinSPF;
+	f32 MaxSPF;
+	u32 DisplayCounter;
+};
+
+internal frame_stats InitFrameStats()
+{
+	frame_stats Stats = {};
+
+	mach_timebase_info(&Stats.Timebase);
+	assert(Stats.Timebase.denom != 0);
+
+	Stats.TimeScale = (f32)Stats.Timebase.numer / (f32)Stats.Timebase.denom;
+
+	Stats.MinSPF = F32Max;
+
+	return Stats;
+}
+
+
+internal f32 UpdateFrameStats(frame_stats* Stats)
+{
+	f32 SecondsElapsed = 0.0f;
+
+	u64 EndCounter = mach_absolute_time();
+
+	if (Stats->LastCounter != 0)
+	{
+		u64 Elapsed = EndCounter - Stats->LastCounter;
+		u64 Nanos = Elapsed * Stats->TimeScale;
+		SecondsElapsed = (float)Nanos * 1.0E-9;
+
+		if (Stats->MinSPF > SecondsElapsed)
+		{
+			Stats->MinSPF = SecondsElapsed;
+		}
+
+		if (Stats->MaxSPF < SecondsElapsed)
+		{
+			Stats->MaxSPF = SecondsElapsed;
+		}
+
+		if (Stats->DisplayCounter++ == 120)
+		{
+			printf("Min: %.02fms  Max: %.02fms\n",
+			       1000.0f * Stats->MinSPF, 1000.0f * Stats->MaxSPF);
+
+			Stats->MinSPF = F32Max;
+			Stats->MaxSPF = 0.0f;
+			Stats->DisplayCounter = 0;
+		}
+	}
+
+	Stats->LastCounter = EndCounter;
+
+	return SecondsElapsed;
+}
+
+
+void* OSXAllocateMemory(umm size)
+{
+	void* p = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+
+	if (p == MAP_FAILED)
+	{
+		printf("OSXAllocateMemory: mmap error: %d: %s\n", errno, strerror(errno));
+	}
+
+	return p;
+}
+
+
+entire_file ReadEntireFile(char* FileName)
+{
+	entire_file Result = {};
+
+	FILE* In = fopen(FileName, "rb");
+
+	if (In)
+	{
+		fseek(In, 0, SEEK_END);
+		Result.ContentsSize = ftell(In);
+		fseek(In, 0, SEEK_SET);
+
+		Result.Contents = OSXAllocateMemory(Result.ContentsSize);
+		fread(Result.Contents, Result.ContentsSize, 1, In);
+		fclose(In);
+	}
+	else
+	{
+		printf("ERROR: Cannot open file %s.\n", FileName);
+	}
+
+	return Result;
+}
+
+
+///////////////////////////////////////////////////////////////////////
 // Application Delegate
 
 @interface HandmadeAppDelegate : NSObject<NSApplicationDelegate, NSWindowDelegate>
@@ -253,7 +512,6 @@ internal renderer_texture LoadBMP(char *FileName)
                     toSize:(NSSize)frameSize
 {
 	// Maintain the proper aspect ratio...
-	//frameSize.height = frameSize.width / GlobalAspectRatio;
 
 	NSRect WindowRect = [window frame];
 	NSRect ContentRect = [window contentRectForFrameRect:WindowRect];
@@ -369,117 +627,6 @@ void OSXProcessPendingMessages()
 @end
 
 
-///////////////////////////////////////////////////////////////////////
-
-enum test_scene_element
-{
-	Element_Grass,
-	Element_Tree,
-	Element_Wall,
-};
-
-#define TEST_SCENE_DIM_X 40
-#define TEST_SCENE_DIM_Y 50
-
-struct test_scene
-{
-	v3 MinP;
-	test_scene_element Elements[TEST_SCENE_DIM_Y][TEST_SCENE_DIM_X];
-
-	renderer_texture GrassTexture;
-	renderer_texture WallTexture;
-	renderer_texture TreeTexture;
-	renderer_texture HeadTexture;
-};
-
-
-internal void PlaceRandom(test_scene* Scene, test_scene_element Element, u32 Count)
-{
-	u32 Placed = 0;
-
-	while(Placed < Count)
-	{
-		u32 X = 1 + (rand() % (TEST_SCENE_DIM_X - 1));
-		u32 Y = 1 + (rand() % (TEST_SCENE_DIM_Y - 1));
-
-		u32 Occ = 0;
-
-		for(u32 TestY = (Y - 1); TestY <= (Y + 1); ++TestY)
-		{
-			for(u32 TestX = (X - 1); TestX <= (X + 1); ++TestX)
-			{
-				if(Scene->Elements[TestY][TestX])
-				{
-					++Occ;
-				}
-			}
-		}
-
-		if(Occ == 0)
-		{
-			Scene->Elements[Y][X] = Element;
-			++Placed;
-		}
-	}
-}
-
-
-internal void InitTestScene(test_scene* Scene)
-{
-	Scene->GrassTexture = LoadBMP("test_cube_grass.bmp");
-	Scene->WallTexture = LoadBMP("test_cube_wall.bmp");
-	Scene->TreeTexture = LoadBMP("test_sprite_tree.bmp");
-	Scene->HeadTexture = LoadBMP("test_sprite_head.bmp");
-
-	Scene->MinP = V3(-0.5f*(f32)TEST_SCENE_DIM_X,
-					 -0.5f*(f32)TEST_SCENE_DIM_Y,
-					 0.0f);
-
-	PlaceRandom(Scene, Element_Tree, 90);
-	PlaceRandom(Scene, Element_Wall, 50);
-}
-
-
-internal void PushSimpleScene(render_group* Group, test_scene* Scene)
-{
-	srand(1234);
-
-	for(s32 Y = 0; Y < TEST_SCENE_DIM_Y; ++Y)
-	{
-		for(s32 X = 0; X <= TEST_SCENE_DIM_X; ++X)
-		{
-			test_scene_element Elem = Scene->Elements[Y][X];
-
-			f32 Z = 0.4f*((f32)rand() / (f32)RAND_MAX);
-			f32 R = 0.5f + 0.5f*((f32)rand() / (f32)RAND_MAX);
-			f32 ZRadius = 2.0f;
-			v4 Color = V4(R, 1, 1, 1);
-			v3 P = Scene->MinP + V3((f32)X, (f32)Y, Z);
-
-			PushCube(Group, Scene->GrassTexture, P, V3(0.5f, 0.5f, ZRadius), Color, 0.0f);
-
-			v3 GroundP = P + V3(0, 0, ZRadius);
-
-			if(Elem == Element_Tree)
-			{
-				PushSprite(Group, Scene->TreeTexture, true, GroundP,
-				           V2(2.0f, 2.5f), V2(0, 0), V2(1, 1));
-			}
-			else if(Elem == Element_Wall)
-			{
-				f32 WallRadius = 1.0f;
-
-				PushCube(Group, Scene->WallTexture, GroundP + V3(0, 0, WallRadius),
-				         V3(0.5f, 0.5f, WallRadius), Color, 0.0f);
-			}
-		}
-	}
-
-	PushSprite(Group, Scene->HeadTexture, true, V3(0, 2.0f, 3.0f),
-	           V2(4.0f, 4.0f), V2(0, 0), V2(1, 1));
-}
-
-
 int main(int argc, const char* argv[])
 {
 	#pragma unused(argc)
@@ -510,6 +657,7 @@ int main(int argc, const char* argv[])
 
     [NSApp finishLaunching];
 
+	frame_stats Stats = InitFrameStats();
 
 	///////////////////////////////////////////////////////////////////
 	// Game Setup
@@ -534,8 +682,6 @@ int main(int argc, const char* argv[])
 	NSRect screenRect = [[NSScreen mainScreen] frame];
 
 	int BytesPerPixel = 4;
-
-	GlobalAspectRatio = GlobalRenderWidth / GlobalRenderHeight;
 
 	NSRect InitialFrame = NSMakeRect((screenRect.size.width - GlobalRenderWidth) * 0.5,
 									(screenRect.size.height - GlobalRenderHeight) * 0.5,
@@ -571,10 +717,6 @@ int main(int argc, const char* argv[])
 	[window setTitle:@"Handmade Renderer Test"];
 	[window makeKeyAndOrderFront:nil];
 
-
-	//OSXSetupGameRenderBuffer(&GameData, GlobalRenderWidth, GlobalRenderHeight, BytesPerPixel);
-
-
 	///////////////////////////////////////////////////////////////////
 	// OpenGL setup with Cocoa
 #if HANDMADE_USE_VSYNC
@@ -582,6 +724,7 @@ int main(int argc, const char* argv[])
 #else
     GLint swapInt = 0;
 #endif
+
 	[GlobalGLContext setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
 	[GlobalGLContext setView:[window contentView]];
 	[GlobalGLContext makeCurrentContext];
@@ -594,28 +737,18 @@ int main(int argc, const char* argv[])
 
 
 	///////////////////////////////////////////////////////////////////
-	// Run loop
+	// Renderer Setup
 	//
-	u64 CurrentTime = mach_absolute_time();
-	u64 LastCounter = CurrentTime;
-
-#if 1
-	u64 tickCounter = 0;
-	float frameTime = 0.0f;
-#endif
-
-	GlobalRunning = true;
-
 	u32 PushBufferSize = Megabytes(64);
 	u8* PushBuffer = (u8*)OSXAllocateMemory(PushBufferSize);
 
-	u32 MaxVertexCount = 65536;
-	textured_vertex* VertexArray = (textured_vertex*)OSXAllocateMemory(MaxVertexCount
-																	   * sizeof(textured_vertex));
-	renderer_texture* BitmapArray = (renderer_texture*)OSXAllocateMemory(MaxVertexCount
-	                                                                     * sizeof(renderer_texture));
+	u32 MaxVertexCount = 10 * 65536;
+	textured_vertex* VertexArray =
+		(textured_vertex*)OSXAllocateMemory(MaxVertexCount * sizeof(textured_vertex));
+	renderer_texture* BitmapArray =
+		(renderer_texture*)OSXAllocateMemory(MaxVertexCount * sizeof(renderer_texture));
 
-	u32 TextureOpCount = 1024;
+	u32 TextureOpCount = 256;
 	InitTextureQueue(&OpenGL.TextureQueue,
 	                 TextureOpCount,
 					 (texture_op*)OSXAllocateMemory(sizeof(texture_op) * TextureOpCount));
@@ -634,9 +767,12 @@ int main(int argc, const char* argv[])
 
 	f32 tCameraShift = 0.0f;
 
-	f32 MinSPF = F32Max;
-	f32 MaxSPF = 0.0f;
-	u32 DisplayCounter = 0;
+	b32 CameraIsPanning = false;
+
+	///////////////////////////////////////////////////////////////////
+	// Run loop
+	//
+	GlobalRunning = true;
 
 	while (GlobalRunning)
 	{
@@ -644,52 +780,40 @@ int main(int argc, const char* argv[])
 
 		[GlobalGLContext makeCurrentContext];
 
-
-		///////////////////////////////////////////////////////////////
-		// Main Game Function
-		//
 		CGRect WindowFrame = [window frame];
 		CGRect ContentViewFrame = [[window contentView] frame];
 
 		float DrawWidth = ContentViewFrame.size.width;
 		float DrawHeight = ContentViewFrame.size.height;
 
-#if 0
-		CGPoint MouseLocationInScreen = [NSEvent mouseLocation];
-		BOOL MouseInWindowFlag = NSPointInRect(MouseLocationInScreen, WindowFrame);
-		CGPoint MouseLocationInView = {};
+		rectangle2i DrawRegion = AspectRatioFit(16, 9, DrawWidth, DrawHeight);
 
-		if (MouseInWindowFlag)
-		{
-			// We don't actually care what the mouse screen coordinates are, we just want the
-			// coordinates relative to the content view
-			NSRect RectInWindow = [window convertRectFromScreen:NSMakeRect(MouseLocationInScreen.x,
-																			MouseLocationInScreen.y,
-																			1, 1)];
-			NSPoint PointInWindow = RectInWindow.origin;
-			MouseLocationInView = [[window contentView] convertPoint:PointInWindow fromView:nil];
-		}
-
-		u32 MouseButtonMask = [NSEvent pressedMouseButtons];
-#endif
-
+		///////////////////////////////////////////////////////////////
+		// Sample Renderer Scene
+		//
 		b32x Fog = false;
 
-		rectangle2i DrawRegion = AspectRatioFit(16, 9, DrawWidth, DrawHeight);
 		camera_params Camera = GetStandardCameraParams(GetWidth(DrawRegion), CameraFocalLength);
 
 		if (tCameraShift > Tau32)
 		{
 			tCameraShift -= Tau32;
+			CameraIsPanning = !CameraIsPanning;
 		}
 
 		v3 CameraOffset = {0, 0, CameraDropShift};
 
-#if 0
-		CameraOffset += 10.0f * V3(cosf(tCameraShift), -0.2f + sinf(tCameraShift), 0.0f);
-#else
-		CameraOrbit = tCameraShift;
-#endif
+		if (CameraIsPanning)
+		{
+			CameraOffset += 10.0f * V3(cosf(tCameraShift), -0.2f + sinf(tCameraShift), 0.0f);
+		}
+		else
+		{
+			CameraOrbit = tCameraShift;
+		}
+
+		m4x4 CameraO = ZRotation(CameraOrbit)*XRotation(CameraPitch);
+		v3 CameraOt = CameraO*(V3(0, 0, CameraDolly));
 
 		game_render_commands RenderCommands = DefaultRenderCommands(
 				PushBufferSize, PushBuffer,
@@ -698,17 +822,18 @@ int main(int argc, const char* argv[])
 				MaxVertexCount, VertexArray, BitmapArray,
 				OpenGL.WhiteBitmap);
 
-		m4x4 CameraO = ZRotation(CameraOrbit)*XRotation(CameraPitch);
-		v3 CameraOt = CameraO*(V3(0, 0, CameraDolly));
+		render_group Group = BeginRenderGroup(0, &RenderCommands, 1);
 
-		render_group Group = BeginRenderGroup(0, &RenderCommands, 1,
-											  GetWidth(DrawRegion),
-											  GetHeight(DrawRegion));
-
-		SetCameraTransform(&Group, 0, Camera.FocalLength, GetColumn(CameraO, 0),
+		SetCameraTransform(&Group,
+		                   0,
+						   Camera.FocalLength,
+						   GetColumn(CameraO, 0),
 						   GetColumn(CameraO, 1),
 						   GetColumn(CameraO, 2),
-						   CameraOt + CameraOffset, NearClipPlane, FarClipPlane, Fog);
+						   CameraOt + CameraOffset,
+						   NearClipPlane,
+						   FarClipPlane,
+						   Fog);
 
 		v4 BackgroundColor = V4(0.15f, 0.15f, 0.15f, 0.0f);
 		BeginDepthPeel(&Group, BackgroundColor);
@@ -719,7 +844,9 @@ int main(int argc, const char* argv[])
 		EndRenderGroup(&Group);
 
 		OpenGLRenderCommands(&RenderCommands, DrawRegion, DrawWidth, DrawHeight);
-
+		//
+		// End of Sample Renderer Scene
+		///////////////////////////////////////////////////////////////
 
 		// flushes and forces vsync
 #if HANDMADE_USE_VSYNC
@@ -728,41 +855,8 @@ int main(int argc, const char* argv[])
 		glFlush();
 #endif
 
-		u64 EndCounter = mach_absolute_time();
-		f32 MeasuredSecondsPerFrame = OSXGetSecondsElapsed(LastCounter, EndCounter);
-		LastCounter = EndCounter;
-
-		tCameraShift += 0.1f * MeasuredSecondsPerFrame;
-
-#if 0
-		if (MinSPF > MeasuredSecondsPerFrame)
-		{
-			MinSPF = MeasuredSecondsPerFrame;
-		}
-
-		if (MaxSPF < MeasuredSecondsPerFrame)
-		{
-			MaxSPF = MeasuredSecondsPerFrame;
-		}
-
-		if (DisplayCounter++ == 300)
-		{
-			NSLog(@"Min: %.02fms  Max: %.02fms", 1000.0f * MinSPF, 1000.0f * MaxSPF);
-			MinSPF = F32Max;
-			MaxSPF = 0.0f;
-			DisplayCounter = 0;
-		}
-#else
-		frameTime += MeasuredSecondsPerFrame;
-		++tickCounter;
-		if (tickCounter == 60)
-		{
-			float avgFrameTime = frameTime / 60.0f;
-			tickCounter = 0;
-			frameTime = 0.0f;
-			printf("frame time = %.02fms\n", 1000.0f * avgFrameTime);
-		}
-#endif
+		f32 SecondsElapsed = UpdateFrameStats(&Stats);
+		tCameraShift += 0.1f * SecondsElapsed;
 	}
 
 	printf("Handmade Renderer Test finished running\n");

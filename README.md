@@ -3,8 +3,11 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 472.
+This repository works with Casey's source code from Day 473.
 
+If you are compiling for the first time, you might want to
+skip down to the [Compiling and Running](#compiling-and-running)
+section first.
 
 This OS X platform layer code does not need to be updated for
 every episode of Handmade Hero, although I do test each day's code
@@ -14,8 +17,27 @@ work. For example, day 405 of the OS X platform layer
 will work with Casey's Handmade Hero days 405 through 409.
 
 
-Day 471 Note:
--------------
+# Recent Update Notes
+---------------------
+
+## Day 472 Note:
+----------------
+If you want to run the HandmadeRendererTest with textures, you will
+have to recreate the sample textures that Casey created on stream
+and put them in the ./data/renderer_test directory. I recreated
+them with Gimp on OS X, but I didn't want to redistribute Casey's
+original artwork.
+
+WARNING: The popular native graphics editing packages on OS X
+(Acorn, Pixelmator, Affinity Photo, Preview, etc.) either do not
+export bitmaps at all, or do not write bitmaps in the
+.bmp format that the Handmade Hero code expects. The y-axis is
+flipped and a different compression method is used. I'd recommend
+downloading and using Gimp to create the .bmp files.
+
+
+## Day 471 Note:
+----------------
 I added an OS X version of the HandmadeRendererTest application.
 You can build this by running:
 
@@ -28,9 +50,8 @@ from a shell prompt like this:
     open HandmadeRendererTest.app
 
 
-
-Day 467 Note:
--------------
+## Day 467 Note:
+----------------
 Day 467 started using version 1 assets, so don't forget to
 rewrite the .hha files! You can rewrite an .hha file like this:
 
@@ -43,8 +64,8 @@ the application bundle if you want this functionality at runtime.
     hhaedit -create ../data/local.hha
 
 
-Day 466 Note:
--------------
+## Day 466 Note:
+----------------
 I added an OS X version of the TabView utility. You can build this
 by running:
 
@@ -79,8 +100,8 @@ expand/collapse all nodes of a dump tree in the currently active window.
 - 'Command r' will reload the file contents of the currently active window.
 
 
-2018-08-17 Note:
-----------------
+## 2018-08-17 Note:
+-------------------
 
 While the code compiles as-is on OS X, you must first apply a patch to
 Casey's Handmade Hero source code to get the game to render properly. You can
@@ -105,8 +126,8 @@ button. Your mileage may vary with other controllers. Let me know if you
 have problems.
 
 
-Compiling and Running
----------------------
+# Compiling and Running
+-----------------------
 
 Once you clone or update this repository, copy (or clone, if you are
 using Casey's Github repository) Casey's .cpp
@@ -179,8 +200,8 @@ instead of the default 60fps. The proper Core Audio sound buffer size
 is automatically adjusted.
 
 
-Author
-------
+# Author
+--------
 Jeff Buck
 
 The original version of Handmade Hero is being created by Casey Muratori.

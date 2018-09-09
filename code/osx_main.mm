@@ -17,6 +17,8 @@
 #define Maximum(A, B) ((A > B) ? (A) : (B))
 
 #import "handmade_platform.h"
+#import "handmade_intrinsics.h"
+#import "handmade_math.h"
 
 #import "handmade_shared.h"
 #import "handmade_memory.h"
@@ -26,7 +28,6 @@
 #import "osx_handmade_events.h"
 #import "osx_handmade.h"
 
-#import "handmade_intrinsics.h"
 
 #import "osx_handmade.cpp"
 

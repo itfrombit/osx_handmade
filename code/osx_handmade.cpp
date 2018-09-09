@@ -63,6 +63,8 @@ global open_gl OpenGL;
 
 #include "handmade_sort.cpp"
 #include "handmade_renderer_opengl.cpp"
+
+#include "handmade_simd.h"
 #include "handmade_renderer_software.h"
 #include "handmade_renderer_software.cpp"
 

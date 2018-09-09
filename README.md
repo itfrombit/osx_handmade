@@ -18,10 +18,9 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 
 # Recent Update Notes
----------------------
 
 ## Day 472 Note:
-----------------
+
 If you want to run the HandmadeRendererTest with textures, you will
 have to recreate the sample textures that Casey created on stream
 and put them in the ./data/renderer_test directory. I recreated
@@ -37,7 +36,7 @@ downloading and using Gimp to create the .bmp files.
 
 
 ## Day 471 Note:
-----------------
+
 I added an OS X version of the HandmadeRendererTest application.
 You can build this by running:
 
@@ -51,7 +50,7 @@ from a shell prompt like this:
 
 
 ## Day 467 Note:
-----------------
+
 Day 467 started using version 1 assets, so don't forget to
 rewrite the .hha files! You can rewrite an .hha file like this:
 
@@ -65,7 +64,7 @@ the application bundle if you want this functionality at runtime.
 
 
 ## Day 466 Note:
-----------------
+
 I added an OS X version of the TabView utility. You can build this
 by running:
 
@@ -101,7 +100,6 @@ expand/collapse all nodes of a dump tree in the currently active window.
 
 
 ## 2018-08-17 Note:
--------------------
 
 While the code compiles as-is on OS X, you must first apply a patch to
 Casey's Handmade Hero source code to get the game to render properly. You can
@@ -127,7 +125,6 @@ have problems.
 
 
 # Compiling and Running
------------------------
 
 Once you clone or update this repository, copy (or clone, if you are
 using Casey's Github repository) Casey's .cpp
@@ -201,7 +198,7 @@ is automatically adjusted.
 
 
 # Author
---------
+
 Jeff Buck
 
 The original version of Handmade Hero is being created by Casey Muratori.

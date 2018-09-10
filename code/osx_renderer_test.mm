@@ -793,7 +793,7 @@ int main(int argc, const char* argv[])
 		//
 		b32x Fog = false;
 
-		camera_params Camera = GetStandardCameraParams(GetWidth(DrawRegion), CameraFocalLength);
+		camera_params Camera = GetStandardCameraParams(CameraFocalLength);
 
 		if (tCameraShift > Tau32)
 		{
@@ -822,7 +822,9 @@ int main(int argc, const char* argv[])
 				MaxVertexCount, VertexArray, BitmapArray,
 				OpenGL.WhiteBitmap);
 
-		render_group Group = BeginRenderGroup(0, &RenderCommands, 1);
+		v4 BackgroundColor = V4(0.15f, 0.15f, 0.15f, 0.0f);
+		render_group Group = BeginRenderGroup(0, &RenderCommands, Render_Default,
+		                                      BackgroundColor);
 
 		SetCameraTransform(&Group,
 		                   0,
@@ -835,12 +837,8 @@ int main(int argc, const char* argv[])
 						   FarClipPlane,
 						   Fog);
 
-		v4 BackgroundColor = V4(0.15f, 0.15f, 0.15f, 0.0f);
-		BeginDepthPeel(&Group, BackgroundColor);
-
 		PushSimpleScene(&Group, &Scene);
 
-		EndDepthPeel(&Group);
 		EndRenderGroup(&Group);
 
 		OpenGLRenderCommands(&RenderCommands, DrawRegion, DrawWidth, DrawHeight);

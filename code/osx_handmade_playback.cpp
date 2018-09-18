@@ -5,8 +5,6 @@
 // Copyright 2014-2016. All Rights Reserved.
 //
 
-extern osx_state GlobalOSXState;
-
 void OSXGetInputFileLocation(osx_state* State, bool32 InputStream, int SlotIndex, int DestCount, char* Dest)
 {
 	char Temp[64];

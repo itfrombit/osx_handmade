@@ -276,7 +276,14 @@ typedef struct osx_game_data
 	textured_vertex*			VertexArray;
 	renderer_texture*			BitmapArray;
 
-	//game_memory					GameMemory;
+	texture_op					TextureQueueMemory[512];
+	//texture_op					TextureQueueMemory[256];
+	u32							TextureOpCount;
+	renderer_texture_queue		TextureQueue;
+	u32							MaxQuadCountPerFrame;
+	platform_renderer*			Renderer;
+
+
 	game_offscreen_buffer		RenderBuffer;
 
 	game_input					Input[2];
@@ -288,7 +295,10 @@ typedef struct osx_game_data
 
 	osx_sound_output			SoundOutput;
 
+	osx_thread_startup			HighPriorityStartups[6];
 	platform_work_queue			HighPriorityQueue;
+
+	osx_thread_startup			LowPriorityStartups[2];
 	platform_work_queue			LowPriorityQueue;
 
 	//texture_op_queue			TextureOpQueue;
@@ -329,7 +339,6 @@ b32 OSXIsGameRunning();
 void OSXStopGame();
 
 
-
 inline void OSXProcessKeyboardMessage(game_button_state* NewState, b32 IsDown)
 {
 	if (NewState->EndedDown != IsDown)
@@ -342,6 +351,12 @@ inline void OSXProcessKeyboardMessage(game_button_state* NewState, b32 IsDown)
 void OSXKeyProcessing(b32 IsDown, u32 KeyCode, u32 Key,
 					  int ShiftKeyFlag, int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
 					  game_input* Input, osx_game_data* GameData);
+
+inline b32x OSXIsInLoop(osx_state* State)
+{
+	b32x Result = (State->InputRecordingIndex || State->InputPlayingIndex);
+	return Result;
+}
 
 #if HANDMADE_INTERNAL
 #define OSXDebugLogOpenGLErrors(l) OSXDebugInternalLogOpenGLErrors(l)
@@ -356,10 +371,9 @@ void OSXInitOpenGL();
 void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height, int BytesPerPixel);
 
 void OSXInitializeGameInputForNewFrame(osx_game_data* GameData);
-void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
-									b32 MouseInWindowFlag, CGPoint MouseLocation,
-									int MouseButtonMask);
 
+struct osx_mouse_data;
 
+void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame, osx_mouse_data* MouseData);
 
 

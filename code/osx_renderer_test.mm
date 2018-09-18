@@ -21,26 +21,42 @@
 #include "handmade_renderer.h"
 #include "handmade_renderer_opengl.h"
 
-global open_gl OpenGL;
-
 #include "osx_handmade_events.h"
+#include "osx_handmade_cocoa.h"
+
+void* OSXSimpleAllocateMemory(umm Size)
+{
+	void* P = (void*)mmap(0, Size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+
+	if (P == MAP_FAILED)
+	{
+		printf("OSXAllocateMemory: mmap error: %d  %s", errno, strerror(errno));
+	}
+
+	Assert(P);
+
+	return P;
+}
+
 #include "osx_handmade_opengl.cpp"
 #include "handmade_renderer_opengl.cpp"
 #include "handmade_renderer.cpp"
 
 volatile global b32x GlobalRunning;
 
+const r32 GlobalRenderWidth = 960;
+const r32 GlobalRenderHeight = 540;
+
 // Let the command line override
 #ifndef HANDMADE_USE_VSYNC
 #define HANDMADE_USE_VSYNC 1
 #endif
 
-internal renderer_texture LoadBMP(char* FileName);
+#import "osx_handmade_cocoa.mm"
 
-global NSOpenGLContext* GlobalGLContext;
 
-const r32 GlobalRenderWidth = 960;
-const r32 GlobalRenderHeight = 540;
+internal void LoadBMP(renderer_texture_queue* TextureOpQueue, char* FileName,
+                      renderer_texture* Result);
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -158,13 +174,13 @@ internal b32x PlaceRectangularWall(test_scene* Scene, u32 MinX, u32 MinY, u32 Ma
 }
 
 
-internal void InitTestScene(test_scene* Scene)
+internal void InitTestScene(renderer_texture_queue* TextureOpQueue, test_scene* Scene)
 {
-	Scene->GrassTexture = LoadBMP("test_cube_grass.bmp");
-	Scene->WallTexture = LoadBMP("test_cube_wall.bmp");
-	Scene->TreeTexture = LoadBMP("test_sprite_tree.bmp");
-	Scene->HeadTexture = LoadBMP("test_sprite_head.bmp");
-	Scene->CoverTexture = LoadBMP("test_cover_grass.bmp");
+	LoadBMP(TextureOpQueue, "test_cube_grass.bmp", &Scene->GrassTexture);
+	LoadBMP(TextureOpQueue, "test_cube_wall.bmp", &Scene->WallTexture);
+	LoadBMP(TextureOpQueue, "test_sprite_tree.bmp", &Scene->TreeTexture);
+	LoadBMP(TextureOpQueue, "test_sprite_head.bmp", &Scene->HeadTexture);
+	LoadBMP(TextureOpQueue, "test_cover_grass.bmp", &Scene->CoverTexture);
 
 	Scene->MinP = V3(-0.5f*(f32)TEST_SCENE_DIM_X,
 	                 -0.5f*(f32)TEST_SCENE_DIM_Y,
@@ -192,7 +208,7 @@ internal void PushSimpleScene(render_group* Group, test_scene* Scene)
 
 	for(s32 Y = 0; Y < TEST_SCENE_DIM_Y; ++Y)
 	{
-		for(s32 X = 0; X <= TEST_SCENE_DIM_X; ++X)
+		for(s32 X = 0; X < TEST_SCENE_DIM_X; ++X)
 		{
 			test_scene_element Elem = Scene->Elements[Y][X];
 
@@ -220,7 +236,7 @@ internal void PushSimpleScene(render_group* Group, test_scene* Scene)
 			}
 			else
 			{
-				for (u32 CoverIndex = 0; CoverIndex < 5; ++CoverIndex)
+				for (u32 CoverIndex = 0; CoverIndex < 3; ++CoverIndex)
 				{
 					v2 Disp = 0.8f*V2((f32)rand() / (f32)RAND_MAX,
 									  (f32)rand() / (f32)RAND_MAX) - V2(0.4f, 0.4f);
@@ -283,7 +299,8 @@ struct entire_file
 
 entire_file ReadEntireFile(char* FileName);
 
-internal renderer_texture LoadBMP(char* FileName)
+internal void LoadBMP(renderer_texture_queue* TextureOpQueue, char* FileName,
+                      renderer_texture* TextureHandle)
 {
 	loaded_bitmap Result = {};
 
@@ -355,19 +372,15 @@ internal renderer_texture LoadBMP(char* FileName)
 		}
 	}
 
-	Result.Pitch = Result.Width*4;
+	Result.Pitch = Result.Width * 4;
 
-	renderer_texture CubeTexture = {};
 	texture_op CubeOp = {};
 	CubeOp.IsAllocate = true;
 	CubeOp.Allocate.Width = Result.Width;
 	CubeOp.Allocate.Height = Result.Height;
 	CubeOp.Allocate.Data = Result.Memory;
-	CubeOp.Allocate.ResultTexture = &CubeTexture;
-	AddOp(&OpenGL.TextureQueue, &CubeOp);
-	OpenGLManageTextures();
-
-	return CubeTexture;
+	CubeOp.Allocate.ResultTexture = TextureHandle;
+	AddOp(TextureOpQueue, &CubeOp);
 }
 
 
@@ -440,19 +453,6 @@ internal f32 UpdateFrameStats(frame_stats* Stats)
 }
 
 
-void* OSXAllocateMemory(umm size)
-{
-	void* p = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-
-	if (p == MAP_FAILED)
-	{
-		printf("OSXAllocateMemory: mmap error: %d: %s\n", errno, strerror(errno));
-	}
-
-	return p;
-}
-
-
 entire_file ReadEntireFile(char* FileName)
 {
 	entire_file Result = {};
@@ -465,7 +465,7 @@ entire_file ReadEntireFile(char* FileName)
 		Result.ContentsSize = ftell(In);
 		fseek(In, 0, SEEK_SET);
 
-		Result.Contents = OSXAllocateMemory(Result.ContentsSize);
+		Result.Contents = OSXSimpleAllocateMemory(Result.ContentsSize);
 		fread(Result.Contents, Result.ContentsSize, 1, In);
 		fclose(In);
 	}
@@ -478,154 +478,6 @@ entire_file ReadEntireFile(char* FileName)
 }
 
 
-///////////////////////////////////////////////////////////////////////
-// Application Delegate
-
-@interface HandmadeAppDelegate : NSObject<NSApplicationDelegate, NSWindowDelegate>
-@end
-
-@implementation HandmadeAppDelegate
-
-// app delegate methods
-- (void)applicationDidFinishLaunching:(id)sender
-{
-	#pragma unused(sender)
-}
-
-
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender
-{
-	#pragma unused(sender)
-
-	return YES;
-}
-
-
-- (void)applicationWillTerminate:(NSApplication*)sender
-{
-	#pragma unused(sender)
-}
-
-
-// window delegate methods
-- (NSSize)windowWillResize:(NSWindow*)window
-                    toSize:(NSSize)frameSize
-{
-	// Maintain the proper aspect ratio...
-
-	NSRect WindowRect = [window frame];
-	NSRect ContentRect = [window contentRectForFrameRect:WindowRect];
-
-	r32 WidthAdd = (WindowRect.size.width - ContentRect.size.width);
-	r32 HeightAdd = (WindowRect.size.height - ContentRect.size.height);
-
-	r32 NewCy = (GlobalRenderHeight * (frameSize.width - WidthAdd)) / GlobalRenderWidth;
-
-	frameSize.height = NewCy + HeightAdd;
-
-	return frameSize;
-}
-
-- (void)windowWillClose:(id)sender
-{
-	GlobalRunning = false;
-}
-
-@end
-
-// Application Delegate
-///////////////////////////////////////////////////////////////////////
-
-
-void OSXCreateMainMenu()
-{
-    NSMenu* menubar = [NSMenu new];
-
-	NSMenuItem* appMenuItem = [NSMenuItem new];
-	[menubar addItem:appMenuItem];
-
-	[NSApp setMainMenu:menubar];
-
-	NSMenu* appMenu = [NSMenu new];
-
-    NSString* appName = @"Handmade Renderer Test";
-
-    [appMenu addItem:[[NSMenuItem alloc] initWithTitle:@"Enter Full Screen"
-					  						    action:@selector(toggleFullScreen:)
-										 keyEquivalent:@"f"]];
-
-    [appMenu addItem:[[NSMenuItem alloc] initWithTitle:[@"Quit " stringByAppendingString:appName]
-											    action:@selector(terminate:)
-										 keyEquivalent:@"q"]];
-    [appMenuItem setSubmenu:appMenu];
-}
-
-
-void OSXProcessPendingMessages()
-{
-	NSEvent* Event;
-
-	do
-	{
-		Event = [NSApp nextEventMatchingMask:NSEventMaskAny
-									untilDate:nil
-										inMode:NSDefaultRunLoopMode
-									dequeue:YES];
-
-		switch ([Event type])
-		{
-			case NSEventTypeKeyDown:
-			case NSEventTypeKeyUp:
-			{
-				u32 KeyCode = [Event keyCode];
-				if (KeyCode == kVK_ANSI_Q)
-				{
-					GlobalRunning = false;
-				}
-			} break;
-
-			default:
-				[NSApp sendEvent:Event];
-		}
-	} while (Event != nil);
-}
-
-
-
-///////////////////////////////////////////////////////////////////////
-@interface HandmadeView : NSOpenGLView
-{
-}
-@end
-
-@implementation HandmadeView
-
-- (id)init
-{
-	self = [super init];
-
-	return self;
-}
-
-
-- (void)prepareOpenGL
-{
-	[super prepareOpenGL];
-	[[self openGLContext] makeCurrentContext];
-}
-
-- (void)reshape
-{
-	[super reshape];
-
-	NSRect bounds = [self bounds];
-	[GlobalGLContext makeCurrentContext];
-	[GlobalGLContext update];
-	glViewport(0, 0, bounds.size.width, bounds.size.height);
-}
-
-@end
-
 
 int main(int argc, const char* argv[])
 {
@@ -634,127 +486,31 @@ int main(int argc, const char* argv[])
 
 	@autoreleasepool
 	{
-	// Cocoa boilerplate startup code
-	NSApplication* app = [NSApplication sharedApplication];
-	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 
-	OSXCreateMainMenu();
-
-	// Set working directory
-	NSString *dir = [[NSFileManager defaultManager] currentDirectoryPath];
-	NSLog(@"working directory: %@", dir);
-
-	NSFileManager* FileManager = [NSFileManager defaultManager];
-	NSString* AppPath = [NSString stringWithFormat:@"%@/Contents/Resources",
-		[[NSBundle mainBundle] bundlePath]];
-	if ([FileManager changeCurrentDirectoryPath:AppPath] == NO)
-	{
-		Assert(0);
-	}
-
-	HandmadeAppDelegate* appDelegate = [[HandmadeAppDelegate alloc] init];
-	[app setDelegate:appDelegate];
-
-    [NSApp finishLaunching];
+	///////////////////////////////////////////////////////////////////
+	// OS X platform code to set up application with default handlers
+	//
+	OSXCocoaContext OSXAppContext = OSXInitCocoaContext();
 
 	frame_stats Stats = InitFrameStats();
 
+    NSString* AppName = @"Handmade Renderer Test";
+	OSXCreateSimpleMainMenu(AppName);
+
+	OSXInitOpenGLWindow(&OSXAppContext, AppName, GlobalRenderWidth, GlobalRenderHeight);
+
 	///////////////////////////////////////////////////////////////////
-	// Game Setup
+	// Sample Renderer Scene Setup
 	//
-    NSOpenGLPixelFormatAttribute openGLAttributes[] =
-    {
-        NSOpenGLPFAAccelerated,
-#if HANDMADE_USE_VSYNC
-        NSOpenGLPFADoubleBuffer, // Uses vsync
-#endif
-		NSOpenGLPFAColorSize, 24,
-		NSOpenGLPFAAlphaSize, 8,
-        NSOpenGLPFADepthSize, 24,
-        NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
-        0
-    };
-	NSOpenGLPixelFormat* PixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:openGLAttributes];
-    GlobalGLContext = [[NSOpenGLContext alloc] initWithFormat:PixelFormat shareContext:NULL];
+	u32 MaxQuadCountPerFrame = (1 << 18);
+	platform_renderer* Renderer = OSXAllocateRenderer(RendererType_OpenGL, MaxQuadCountPerFrame);
 
-	///////////////////////////////////////////////////////////////////
-	// Create the main window and the content view
-	NSRect screenRect = [[NSScreen mainScreen] frame];
-
-	int BytesPerPixel = 4;
-
-	NSRect InitialFrame = NSMakeRect((screenRect.size.width - GlobalRenderWidth) * 0.5,
-									(screenRect.size.height - GlobalRenderHeight) * 0.5,
-									GlobalRenderWidth,
-									GlobalRenderHeight);
-
-	NSWindow* window = [[NSWindow alloc] initWithContentRect:InitialFrame
-									styleMask:NSWindowStyleMaskTitled
-												| NSWindowStyleMaskClosable
-												| NSWindowStyleMaskMiniaturizable
-												| NSWindowStyleMaskResizable
-									backing:NSBackingStoreBuffered
-									defer:NO];
-
-	[window setBackgroundColor: NSColor.redColor];
-	[window setDelegate:appDelegate];
-
-	NSView* cv = [window contentView];
-	[cv setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-	[cv setAutoresizesSubviews:YES];
-
-	HandmadeView* GLView = [[HandmadeView alloc] init];
-	[GLView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-	[GLView setPixelFormat:PixelFormat];
-	[GLView setOpenGLContext:GlobalGLContext];
-	[GLView setFrame:[cv bounds]];
-
-	[cv addSubview:GLView];
-
-    [PixelFormat release];
-
-	[window setMinSize:NSMakeSize(160, 90)];
-	[window setTitle:@"Handmade Renderer Test"];
-	[window makeKeyAndOrderFront:nil];
-
-	///////////////////////////////////////////////////////////////////
-	// OpenGL setup with Cocoa
-#if HANDMADE_USE_VSYNC
-    GLint swapInt = 1;
-#else
-    GLint swapInt = 0;
-#endif
-
-	[GlobalGLContext setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
-	[GlobalGLContext setView:[window contentView]];
-	[GlobalGLContext makeCurrentContext];
-
-
-	///////////////////////////////////////////////////////////////////
-	// Non-Cocoa OpenGL
-	//
-	OSXInitOpenGL();
-
-
-	///////////////////////////////////////////////////////////////////
-	// Renderer Setup
-	//
-	u32 PushBufferSize = Megabytes(64);
-	u8* PushBuffer = (u8*)OSXAllocateMemory(PushBufferSize);
-
-	u32 MaxVertexCount = 10 * 65536;
-	textured_vertex* VertexArray =
-		(textured_vertex*)OSXAllocateMemory(MaxVertexCount * sizeof(textured_vertex));
-	renderer_texture* BitmapArray =
-		(renderer_texture*)OSXAllocateMemory(MaxVertexCount * sizeof(renderer_texture));
-
-	u32 TextureOpCount = 256;
-	InitTextureQueue(&OpenGL.TextureQueue,
-	                 TextureOpCount,
-					 (texture_op*)OSXAllocateMemory(sizeof(texture_op) * TextureOpCount));
+	texture_op TextureQueueMemory[256];
+	renderer_texture_queue TextureQueue = {};
+	InitTextureQueue(&TextureQueue, sizeof(TextureQueueMemory), TextureQueueMemory);
 
 	test_scene Scene = {};
-	InitTestScene(&Scene);
+	InitTestScene(&TextureQueue, &Scene);
 
 	f32 CameraPitch = 0.3f*Pi32;
 	f32 CameraOrbit = 0;
@@ -769,6 +525,7 @@ int main(int argc, const char* argv[])
 
 	b32 CameraIsPanning = false;
 
+
 	///////////////////////////////////////////////////////////////////
 	// Run loop
 	//
@@ -776,12 +533,10 @@ int main(int argc, const char* argv[])
 
 	while (GlobalRunning)
 	{
-		OSXProcessPendingMessages();
+		OSXProcessMinimalPendingMessages();
 
-		[GlobalGLContext makeCurrentContext];
-
-		CGRect WindowFrame = [window frame];
-		CGRect ContentViewFrame = [[window contentView] frame];
+		//CGRect WindowFrame = [window frame];
+		CGRect ContentViewFrame = [[OSXAppContext.Window contentView] frame];
 
 		float DrawWidth = ContentViewFrame.size.width;
 		float DrawHeight = ContentViewFrame.size.height;
@@ -815,16 +570,13 @@ int main(int argc, const char* argv[])
 		m4x4 CameraO = ZRotation(CameraOrbit)*XRotation(CameraPitch);
 		v3 CameraOt = CameraO*(V3(0, 0, CameraDolly));
 
-		game_render_commands RenderCommands = DefaultRenderCommands(
-				PushBufferSize, PushBuffer,
-				(u32)GetWidth(DrawRegion),
-				(u32)GetHeight(DrawRegion),
-				MaxVertexCount, VertexArray, BitmapArray,
-				OpenGL.WhiteBitmap);
+		ProcessTextureQueue(Renderer, &TextureQueue);
+		game_render_commands* Frame = BeginFrame(Renderer, DrawWidth, DrawHeight, DrawRegion);
+
+		Frame->Settings.RequestVSync = true;
 
 		v4 BackgroundColor = V4(0.15f, 0.15f, 0.15f, 0.0f);
-		render_group Group = BeginRenderGroup(0, &RenderCommands, Render_Default,
-		                                      BackgroundColor);
+		render_group Group = BeginRenderGroup(0, Frame, Render_Default, BackgroundColor);
 
 		SetCameraTransform(&Group,
 		                   0,
@@ -841,19 +593,13 @@ int main(int argc, const char* argv[])
 
 		EndRenderGroup(&Group);
 
-		OpenGLRenderCommands(&RenderCommands, DrawRegion, DrawWidth, DrawHeight);
+		EndFrame(Renderer, Frame);
 		//
 		// End of Sample Renderer Scene
 		///////////////////////////////////////////////////////////////
 
-		// flushes and forces vsync
-#if HANDMADE_USE_VSYNC
-		[GlobalGLContext flushBuffer];
-#else
-		glFlush();
-#endif
-
 		f32 SecondsElapsed = UpdateFrameStats(&Stats);
+
 		tCameraShift += 0.1f * SecondsElapsed;
 	}
 

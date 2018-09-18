@@ -17,7 +17,6 @@
 #endif
 
 
-
 float OSXGetSecondsElapsed(u64 Then, u64 Now)
 {
 	static mach_timebase_info_data_t tb;
@@ -35,5 +34,50 @@ float OSXGetSecondsElapsed(u64 Then, u64 Now)
 
 	return Result;
 }
+
+void OSXVerifyMemoryListIntegrity()
+{
+	BeginTicketMutex(&GlobalOSXState.MemoryMutex);
+	local_persist u32 FailCounter;
+
+	osx_memory_block* Sentinel = &GlobalOSXState.MemorySentinel;
+
+	for (osx_memory_block* SourceBlock = Sentinel->Next;
+			SourceBlock != Sentinel;
+			SourceBlock = SourceBlock->Next)
+	{
+		Assert(SourceBlock->Block.Size <= U32Max);
+	}
+
+	++FailCounter;
+
+	EndTicketMutex(&GlobalOSXState.MemoryMutex);
+}
+
+
+#if HANDMADE_INTERNAL
+DEBUG_PLATFORM_GET_MEMORY_STATS(OSXGetMemoryStats)
+{
+	debug_platform_memory_stats Stats = {};
+
+	BeginTicketMutex(&GlobalOSXState.MemoryMutex);
+	osx_memory_block* Sentinel = &GlobalOSXState.MemorySentinel;
+
+	for (osx_memory_block* SourceBlock = Sentinel->Next;
+			SourceBlock != Sentinel;
+			SourceBlock = SourceBlock->Next)
+	{
+		Assert(SourceBlock->Block.Size <= U32Max);
+
+		++Stats.BlockCount;
+		Stats.TotalSize += SourceBlock->Block.Size;
+		Stats.TotalUsed += SourceBlock->Block.Used;
+	}
+	EndTicketMutex(&GlobalOSXState.MemoryMutex);
+
+	return Stats;
+}
+#endif
+
 
 

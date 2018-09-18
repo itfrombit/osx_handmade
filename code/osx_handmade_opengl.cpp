@@ -26,7 +26,6 @@ typedef void gl_get_program_iv(GLuint program, GLenum pname, GLint *params);
 typedef void type_glBindVertexArray(GLuint array);
 typedef void type_glGenVertexArrays(GLsizei n, GLuint *arrays);
 typedef GLubyte* type_glGetStringi(GLenum name, GLuint index);
-typedef GLubyte* type_glGetStringi(GLenum name, GLuint index);
 
 typedef void type_glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers);
 
@@ -70,6 +69,12 @@ OpenGLGlobalFunction(glDeleteFramebuffers);
 OpenGLGlobalFunction(glVertexAttribIPointer);
 
 //OpenGLGlobalFunction(glDrawBuffers);
+
+
+
+static NSOpenGLContext* GlobalGLContext;
+static b32x GlobalVSyncEnabled;
+
 
 void OSXDebugInternalLogOpenGLErrors(const char* label)
 {
@@ -120,8 +125,32 @@ void OSXDebugInternalLogOpenGLErrors(const char* label)
 }
 
 
-void OSXInitOpenGL()
+
+internal void* OSXRendererAlloc(umm Size)
 {
+	void* Result = OSXSimpleAllocateMemory(Size);
+
+	return Result;
+}
+
+
+internal void PlatformOpenGLSetVSync(open_gl* Renderer, b32x VSyncEnabled)
+{
+	Assert(GlobalGLContext);
+
+    GLint SwapInterval = VSyncEnabled ? 1 : 0;
+	GlobalVSyncEnabled = VSyncEnabled;
+
+	[GlobalGLContext setValues:&SwapInterval forParameter:NSOpenGLCPSwapInterval];
+}
+
+
+internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame)
+{
+	open_gl* OpenGL = (open_gl*)OSXRendererAlloc(sizeof(open_gl));
+
+	//OSXSetPixelFormat(OpenGL);
+
 	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)
 	{
@@ -141,7 +170,6 @@ void OSXInitOpenGL()
         glBlitFramebuffer = (gl_blit_framebuffer *)dlsym(Image, "glBlitFramebuffer");
 
 		OSXGetOpenGLFunction(Image, glDeleteFramebuffers);
-		//OSXGetOpenGLFunction(Image, glDrawBuffers);
 		OSXGetOpenGLFunction(Image, glVertexAttribIPointer);
 #if 0
         glAttachShader = (gl_attach_shader *)dlsym("glAttachShader");
@@ -185,7 +213,7 @@ void OSXInitOpenGL()
         Assert(glGetProgramiv);
 
 		//OpenGL.SupportsSRGBFramebuffer = true;
-		OpenGLInit(Info, OpenGL.SupportsSRGBFramebuffer);
+		OpenGLInit(OpenGL, Info, OpenGL->SupportsSRGBFramebuffer);
 
 #if 0
 		OpenGLDefaultInternalTextureFormat = GL_RGBA8;
@@ -198,4 +226,190 @@ void OSXInitOpenGL()
 		printf("Could not dynamically load OpenGL\n");
 	}
 
+	u32 MaxVertexCount = MaxQuadCountPerFrame * 4;
+	OpenGL->MaxVertexCount = MaxVertexCount;
+	OpenGL->VertexArray = (textured_vertex*)OSXRendererAlloc(MaxVertexCount *
+	                                                         sizeof(textured_vertex));
+	OpenGL->BitmapArray = (renderer_texture*)OSXRendererAlloc(MaxVertexCount *
+	                                                          sizeof(renderer_texture));
+
+	return OpenGL;
 }
+
+
+internal platform_renderer* OSXAllocateRenderer(platform_renderer_type RendererType,
+                                                u32 MaxQuadCountPerFrame)
+{
+	platform_renderer* Result = 0;
+
+	switch(RendererType)
+	{
+		case RendererType_Software:
+		{
+			NotImplemented;
+		} break;
+
+		case RendererType_OpenGL:
+		{
+			Result = (platform_renderer*)OSXInitOpenGL(MaxQuadCountPerFrame);
+		} break;
+
+		case RendererType_Direct3D:
+		{
+			Assert(!"Direct3D doesn't run on OS X!!");
+		} break;
+
+		case RendererType_Metal:
+		{
+			//Result = (platform_renderer*)OSXInitMetal(MaxQuadCountPerFrame);
+			NotImplemented;
+		} break;
+
+		InvalidDefaultCase;
+	}
+
+	return Result;
+}
+
+
+internal void ProcessTextureQueue(platform_renderer* Renderer,
+                                  renderer_texture_queue* TextureQueue)
+{
+	switch(Renderer->RendererType)
+	{
+		case RendererType_Software:
+		{
+			NotImplemented;
+		} break;
+
+		case RendererType_OpenGL:
+		{
+			OpenGLManageTextures((open_gl*)Renderer, TextureQueue);
+		} break;
+
+		case RendererType_Metal:
+		{
+			//MetalManageTextures((open_gl*)Renderer, TextureQueue);
+			NotImplemented;
+		} break;
+
+		InvalidDefaultCase;
+	}
+}
+
+
+internal game_render_commands* BeginFrame(platform_renderer* Renderer,
+                                          u32 WindowWidth, u32 WindowHeight,
+										  rectangle2i DrawRegion)
+{
+	game_render_commands* Result = 0;
+
+	switch(Renderer->RendererType)
+	{
+		case RendererType_Software:
+		{
+			NotImplemented;
+		} break;
+
+		case RendererType_OpenGL:
+		{
+			[GlobalGLContext makeCurrentContext];
+			Result = OpenGLBeginFrame((open_gl*)Renderer, WindowWidth, WindowHeight, DrawRegion);
+		} break;
+
+		case RendererType_Metal:
+		{
+			//Result = MetalBeginFrame((open_gl*)Renderer, WindowWidth, WindowHeight, DrawRegion);
+			NotImplemented;
+		} break;
+
+		InvalidDefaultCase;
+	}
+
+	return Result;
+}
+
+
+internal void EndFrame(platform_renderer* Renderer, game_render_commands* Frame)
+{
+	switch(Renderer->RendererType)
+	{
+		case RendererType_Software:
+		{
+			NotImplemented;
+		} break;
+
+		case RendererType_OpenGL:
+		{
+			OpenGLEndFrame((open_gl*)Renderer, Frame);
+
+			// flushes and forces vsync
+			//
+			[GlobalGLContext flushBuffer];
+#if 0
+#if HANDMADE_USE_VSYNC
+			[GlobalGLContext flushBuffer];
+#else
+			glFlush();
+#endif
+#endif
+		} break;
+
+		case RendererType_Metal:
+		{
+			//MetalEndFrame((open_gl*)Renderer, Frame);
+			//MetalFlushBuffer();
+			NotImplemented;
+		} break;
+
+		InvalidDefaultCase;
+	}
+}
+
+
+#if 0
+void OSXDisplayBufferInWindow(platform_work_queue* RenderQueue,
+							  game_offscreen_buffer* RenderBuffer,
+							  game_render_commands* Commands,
+							  rectangle2i DrawRegion,
+							  u32 WindowWidth,
+							  u32 WindowHeight,
+						      memory_arena* TempArena)
+{
+	temporary_memory TempMem = BeginTemporaryMemory(TempArena);
+
+	if (!GlobalSoftwareRendering)
+	{
+		BEGIN_BLOCK("OpenGLRenderCommands");
+
+		OpenGLRenderCommands(Commands, DrawRegion, WindowWidth, WindowHeight);
+		END_BLOCK();
+	}
+	else
+	{
+		software_texture OutputTarget;
+		OutputTarget.Memory = RenderBuffer->Memory;
+		OutputTarget.Width = RenderBuffer->Width;
+		OutputTarget.Height = RenderBuffer->Height;
+		OutputTarget.Pitch = RenderBuffer->Pitch;
+
+		//BEGIN_BLOCK("SoftwareRenderCommands");
+		SoftwareRenderCommands(RenderQueue, Commands, &OutputTarget, TempArena);
+		//END_BLOCK();
+
+		// We always display via hardware
+
+		v4 ClearColor = {};
+
+		OpenGLDisplayBitmap(RenderBuffer->Width, RenderBuffer->Height,
+							RenderBuffer->Memory, RenderBuffer->Pitch,
+							DrawRegion,
+							ClearColor,
+							OpenGL.ReservedBlitTexture);
+		//SwapBuffers();
+	}
+
+	EndTemporaryMemory(TempMem);
+}
+#endif
+

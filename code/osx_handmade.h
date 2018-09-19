@@ -366,7 +366,7 @@ inline b32x OSXIsInLoop(osx_state* State)
 
 void OSXDebugInternalLogOpenGLErrors(const char* label);
 void OSXSetupSound(osx_game_data* GameData);
-void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext);
+void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData);
 void OSXInitOpenGL();
 void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height, int BytesPerPixel);
 

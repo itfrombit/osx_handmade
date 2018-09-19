@@ -7,10 +7,6 @@
 
 #include <Cocoa/Cocoa.h>
 
-#define GL_GLEXT_LEGACY
-#import <OpenGL/OpenGL.h>
-#import <OpenGL/gl.h>
-
 #include <mach/mach_time.h>
 #include <dlfcn.h>
 
@@ -19,7 +15,7 @@
 #include "handmade_math.h"
 #include "handmade_shared.h"
 #include "handmade_renderer.h"
-#include "handmade_renderer_opengl.h"
+#include "handmade_camera.h"
 
 #include "osx_handmade_events.h"
 #include "osx_handmade_cocoa.h"
@@ -38,9 +34,9 @@ void* OSXSimpleAllocateMemory(umm Size)
 	return P;
 }
 
-#include "osx_handmade_opengl.cpp"
-#include "handmade_renderer_opengl.cpp"
+#include "osx_handmade_renderer.h"
 #include "handmade_renderer.cpp"
+#include "handmade_camera.cpp"
 
 volatile global b32x GlobalRunning;
 
@@ -490,20 +486,21 @@ int main(int argc, const char* argv[])
 	///////////////////////////////////////////////////////////////////
 	// OS X platform code to set up application with default handlers
 	//
-	OSXCocoaContext OSXAppContext = OSXInitCocoaContext();
+    NSString* AppName = @"Handmade Renderer Test";
+
+	OSXCocoaContext OSXAppContext = OSXInitCocoaContext(AppName, GlobalRenderWidth, GlobalRenderHeight);
 
 	frame_stats Stats = InitFrameStats();
 
-    NSString* AppName = @"Handmade Renderer Test";
 	OSXCreateSimpleMainMenu(AppName);
 
-	OSXInitOpenGLWindow(&OSXAppContext, AppName, GlobalRenderWidth, GlobalRenderHeight);
+	//OSXInitOpenGLView(&OSXAppContext, GlobalRenderWidth, GlobalRenderHeight);
 
 	///////////////////////////////////////////////////////////////////
 	// Sample Renderer Scene Setup
 	//
 	u32 MaxQuadCountPerFrame = (1 << 18);
-	platform_renderer* Renderer = OSXAllocateRenderer(RendererType_OpenGL, MaxQuadCountPerFrame);
+	platform_renderer* Renderer = OSXInitDefaultRenderer(OSXAppContext.Window, MaxQuadCountPerFrame);
 
 	texture_op TextureQueueMemory[256];
 	renderer_texture_queue TextureQueue = {};
@@ -512,6 +509,7 @@ int main(int argc, const char* argv[])
 	test_scene Scene = {};
 	InitTestScene(&TextureQueue, &Scene);
 
+#if 0
 	f32 CameraPitch = 0.3f*Pi32;
 	f32 CameraOrbit = 0;
 	f32 CameraDolly = 20.0f;
@@ -520,9 +518,11 @@ int main(int argc, const char* argv[])
 
 	f32 NearClipPlane = 0.2f;
 	f32 FarClipPlane = 1000.0f;
+#endif
+
+	camera Camera = GetStandardCamera();
 
 	f32 tCameraShift = 0.0f;
-
 	b32 CameraIsPanning = false;
 
 
@@ -546,54 +546,36 @@ int main(int argc, const char* argv[])
 		///////////////////////////////////////////////////////////////
 		// Sample Renderer Scene
 		//
-		b32x Fog = false;
-
-		camera_params Camera = GetStandardCameraParams(CameraFocalLength);
-
 		if (tCameraShift > Tau32)
 		{
 			tCameraShift -= Tau32;
 			CameraIsPanning = !CameraIsPanning;
 		}
 
-		v3 CameraOffset = {0, 0, CameraDropShift};
-
 		if (CameraIsPanning)
 		{
-			CameraOffset += 10.0f * V3(cosf(tCameraShift), -0.2f + sinf(tCameraShift), 0.0f);
+			Camera.Offset += 10.0f * V3(cosf(tCameraShift), -0.2f + sinf(tCameraShift), 0.0f);
 		}
 		else
 		{
-			CameraOrbit = tCameraShift;
+			Camera.Orbit = tCameraShift;
 		}
 
-		m4x4 CameraO = ZRotation(CameraOrbit)*XRotation(CameraPitch);
-		v3 CameraOt = CameraO*(V3(0, 0, CameraDolly));
-
-		ProcessTextureQueue(Renderer, &TextureQueue);
-		game_render_commands* Frame = BeginFrame(Renderer, DrawWidth, DrawHeight, DrawRegion);
+		Renderer->ProcessTextureQueue(Renderer, &TextureQueue);
+		game_render_commands* Frame = Renderer->BeginFrame(Renderer, DrawWidth, DrawHeight, DrawRegion);
 
 		Frame->Settings.RequestVSync = true;
 
 		v4 BackgroundColor = V4(0.15f, 0.15f, 0.15f, 0.0f);
 		render_group Group = BeginRenderGroup(0, Frame, Render_Default, BackgroundColor);
 
-		SetCameraTransform(&Group,
-		                   0,
-						   Camera.FocalLength,
-						   GetColumn(CameraO, 0),
-						   GetColumn(CameraO, 1),
-						   GetColumn(CameraO, 2),
-						   CameraOt + CameraOffset,
-						   NearClipPlane,
-						   FarClipPlane,
-						   Fog);
+		ViewFromCamera(&Group, &Camera);
 
 		PushSimpleScene(&Group, &Scene);
 
 		EndRenderGroup(&Group);
 
-		EndFrame(Renderer, Frame);
+		Renderer->EndFrame(Renderer, Frame);
 		//
 		// End of Sample Renderer Scene
 		///////////////////////////////////////////////////////////////

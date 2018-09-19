@@ -126,14 +126,6 @@ void OSXDebugInternalLogOpenGLErrors(const char* label)
 
 
 
-internal void* OSXRendererAlloc(umm Size)
-{
-	void* Result = OSXSimpleAllocateMemory(Size);
-
-	return Result;
-}
-
-
 internal void PlatformOpenGLSetVSync(open_gl* Renderer, b32x VSyncEnabled)
 {
 	Assert(GlobalGLContext);
@@ -145,11 +137,45 @@ internal void PlatformOpenGLSetVSync(open_gl* Renderer, b32x VSyncEnabled)
 }
 
 
+RENDERER_PROCESS_TEXTURE_QUEUE(OSXOpenGLProcessTextureQueue)
+{
+	OpenGLManageTextures((open_gl*)Renderer, TextureQueue);
+}
+
+
+RENDERER_BEGIN_FRAME(OSXOpenGLBeginFrame)
+{
+	[GlobalGLContext makeCurrentContext];
+	game_render_commands* Result = OpenGLBeginFrame((open_gl*)Renderer, WindowWidth, WindowHeight, DrawRegion);
+
+	return Result;
+}
+
+
+RENDERER_END_FRAME(OSXOpenGLEndFrame)
+{
+	OpenGLEndFrame((open_gl*)Renderer, Frame);
+
+	// flushes and forces vsync
+	//
+	[GlobalGLContext flushBuffer];
+
+#if 0
+#if HANDMADE_USE_VSYNC
+	[GlobalGLContext flushBuffer];
+#else
+	glFlush();
+#endif
+#endif
+}
+
 internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame)
 {
 	open_gl* OpenGL = (open_gl*)OSXRendererAlloc(sizeof(open_gl));
 
-	//OSXSetPixelFormat(OpenGL);
+	OpenGL->Header.ProcessTextureQueue = OSXOpenGLProcessTextureQueue;
+	OpenGL->Header.BeginFrame = OSXOpenGLBeginFrame;
+	OpenGL->Header.EndFrame = OSXOpenGLEndFrame;
 
 	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)
@@ -237,133 +263,15 @@ internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame)
 }
 
 
-internal platform_renderer* OSXAllocateRenderer(platform_renderer_type RendererType,
-                                                u32 MaxQuadCountPerFrame)
+extern "C"
 {
-	platform_renderer* Result = 0;
-
-	switch(RendererType)
-	{
-		case RendererType_Software:
-		{
-			NotImplemented;
-		} break;
-
-		case RendererType_OpenGL:
-		{
-			Result = (platform_renderer*)OSXInitOpenGL(MaxQuadCountPerFrame);
-		} break;
-
-		case RendererType_Direct3D:
-		{
-			Assert(!"Direct3D doesn't run on OS X!!");
-		} break;
-
-		case RendererType_Metal:
-		{
-			//Result = (platform_renderer*)OSXInitMetal(MaxQuadCountPerFrame);
-			NotImplemented;
-		} break;
-
-		InvalidDefaultCase;
-	}
+OSX_LOAD_RENDERER_ENTRY()
+{
+	OSXInitOpenGLView(Window);
+	platform_renderer* Result = (platform_renderer*)OSXInitOpenGL(MaxQuadCountPerFrame);
 
 	return Result;
 }
-
-
-internal void ProcessTextureQueue(platform_renderer* Renderer,
-                                  renderer_texture_queue* TextureQueue)
-{
-	switch(Renderer->RendererType)
-	{
-		case RendererType_Software:
-		{
-			NotImplemented;
-		} break;
-
-		case RendererType_OpenGL:
-		{
-			OpenGLManageTextures((open_gl*)Renderer, TextureQueue);
-		} break;
-
-		case RendererType_Metal:
-		{
-			//MetalManageTextures((open_gl*)Renderer, TextureQueue);
-			NotImplemented;
-		} break;
-
-		InvalidDefaultCase;
-	}
-}
-
-
-internal game_render_commands* BeginFrame(platform_renderer* Renderer,
-                                          u32 WindowWidth, u32 WindowHeight,
-										  rectangle2i DrawRegion)
-{
-	game_render_commands* Result = 0;
-
-	switch(Renderer->RendererType)
-	{
-		case RendererType_Software:
-		{
-			NotImplemented;
-		} break;
-
-		case RendererType_OpenGL:
-		{
-			[GlobalGLContext makeCurrentContext];
-			Result = OpenGLBeginFrame((open_gl*)Renderer, WindowWidth, WindowHeight, DrawRegion);
-		} break;
-
-		case RendererType_Metal:
-		{
-			//Result = MetalBeginFrame((open_gl*)Renderer, WindowWidth, WindowHeight, DrawRegion);
-			NotImplemented;
-		} break;
-
-		InvalidDefaultCase;
-	}
-
-	return Result;
-}
-
-
-internal void EndFrame(platform_renderer* Renderer, game_render_commands* Frame)
-{
-	switch(Renderer->RendererType)
-	{
-		case RendererType_Software:
-		{
-			NotImplemented;
-		} break;
-
-		case RendererType_OpenGL:
-		{
-			OpenGLEndFrame((open_gl*)Renderer, Frame);
-
-			// flushes and forces vsync
-			//
-			[GlobalGLContext flushBuffer];
-#if 0
-#if HANDMADE_USE_VSYNC
-			[GlobalGLContext flushBuffer];
-#else
-			glFlush();
-#endif
-#endif
-		} break;
-
-		case RendererType_Metal:
-		{
-			//MetalEndFrame((open_gl*)Renderer, Frame);
-			//MetalFlushBuffer();
-			NotImplemented;
-		} break;
-
-		InvalidDefaultCase;
-	}
 }
 
 

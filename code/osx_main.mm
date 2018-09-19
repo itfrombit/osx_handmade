@@ -30,10 +30,11 @@
 #define HANDMADE_USE_VSYNC 1
 #endif
 
-
+#if 0
 #define GL_GLEXT_LEGACY
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl.h>
+#endif
 
 #define Maximum(A, B) ((A > B) ? (A) : (B))
 
@@ -44,11 +45,11 @@
 #import "handmade_shared.h"
 #import "handmade_memory.h"
 #import "handmade_renderer.h"
-#import "handmade_renderer_opengl.h"
 
 #import "osx_handmade_events.h"
 #import "osx_handmade.h"
 #import "osx_handmade_cocoa.h"
+#import "osx_handmade_renderer.h"
 
 platform_api Platform;
 
@@ -77,20 +78,7 @@ const r32 GlobalRenderHeight = 540;
 //const r32 GlobalRenderWidth = 480;
 //const r32 GlobalRenderHeight = 270;
 
-
-#import "osx_handmade_opengl.cpp"
 #import "handmade_renderer.cpp"
-#import "handmade_renderer_opengl.cpp"
-
-#import "handmade_sort.cpp"
-
-#import "handmade_simd.h"
-#import "handmade_renderer_software.h"
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wself-assign"
-#import "handmade_renderer_software.cpp"
-#pragma clang diagnostic pop
 
 #import "osx_handmade_memory.cpp"
 #import "osx_handmade_debug.cpp"
@@ -226,16 +214,16 @@ int main(int argc, const char* argv[])
 	@autoreleasepool
 	{
 
-	OSXCocoaContext OSXAppContext = OSXInitCocoaContext();
 	NSString* AppName = @"Handmade Hero";
+	OSXCocoaContext OSXAppContext = OSXInitCocoaContext(AppName, GlobalRenderWidth, GlobalRenderHeight);
+
 	OSXCreateSimpleMainMenu(AppName);
-	OSXInitOpenGLWindow(&OSXAppContext, AppName, GlobalRenderWidth, GlobalRenderHeight);
 
 	DEBUGSetEventRecording(true);
 
 	// game_data holds the OS X platform layer non-Cocoa data structures
 	osx_game_data GameData = {};
-	OSXSetupGameData(&GameData, [GlobalGLContext CGLContextObj]);
+	OSXSetupGameData(OSXAppContext.Window, &GameData);
 
 
 	///////////////////////////////////////////////////////////////////

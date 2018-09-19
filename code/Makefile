@@ -19,7 +19,8 @@ COPTS = -O3 -Wall $(HANDMADE_FLAGS)
 CPP11_FLAGS	= -std=c++11 -stdlib=libc++ -ggdb
 CPP11_LD_FLAGS = -lstdc++
 
-OSX_LD_FLAGS = -framework Cocoa -framework QuartzCore -framework OpenGL -framework IOKit -framework AudioUnit
+
+OSX_LD_FLAGS = -framework Cocoa -framework IOKit -framework AudioUnit
 
 
 DYNAMIC_COMPILE_PATH=$(shell pwd)
@@ -31,7 +32,7 @@ default: clean libhandmade.dylib handmade package
 # 'quick' only rebuilds the local debugging 'handmade' executable. Does not update the Handmade.app bundle!
 quick: libhandmade.dylib handmade
 
-BINARIES = libhandmade.dylib handmade osx_asset_builder test_png hhaedit HandmadeTabView HandmadeRendererTest
+BINARIES = libhandmade.dylib libhandmade_opengl.dylib handmade osx_asset_builder test_png hhaedit HandmadeTabView HandmadeRendererTest
 
 all: clean libhandmade.dylib handmade package osx_asset_builder test_png hhaedit HandmadeTabView HandmadeRendererTest
 
@@ -56,6 +57,7 @@ package:
 	fi
 	cp $(HANDMADE_ART_PATH)/*.png ./Contents/Resources/art
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
+	cp libhandmade_opengl.dylib ./Contents/Resources
 	# The "official" app bundle
 	rm -rf ../build/Handmade.app
 	mkdir Handmade.app
@@ -81,8 +83,12 @@ libhandmade.dylib: $(HANDMADE_CODE_PATH)/handmade.cpp $(HANDMADE_CODE_PATH)/hand
 	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -dynamiclib -o $@ $(HANDMADE_CODE_PATH)/handmade.cpp
 
 
-handmade: osx_main.mm osx_handmade.h $(HANDMADE_CODE_PATH)/handmade_platform.h
-	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) -Wno-writable-strings -Wno-deprecated-declarations -Wno-null-dereference -Wno-c++11-compat-deprecated-writable-strings -Wno-unused-function -Wno-unused-variable -Wno-missing-braces $(OSX_LD_FLAGS) -o $@ osx_main.mm
+libhandmade_opengl.dylib: osx_handmade_opengl.mm osx_handmade_opengl.cpp osx_handmade_renderer.h
+	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) -dynamiclib -framework Cocoa -framework QuartzCore -framework OpenGL -o $@ osx_handmade_opengl.mm
+
+
+handmade: osx_main.mm osx_handmade.h $(HANDMADE_CODE_PATH)/handmade_platform.h libhandmade_opengl.dylib
+	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) -Wno-writable-strings -Wno-deprecated-declarations -Wno-null-dereference -Wno-c++11-compat-deprecated-writable-strings -Wno-unused-function -Wno-unused-variable -Wno-missing-braces $(CPP11_LD_FLAGS) $(OSX_LD_FLAGS) -o $@ osx_main.mm
 
 
 HandmadeTabView:	osx_tabview.mm
@@ -92,8 +98,8 @@ HandmadeTabView:	osx_tabview.mm
 	cp HandmadeTabView HandmadeTabView.app/Contents/MacOS/HandmadeTabView
 	cp osx_tabview.info.plist HandmadeTabView.app/Contents/Info.plist
 
-HandmadeRendererTest:	osx_renderer_test.mm
-	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) -I$(HANDMADE_CODE_PATH) $(CPP11_FLAGS) -Wno-null-dereference -Wno-missing-braces -Wno-unused-variable -Wno-unused-function -Wno-writable-strings -framework Cocoa -framework QuartzCore -framework OpenGL $(CPP11_LD_FLAGS) -o $@ $<
+HandmadeRendererTest:	osx_renderer_test.mm libhandmade_opengl.dylib
+	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) -I$(HANDMADE_CODE_PATH) $(CPP11_FLAGS) -Wno-null-dereference -Wno-missing-braces -Wno-unused-variable -Wno-unused-function -Wno-writable-strings -framework Cocoa $(CPP11_LD_FLAGS) -o $@ $<
 	rm -rf ./HandmadeRendererTest.app
 	mkdir -p ./HandmadeRendererTest.app/Contents/MacOS
 	mkdir -p ./HandmadeRendererTest.app/Contents/Resources
@@ -103,6 +109,7 @@ HandmadeRendererTest:	osx_renderer_test.mm
 	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_sprite_head.bmp ./HandmadeRendererTest.app/Contents/Resources
 	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_cover_grass.bmp ./HandmadeRendererTest.app/Contents/Resources
 	mv HandmadeRendererTest HandmadeRendererTest.app/Contents/MacOS/HandmadeRendererTest
+	cp libhandmade_opengl.dylib HandmadeRendererTest.app/Contents/Resources
 	#cp osx_tabview.info.plist HandmadeTabView.app/Contents/Info.plist
 
 clean:

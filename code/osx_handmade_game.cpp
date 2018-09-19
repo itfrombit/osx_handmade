@@ -83,7 +83,7 @@ memory_arena FrameTempArena;
 game_memory GameMemory;
 
 
-void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
+void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 {
 	if (GameData->SetupComplete)
 	{
@@ -101,14 +101,12 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 
 
 	GameData->MaxQuadCountPerFrame = (1 << 18);
-	GameData->Renderer = OSXAllocateRenderer(RendererType_OpenGL, GameData->MaxQuadCountPerFrame);
+	GameData->Renderer = OSXInitDefaultRenderer(Window, GameData->MaxQuadCountPerFrame);
 
 
 	///////////////////////////////////////////////////////////////////
 	// Worker Threads
 	//
-
-#if 1
 	ZeroArray(ArrayCount(GameData->HighPriorityStartups), GameData->HighPriorityStartups);
 	OSXMakeQueue(&GameData->HighPriorityQueue,
 	             ArrayCount(GameData->HighPriorityStartups),
@@ -118,18 +116,6 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	OSXMakeQueue(&GameData->LowPriorityQueue,
 	             ArrayCount(GameData->LowPriorityStartups),
 	             GameData->LowPriorityStartups);
-#else
-	osx_thread_startup HighPriorityStartups[6] = {};
-	osx_thread_startup LowPriorityStartups[2] = {};
-
-	OSXMakeQueue(&GameData->HighPriorityQueue,
-	             ArrayCount(GameData->HighPriorityStartups),
-	             HighPriorityStartups);
-
-	OSXMakeQueue(&GameData->LowPriorityQueue,
-	             ArrayCount(GameData->LowPriorityStartups),
-	             LowPriorityStartups);
-#endif
 
 	///////////////////////////////////////////////////////////////////
 	// Rendering Frame Rate
@@ -167,6 +153,7 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	// NOTE(jeff): We don't have to create a temp file
 	GameData->Game = OSXLoadGameCode(GameData->SourceGameCodeDLFullPath);
 
+	DEBUGSetEventRecording(GameData->Game.IsValid);
 
 	///////////////////////////////////////////////////////////////////
 	// Set up memory
@@ -194,6 +181,8 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 	uint32 AllocationFlags = MAP_PRIVATE|MAP_ANON;
 #endif
 
+
+	GameMemory = {};
 
 #if HANDMADE_INTERNAL
 	GameMemory.DebugTable = GlobalDebugTable;
@@ -297,6 +286,7 @@ void OSXSetupGameData(osx_game_data* GameData, CGLContextObj CGLContext)
 }
 
 
+#if 0
 void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height, int BytesPerPixel)
 {
 	GameData->RenderBuffer.Width = Width;
@@ -316,7 +306,7 @@ void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height
 		printf("Render Buffer Memory mmap error: %d  %s", errno, strerror(errno));
 	}
 }
-
+#endif
 
 void OSXKeyProcessing(bool32 IsKeyDown, u32 KeyCode, u32 Key,
 					  int ShiftKeyFlag, int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
@@ -715,34 +705,12 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Input Processing");
 
-#if 0
-	if (GameData->RenderCommandsInitialized == 0)
-	{
-		GameData->RenderCommands = DefaultRenderCommands(
-										GameData->PushBufferSize, GameData->PushBuffer,
-										(u32)GameData->RenderBuffer.Width,
-										(u32)GameData->RenderBuffer.Height,
-										GameData->MaxVertexCount,
-										GameData->VertexArray,
-										GameData->BitmapArray,
-										OpenGL.WhiteBitmap);
-		GameData->RenderCommandsInitialized = 1;
-	}
-#endif
-
-#if 0
-	rectangle2i DrawRegion = AspectRatioFit(GameData->RenderCommands.Settings.Width,
-	                                        GameData->RenderCommands.Settings.Height,
-											WindowFrame.size.width,
-											WindowFrame.size.height);
-#else
 	rectangle2i DrawRegion = AspectRatioFit(WindowFrame.size.width,
 	                                        WindowFrame.size.height,
 											WindowFrame.size.width,
 											WindowFrame.size.height);
-#endif
 
-	game_render_commands* Frame = BeginFrame(GameData->Renderer,
+	game_render_commands* Frame = GameData->Renderer->BeginFrame(GameData->Renderer,
 	                                         WindowFrame.size.width,
 											 WindowFrame.size.height,
 											 DrawRegion);
@@ -879,8 +847,8 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Frame Display");
 
-	ProcessTextureQueue(GameData->Renderer, &GameData->TextureQueue);
-	EndFrame(GameData->Renderer, Frame);
+	GameData->Renderer->ProcessTextureQueue(GameData->Renderer, &GameData->TextureQueue);
+	GameData->Renderer->EndFrame(GameData->Renderer, Frame);
 
 	END_BLOCK();
 }

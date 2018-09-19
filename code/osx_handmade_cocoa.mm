@@ -111,42 +111,7 @@ void OSXProcessMinimalPendingMessages()
 
 
 
-///////////////////////////////////////////////////////////////////////
-@interface HandmadeView : NSOpenGLView
-{
-}
-@end
-
-@implementation HandmadeView
-
-- (id)init
-{
-	self = [super init];
-
-	return self;
-}
-
-
-- (void)prepareOpenGL
-{
-	[super prepareOpenGL];
-	[[self openGLContext] makeCurrentContext];
-}
-
-- (void)reshape
-{
-	[super reshape];
-
-	NSRect bounds = [self bounds];
-	[GlobalGLContext makeCurrentContext];
-	[GlobalGLContext update];
-	glViewport(0, 0, bounds.size.width, bounds.size.height);
-}
-
-@end
-
-
-OSXCocoaContext OSXInitCocoaContext()
+OSXCocoaContext OSXInitCocoaContext(NSString* AppName, float WindowWidth, float WindowHeight)
 {
 	OSXCocoaContext Context = {};
 
@@ -156,7 +121,6 @@ OSXCocoaContext OSXInitCocoaContext()
 
 	// Set working directory
 	NSString *dir = [[NSFileManager defaultManager] currentDirectoryPath];
-	NSLog(@"working directory: %@", dir);
 
 	NSFileManager* FileManager = [NSFileManager defaultManager];
 	Context.WorkingDirectory = [NSString stringWithFormat:@"%@/Contents/Resources",
@@ -165,19 +129,14 @@ OSXCocoaContext OSXInitCocoaContext()
 	{
 		Assert(0);
 	}
+	NSLog(@"working directory: %@", Context.WorkingDirectory);
 
 	Context.AppDelegate = [[HandmadeAppDelegate alloc] init];
 	[app setDelegate:Context.AppDelegate];
 
     [NSApp finishLaunching];
 
-	return Context;
-}
-
-
-NSWindow* OSXInitOpenGLWindow(OSXCocoaContext* CocoaContext, NSString* AppName,
-                              float WindowWidth, float WindowHeight)
-{
+	// Create the main application window
 	NSRect ScreenRect = [[NSScreen mainScreen] frame];
 
 	NSRect InitialFrame = NSMakeRect((ScreenRect.size.width - GlobalRenderWidth) * 0.5,
@@ -194,55 +153,20 @@ NSWindow* OSXInitOpenGLWindow(OSXCocoaContext* CocoaContext, NSString* AppName,
 									defer:NO];
 
 	[Window setBackgroundColor: NSColor.redColor];
-	[Window setDelegate:CocoaContext->AppDelegate];
+	[Window setDelegate:Context.AppDelegate];
 
 	NSView* CV = [Window contentView];
 	[CV setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 	[CV setAutoresizesSubviews:YES];
 
- 	// All hardware NSOpenGLPixelFormats support an sRGB framebuffer.
-    NSOpenGLPixelFormatAttribute openGLAttributes[] =
-    {
-        NSOpenGLPFAAccelerated,
-        NSOpenGLPFADoubleBuffer,
-		NSOpenGLPFAColorSize, 24,
-		NSOpenGLPFAAlphaSize, 8,
-        NSOpenGLPFADepthSize, 24,
-        NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
-        0
-    };
-	NSOpenGLPixelFormat* PixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:openGLAttributes];
-    GlobalGLContext = [[NSOpenGLContext alloc] initWithFormat:PixelFormat shareContext:NULL];
-
-	HandmadeView* GLView = [[HandmadeView alloc] init];
-	[GLView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-	[GLView setPixelFormat:PixelFormat];
-	[GLView setOpenGLContext:GlobalGLContext];
-	[GLView setFrame:[CV bounds]];
-
-	[CV addSubview:GLView];
-
-    [PixelFormat release];
-
 	[Window setMinSize:NSMakeSize(160, 90)];
 	[Window setTitle:AppName];
 	[Window makeKeyAndOrderFront:nil];
 
-	///////////////////////////////////////////////////////////////////
-	// OpenGL setup with Cocoa
-#if HANDMADE_USE_VSYNC
-    GLint swapInt = 1;
-#else
-    GLint swapInt = 0;
-#endif
-	[GlobalGLContext setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
+	Context.Window = Window;
+	Context.AppName = AppName;
 
-	[GlobalGLContext setView:[Window contentView]];
-	[GlobalGLContext makeCurrentContext];
-
-	CocoaContext->Window = Window;
-
-	return Window;
+	return Context;
 }
 
 
@@ -276,3 +200,14 @@ osx_mouse_data OSXGetMouseData(OSXCocoaContext* AppContext)
 	return MouseData;
 }
 
+
+void OSXMessageBox(NSString* Title, NSString* Text)
+{
+	NSAlert* MsgBox = [[NSAlert alloc] init];
+	[MsgBox addButtonWithTitle:@"Quit"];
+	[MsgBox setMessageText:Title];
+	[MsgBox setInformativeText:Text];
+	[MsgBox setAlertStyle:NSAlertStyleWarning];
+
+	[MsgBox runModal];
+}

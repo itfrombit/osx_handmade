@@ -20,7 +20,9 @@ struct OSXCocoaContext
 {
 	HandmadeAppDelegate* AppDelegate;
 	NSWindow* Window;
+	NSString* AppName;
 	NSString* WorkingDirectory;
 };
 
 
+void OSXMessageBox(NSString* Title, NSString* Text);

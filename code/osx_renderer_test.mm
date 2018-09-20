@@ -50,19 +50,75 @@ const r32 GlobalRenderHeight = 540;
 
 #import "osx_handmade_cocoa.mm"
 
-
-internal void LoadBMP(renderer_texture_queue* TextureOpQueue, char* FileName,
-                      renderer_texture* Result);
+internal renderer_texture LoadBMP(renderer_texture_queue* TextureOpQueue,
+                                  char* FileName, u16 TextureIndex);
 
 
 ///////////////////////////////////////////////////////////////////////
 // Sample Renderer Scene
+
+global cube_uv_layout WallUV =
+{
+	{0, 0},
+	{0.25f, 0},
+	{0.25f, 0.25f},
+	{0, 0.25f},
+
+	{{0.5f, 0.25f}, {0.5f, 0.25f}, {0.5f, 0.25f}, {0.5f, 0.25f}},
+	{{0.75f, 0.25f}, {0.75f, 0.25f}, {0.75f, 0.25f}, {0.75f, 0.25f}},
+	{{0.75f, 0.75f}, {0.75f, 0.75f}, {0.75f, 0.75f}, {0.75f, 0.75f}},
+	{{0.5f, 0.75f}, {0.5f, 0.75f}, {0.5f, 0.75f}, {0.5f, 0.75f}},
+
+	{0, 0.75f},
+	{0.25f, 0.75f},
+	{0.25f, 1.0f},
+	{0, 1.0f},
+};
+
+global cube_uv_layout WallStartUV =
+{
+	{0, 0},
+	{0.25f, 0},
+	{0.25f, 0.25f},
+	{0, 0.25f},
+
+	{{0.25f, 0.25f}, {0.25f, 0.25f}, {0.25f, 0.25f}, {0.25f, 0.25f}},
+	{{0.5f, 0.25f}, {0.5f, 0.25f}, {0.5f, 0.25f}, {0.5f, 0.25f}},
+	{{0.5f, 0.75f}, {0.5f, 0.75f}, {0.5f, 0.75f}, {0.5f, 0.75f}},
+	{{0.25f, 0.75f}, {0.25f, 0.75f}, {0.25f, 0.75f}, {0.25f, 0.75f}},
+
+	{0, 0.75f},
+	{0.25f, 0.75f},
+	{0.25f, 1.0f},
+	{0, 1.0f},
+};
+
+global cube_uv_layout WallEndUV =
+{
+	{0, 0},
+	{0.25f, 0},
+	{0.25f, 0.25f},
+	{0, 0.25f},
+
+	{{0.75f, 0.25f}, {0.75f, 0.25f}, {0.75f, 0.25f}, {0.75f, 0.25f}},
+	{{1.0f, 0.25f}, {1.0f, 0.25f}, {1.0f, 0.25f}, {1.0f, 0.25f}},
+	{{1.0f, 0.75f}, {1.0f, 0.75f}, {1.0f, 0.75f}, {1.0f, 0.75f}},
+	{{0.75f, 0.75f}, {0.75f, 0.75f}, {0.75f, 0.75f}, {0.75f, 0.75f}},
+
+	{0, 0.75f},
+	{0.25f, 0.75f},
+	{0.25f, 1.0f},
+	{0, 1.0f},
+};
+
 
 enum test_scene_element
 {
 	Element_Grass,
 	Element_Tree,
 	Element_Wall,
+	Element_WallStart,
+	Element_WallEnd,
 };
 
 #define TEST_SCENE_DIM_X 40
@@ -143,8 +199,18 @@ internal b32x PlaceRectangularWall(test_scene* Scene, u32 MinX, u32 MinY, u32 Ma
 			}
 			else
 			{
-				Scene->Elements[MinY][X] = Scene->Elements[MaxY][X] =
-				Element_Wall;
+				test_scene_element ElemType = Element_Wall;
+
+				if (X == MinX)
+				{
+					ElemType = Element_WallStart;
+				}
+				else if (X == MaxX)
+				{
+					ElemType = Element_WallEnd;
+				}
+
+				Scene->Elements[MinY][X] = Scene->Elements[MaxY][X] = ElemType;
 			}
 		}
 
@@ -172,11 +238,11 @@ internal b32x PlaceRectangularWall(test_scene* Scene, u32 MinX, u32 MinY, u32 Ma
 
 internal void InitTestScene(renderer_texture_queue* TextureOpQueue, test_scene* Scene)
 {
-	LoadBMP(TextureOpQueue, "test_cube_grass.bmp", &Scene->GrassTexture);
-	LoadBMP(TextureOpQueue, "test_cube_wall.bmp", &Scene->WallTexture);
-	LoadBMP(TextureOpQueue, "test_sprite_tree.bmp", &Scene->TreeTexture);
-	LoadBMP(TextureOpQueue, "test_sprite_head.bmp", &Scene->HeadTexture);
-	LoadBMP(TextureOpQueue, "test_cover_grass.bmp", &Scene->CoverTexture);
+	Scene->GrassTexture = LoadBMP(TextureOpQueue, "test_cube_grass.bmp", 1);
+	Scene->WallTexture = LoadBMP(TextureOpQueue, "test_cube_wall.bmp", 2);
+	Scene->TreeTexture = LoadBMP(TextureOpQueue, "test_sprite_tree.bmp", 3);
+	Scene->HeadTexture = LoadBMP(TextureOpQueue, "test_sprite_head.bmp", 4);
+	Scene->CoverTexture = LoadBMP(TextureOpQueue, "test_cover_grass.bmp", 5);
 
 	Scene->MinP = V3(-0.5f*(f32)TEST_SCENE_DIM_X,
 	                 -0.5f*(f32)TEST_SCENE_DIM_Y,
@@ -200,6 +266,8 @@ internal void InitTestScene(renderer_texture_queue* TextureOpQueue, test_scene* 
 
 internal void PushSimpleScene(render_group* Group, test_scene* Scene)
 {
+	f32 WallRadius = 1.0f;
+
 	srand(1234);
 
 	for(s32 Y = 0; Y < TEST_SCENE_DIM_Y; ++Y)
@@ -210,41 +278,56 @@ internal void PushSimpleScene(render_group* Group, test_scene* Scene)
 
 			f32 Z = 0.4f*((f32)rand() / (f32)RAND_MAX);
 			f32 R = 0.5f + 0.5f*((f32)rand() / (f32)RAND_MAX);
+
+			if (   (Elem == Element_Wall)
+				|| (Elem == Element_WallStart)
+				|| (Elem == Element_WallEnd))
+			{
+				Z = 0.4f;
+				R = 1.0f;
+			}
+
 			f32 ZRadius = 2.0f;
 			v4 Color = V4(R, 1, 1, 1);
 			v3 P = Scene->MinP + V3((f32)X, (f32)Y, Z);
 
-			PushCube(Group, Scene->GrassTexture, P, V3(0.5f, 0.5f, ZRadius), Color, 0.0f);
+			PushCube(Group, Scene->GrassTexture, P, V3(0.5f, 0.5f, ZRadius), Color);
 
 			v3 GroundP = P + V3(0, 0, ZRadius);
 
 			if(Elem == Element_Tree)
 			{
-				PushSprite(Group, Scene->TreeTexture, true, GroundP,
-				           V2(2.0f, 2.5f), V2(0, 0), V2(1, 1));
+				PushUpright(Group, Scene->TreeTexture, GroundP, V2(2.0f, 2.5f));
 			}
 			else if(Elem == Element_Wall)
 			{
-				f32 WallRadius = 1.0f;
-
 				PushCube(Group, Scene->WallTexture, GroundP + V3(0, 0, WallRadius),
-				         V3(0.5f, 0.5f, WallRadius), Color, 0.0f);
+				         V3(0.5f, 0.5f, WallRadius), Color, &WallUV);
+			}
+			else if(Elem == Element_WallStart)
+			{
+				PushCube(Group, Scene->WallTexture, GroundP + V3(0, 0, WallRadius),
+				         V3(0.5f, 0.5f, WallRadius), Color, &WallStartUV);
+			}
+			else if(Elem == Element_WallEnd)
+			{
+				PushCube(Group, Scene->WallTexture, GroundP + V3(0, 0, WallRadius),
+				         V3(0.5f, 0.5f, WallRadius), Color, &WallEndUV);
 			}
 			else
 			{
-				for (u32 CoverIndex = 0; CoverIndex < 3; ++CoverIndex)
+				for (u32 CoverIndex = 0; CoverIndex < 30; ++CoverIndex)
 				{
 					v2 Disp = 0.8f*V2((f32)rand() / (f32)RAND_MAX,
 									  (f32)rand() / (f32)RAND_MAX) - V2(0.4f, 0.4f);
-					PushSprite(Group, Scene->CoverTexture, true, GroundP + V3(Disp, 0.0f),
-					           V2(0.4f, 0.4f), V2(0, 0), V2(1, 1));
+					PushUpright(Group, Scene->CoverTexture, GroundP + V3(Disp, 0.0f),
+					            V2(0.4f, 0.4f));
 				}
 			}
 		}
 	}
 
-	PushSprite(Group, Scene->HeadTexture, true, V3(0, 2.0f, 3.0f),
-	           V2(4.0f, 4.0f), V2(0, 0), V2(1, 1));
+	PushUpright(Group, Scene->HeadTexture, V3(0, 2.0f, 3.0f), V2(4.0f, 4.0f));
 }
 
 
@@ -295,8 +378,8 @@ struct entire_file
 
 entire_file ReadEntireFile(char* FileName);
 
-internal void LoadBMP(renderer_texture_queue* TextureOpQueue, char* FileName,
-                      renderer_texture* TextureHandle)
+internal renderer_texture LoadBMP(renderer_texture_queue* TextureOpQueue,
+                                  char* FileName, u16 TextureIndex)
 {
 	loaded_bitmap Result = {};
 
@@ -370,13 +453,14 @@ internal void LoadBMP(renderer_texture_queue* TextureOpQueue, char* FileName,
 
 	Result.Pitch = Result.Width * 4;
 
+	renderer_texture Texture = ReferToTexture(TextureIndex, Result.Width, Result.Height);
+
 	texture_op CubeOp = {};
-	CubeOp.IsAllocate = true;
-	CubeOp.Allocate.Width = Result.Width;
-	CubeOp.Allocate.Height = Result.Height;
-	CubeOp.Allocate.Data = Result.Memory;
-	CubeOp.Allocate.ResultTexture = TextureHandle;
+	CubeOp.Update.Data = Result.Memory;
+	CubeOp.Update.Texture = Texture;
 	AddOp(TextureOpQueue, &CubeOp);
+
+	return Texture;
 }
 
 
@@ -500,7 +584,10 @@ int main(int argc, const char* argv[])
 	// Sample Renderer Scene Setup
 	//
 	u32 MaxQuadCountPerFrame = (1 << 18);
-	platform_renderer* Renderer = OSXInitDefaultRenderer(OSXAppContext.Window, MaxQuadCountPerFrame);
+	u32 MaxTextureCount = 256;
+	platform_renderer* Renderer = OSXInitDefaultRenderer(OSXAppContext.Window,
+	                                                     MaxQuadCountPerFrame,
+														 MaxTextureCount);
 
 	texture_op TextureQueueMemory[256];
 	renderer_texture_queue TextureQueue = {};
@@ -509,21 +596,10 @@ int main(int argc, const char* argv[])
 	test_scene Scene = {};
 	InitTestScene(&TextureQueue, &Scene);
 
-#if 0
-	f32 CameraPitch = 0.3f*Pi32;
-	f32 CameraOrbit = 0;
-	f32 CameraDolly = 20.0f;
-	f32 CameraDropShift = -1.0f;
-	f32 CameraFocalLength = 3.0f;
-
-	f32 NearClipPlane = 0.2f;
-	f32 FarClipPlane = 1000.0f;
-#endif
-
 	camera Camera = GetStandardCamera();
 
 	f32 tCameraShift = 0.0f;
-	b32 CameraIsPanning = false;
+	b32 CameraIsPanning = true;
 
 
 	///////////////////////////////////////////////////////////////////
@@ -554,7 +630,7 @@ int main(int argc, const char* argv[])
 
 		if (CameraIsPanning)
 		{
-			Camera.Offset += 10.0f * V3(cosf(tCameraShift), -0.2f + sinf(tCameraShift), 0.0f);
+			Camera.Offset = 10.0f * V3(cosf(tCameraShift), -0.2f + sinf(tCameraShift), 0.0f);
 		}
 		else
 		{
@@ -564,7 +640,8 @@ int main(int argc, const char* argv[])
 		Renderer->ProcessTextureQueue(Renderer, &TextureQueue);
 		game_render_commands* Frame = Renderer->BeginFrame(Renderer, DrawWidth, DrawHeight, DrawRegion);
 
-		Frame->Settings.RequestVSync = true;
+		Frame->Settings.RequestVSync = false;
+		Frame->Settings.LightingDisabled = true;
 
 		v4 BackgroundColor = V4(0.15f, 0.15f, 0.15f, 0.0f);
 		render_group Group = BeginRenderGroup(0, Frame, Render_Default, BackgroundColor);

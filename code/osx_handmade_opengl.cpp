@@ -33,6 +33,8 @@ typedef void type_glDrawBuffers(GLsizei n, const GLenum* bufs);
 
 typedef void type_glVertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer);
 
+typedef void type_glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+typedef void type_glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex);
 
 global gl_tex_image_2d_multisample *glTexImage2DMultisample;
 global gl_bind_framebuffer* glBindFramebuffer;
@@ -67,6 +69,9 @@ OpenGLGlobalFunction(glBindVertexArray);
 OpenGLGlobalFunction(glGenVertexArrays);
 OpenGLGlobalFunction(glDeleteFramebuffers);
 OpenGLGlobalFunction(glVertexAttribIPointer);
+
+OpenGLGlobalFunction(glTexStorage3D);
+OpenGLGlobalFunction(glDrawElementsBaseVertex);
 
 //OpenGLGlobalFunction(glDrawBuffers);
 
@@ -169,13 +174,19 @@ RENDERER_END_FRAME(OSXOpenGLEndFrame)
 #endif
 }
 
-internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame)
+internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame, u32 MaxTextureCount)
 {
 	open_gl* OpenGL = (open_gl*)OSXRendererAlloc(sizeof(open_gl));
 
 	OpenGL->Header.ProcessTextureQueue = OSXOpenGLProcessTextureQueue;
 	OpenGL->Header.BeginFrame = OSXOpenGLBeginFrame;
 	OpenGL->Header.EndFrame = OSXOpenGLEndFrame;
+
+	u32 MaxVertexCount = MaxQuadCountPerFrame * 4;
+	u32 MaxIndexCount = MaxQuadCountPerFrame * 6;
+	OpenGL->MaxTextureCount = MaxTextureCount;
+	OpenGL->MaxVertexCount = MaxVertexCount;
+	OpenGL->MaxIndexCount = MaxIndexCount;
 
 	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)
@@ -197,6 +208,10 @@ internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame)
 
 		OSXGetOpenGLFunction(Image, glDeleteFramebuffers);
 		OSXGetOpenGLFunction(Image, glVertexAttribIPointer);
+
+		OSXGetOpenGLFunction(Image, glTexStorage3D);
+		OSXGetOpenGLFunction(Image, glDrawElementsBaseVertex);
+
 #if 0
         glAttachShader = (gl_attach_shader *)dlsym("glAttachShader");
         glCompileShader = (gl_compile_shader *)dlsym("glCompileShader");
@@ -252,10 +267,9 @@ internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame)
 		printf("Could not dynamically load OpenGL\n");
 	}
 
-	u32 MaxVertexCount = MaxQuadCountPerFrame * 4;
-	OpenGL->MaxVertexCount = MaxVertexCount;
 	OpenGL->VertexArray = (textured_vertex*)OSXRendererAlloc(MaxVertexCount *
 	                                                         sizeof(textured_vertex));
+	OpenGL->IndexArray = (u16*)OSXRendererAlloc(MaxIndexCount * sizeof(u16));
 	OpenGL->BitmapArray = (renderer_texture*)OSXRendererAlloc(MaxVertexCount *
 	                                                          sizeof(renderer_texture));
 
@@ -268,7 +282,8 @@ extern "C"
 OSX_LOAD_RENDERER_ENTRY()
 {
 	OSXInitOpenGLView(Window);
-	platform_renderer* Result = (platform_renderer*)OSXInitOpenGL(MaxQuadCountPerFrame);
+	platform_renderer* Result = (platform_renderer*)OSXInitOpenGL(MaxQuadCountPerFrame,
+	                                                              MaxTextureCount);
 
 	return Result;
 }

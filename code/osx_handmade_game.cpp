@@ -101,7 +101,10 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 
 
 	GameData->MaxQuadCountPerFrame = (1 << 18);
-	GameData->Renderer = OSXInitDefaultRenderer(Window, GameData->MaxQuadCountPerFrame);
+	GameData->MaxTextureCount = 256;
+	GameData->Renderer = OSXInitDefaultRenderer(Window,
+	                                            GameData->MaxQuadCountPerFrame,
+	                                            GameData->MaxTextureCount);
 
 
 	///////////////////////////////////////////////////////////////////
@@ -158,20 +161,6 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	///////////////////////////////////////////////////////////////////
 	// Set up memory
 	//
-	//ZeroStruct(GameData->FrameTempArena);
-	//ZeroStruct(GameData->GameMemory);
-
-	GameData->PushBufferSize = Megabytes(64);
-	GameData->PushBuffer = OSXAllocateMemory(GameData->PushBufferSize,
-										     PlatformMemory_NotRestored)->Base;
-
-	GameData->MaxVertexCount = 65536;
-	GameData->VertexArray = (textured_vertex*)OSXAllocateMemory(GameData->MaxVertexCount * sizeof(textured_vertex),
-															          PlatformMemory_NotRestored)->Base;
-
-	GameData->BitmapArray = (renderer_texture*)OSXAllocateMemory(GameData->MaxVertexCount * sizeof(renderer_texture),
-															  PlatformMemory_NotRestored)->Base;
-
 
 #if HANDMADE_INTERNAL
 	char* RequestedAddress = (char*)Gigabytes(8);

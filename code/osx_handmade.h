@@ -269,18 +269,12 @@ typedef struct osx_game_data
 	umm							CurrentClipMemorySize;
 	void*						ClipMemory;
 
-	u32							PushBufferSize;
-	u8*							PushBuffer;
-
-	u32							MaxVertexCount;
-	textured_vertex*			VertexArray;
-	renderer_texture*			BitmapArray;
-
 	texture_op					TextureQueueMemory[512];
 	//texture_op					TextureQueueMemory[256];
 	u32							TextureOpCount;
 	renderer_texture_queue		TextureQueue;
 	u32							MaxQuadCountPerFrame;
+	u32							MaxTextureCount;
 	platform_renderer*			Renderer;
 
 

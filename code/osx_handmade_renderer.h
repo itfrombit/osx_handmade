@@ -1,4 +1,4 @@
-#define OSX_LOAD_RENDERER(name) platform_renderer* name(NSWindow* Window, u32 MaxQuadCountPerFrame, u32 MaxTextureCount)
+#define OSX_LOAD_RENDERER(name) platform_renderer* name(NSWindow* Window, u32 MaxQuadCountPerFrame, u32 MaxTextureCount, u32 MaxSpecialTextureCount)
 typedef OSX_LOAD_RENDERER(osx_load_renderer);
 #define OSX_LOAD_RENDERER_ENTRY() OSX_LOAD_RENDERER(OSXLoadRenderer)
 
@@ -13,7 +13,8 @@ internal osx_load_renderer* OSXLoadRendererDylib(const char* Filename)
 
 internal platform_renderer* OSXInitDefaultRenderer(NSWindow* Window,
 												   u32 MaxQuadCountPerFrame,
-												   u32 MaxTextureCount)
+												   u32 MaxTextureCount,
+												   u32 MaxSpecialTextureCount)
 {
 	osx_load_renderer* OSXLoadOpenGLRenderer = OSXLoadRendererDylib("libhandmade_opengl.dylib");
 
@@ -26,7 +27,8 @@ internal platform_renderer* OSXInitDefaultRenderer(NSWindow* Window,
 
 	platform_renderer* Renderer = OSXLoadOpenGLRenderer(Window,
 	                                                    MaxQuadCountPerFrame,
-														MaxTextureCount);
+														MaxTextureCount,
+														MaxSpecialTextureCount);
 
 	return Renderer;
 }

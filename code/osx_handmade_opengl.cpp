@@ -174,7 +174,8 @@ RENDERER_END_FRAME(OSXOpenGLEndFrame)
 #endif
 }
 
-internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame, u32 MaxTextureCount)
+internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame, u32 MaxTextureCount,
+                                u32 MaxSpecialTextureCount)
 {
 	open_gl* OpenGL = (open_gl*)OSXRendererAlloc(sizeof(open_gl));
 
@@ -187,6 +188,17 @@ internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame, u32 MaxTextureCount)
 	OpenGL->MaxTextureCount = MaxTextureCount;
 	OpenGL->MaxVertexCount = MaxVertexCount;
 	OpenGL->MaxIndexCount = MaxIndexCount;
+	OpenGL->MaxSpecialTextureCount = MaxSpecialTextureCount;
+
+	// NOTE(casey): This is wayyyyyy overkill because you would not render all your quads
+	// as separate textures, so this wastes a ton of memory.  At some point we may want
+	// to restrict the number of these you could draw with separate textures.
+	OpenGL->MaxQuadTextureCount = MaxQuadCountPerFrame;
+
+	OpenGL->VertexArray = (textured_vertex*)OSXRendererAlloc(MaxVertexCount * sizeof(textured_vertex));
+	OpenGL->IndexArray = (u16*)OSXRendererAlloc(MaxIndexCount * sizeof(u16));
+	OpenGL->BitmapArray = (renderer_texture*)OSXRendererAlloc(OpenGL->MaxQuadTextureCount * sizeof(renderer_texture));
+	OpenGL->SpecialTextureHandles = (GLuint*)OSXRendererAlloc(MaxSpecialTextureCount * sizeof(GLuint));
 
 	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)
@@ -267,12 +279,6 @@ internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame, u32 MaxTextureCount)
 		printf("Could not dynamically load OpenGL\n");
 	}
 
-	OpenGL->VertexArray = (textured_vertex*)OSXRendererAlloc(MaxVertexCount *
-	                                                         sizeof(textured_vertex));
-	OpenGL->IndexArray = (u16*)OSXRendererAlloc(MaxIndexCount * sizeof(u16));
-	OpenGL->BitmapArray = (renderer_texture*)OSXRendererAlloc(MaxVertexCount *
-	                                                          sizeof(renderer_texture));
-
 	return OpenGL;
 }
 
@@ -283,7 +289,8 @@ OSX_LOAD_RENDERER_ENTRY()
 {
 	OSXInitOpenGLView(Window);
 	platform_renderer* Result = (platform_renderer*)OSXInitOpenGL(MaxQuadCountPerFrame,
-	                                                              MaxTextureCount);
+	                                                              MaxTextureCount,
+																  MaxSpecialTextureCount);
 
 	return Result;
 }

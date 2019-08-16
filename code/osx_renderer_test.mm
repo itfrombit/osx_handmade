@@ -587,7 +587,8 @@ int main(int argc, const char* argv[])
 	u32 MaxTextureCount = 256;
 	platform_renderer* Renderer = OSXInitDefaultRenderer(OSXAppContext.Window,
 	                                                     MaxQuadCountPerFrame,
-														 MaxTextureCount);
+														 MaxTextureCount,
+														 0);
 
 	texture_op TextureQueueMemory[256];
 	renderer_texture_queue TextureQueue = {};

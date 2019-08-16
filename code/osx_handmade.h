@@ -274,7 +274,7 @@ typedef struct osx_game_data
 	u32							TextureOpCount;
 	renderer_texture_queue		TextureQueue;
 	u32							MaxQuadCountPerFrame;
-	u32							MaxTextureCount;
+	//u32							MaxTextureCount;
 	platform_renderer*			Renderer;
 
 

@@ -101,10 +101,11 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 
 
 	GameData->MaxQuadCountPerFrame = (1 << 18);
-	GameData->MaxTextureCount = 256;
+	//GameData->MaxTextureCount = 256;
 	GameData->Renderer = OSXInitDefaultRenderer(Window,
 	                                            GameData->MaxQuadCountPerFrame,
-	                                            GameData->MaxTextureCount);
+												HANDMADE_NORMAL_TEXTURE_COUNT,
+												HANDMADE_SPECIAL_TEXTURE_COUNT);
 
 
 	///////////////////////////////////////////////////////////////////

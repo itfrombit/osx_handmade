@@ -57,68 +57,17 @@ internal renderer_texture LoadBMP(renderer_texture_queue* TextureOpQueue,
 ///////////////////////////////////////////////////////////////////////
 // Sample Renderer Scene
 
-global cube_uv_layout WallUV =
-{
-	{0, 0},
-	{0.25f, 0},
-	{0.25f, 0.25f},
-	{0, 0.25f},
-
-	{{0.5f, 0.25f}, {0.5f, 0.25f}, {0.5f, 0.25f}, {0.5f, 0.25f}},
-	{{0.75f, 0.25f}, {0.75f, 0.25f}, {0.75f, 0.25f}, {0.75f, 0.25f}},
-	{{0.75f, 0.75f}, {0.75f, 0.75f}, {0.75f, 0.75f}, {0.75f, 0.75f}},
-	{{0.5f, 0.75f}, {0.5f, 0.75f}, {0.5f, 0.75f}, {0.5f, 0.75f}},
-
-	{0, 0.75f},
-	{0.25f, 0.75f},
-	{0.25f, 1.0f},
-	{0, 1.0f},
-};
-
-global cube_uv_layout WallStartUV =
-{
-	{0, 0},
-	{0.25f, 0},
-	{0.25f, 0.25f},
-	{0, 0.25f},
-
-	{{0.25f, 0.25f}, {0.25f, 0.25f}, {0.25f, 0.25f}, {0.25f, 0.25f}},
-	{{0.5f, 0.25f}, {0.5f, 0.25f}, {0.5f, 0.25f}, {0.5f, 0.25f}},
-	{{0.5f, 0.75f}, {0.5f, 0.75f}, {0.5f, 0.75f}, {0.5f, 0.75f}},
-	{{0.25f, 0.75f}, {0.25f, 0.75f}, {0.25f, 0.75f}, {0.25f, 0.75f}},
-
-	{0, 0.75f},
-	{0.25f, 0.75f},
-	{0.25f, 1.0f},
-	{0, 1.0f},
-};
-
-global cube_uv_layout WallEndUV =
-{
-	{0, 0},
-	{0.25f, 0},
-	{0.25f, 0.25f},
-	{0, 0.25f},
-
-	{{0.75f, 0.25f}, {0.75f, 0.25f}, {0.75f, 0.25f}, {0.75f, 0.25f}},
-	{{1.0f, 0.25f}, {1.0f, 0.25f}, {1.0f, 0.25f}, {1.0f, 0.25f}},
-	{{1.0f, 0.75f}, {1.0f, 0.75f}, {1.0f, 0.75f}, {1.0f, 0.75f}},
-	{{0.75f, 0.75f}, {0.75f, 0.75f}, {0.75f, 0.75f}, {0.75f, 0.75f}},
-
-	{0, 0.75f},
-	{0.25f, 0.75f},
-	{0.25f, 1.0f},
-	{0, 1.0f},
-};
-
-
-enum test_scene_element
+enum test_scene_element_type
 {
 	Element_Grass,
 	Element_Tree,
 	Element_Wall,
-	Element_WallStart,
-	Element_WallEnd,
+};
+
+struct test_scene_element
+{
+	test_scene_element_type Type;
+	cube_uv_layout CubeUVLayout;
 };
 
 #define TEST_SCENE_DIM_X 40
@@ -139,7 +88,7 @@ struct test_scene
 
 internal b32x IsEmpty(test_scene* Scene, u32 X, u32 Y)
 {
-	b32x Result = (Scene->Elements[Y][X] == Element_Grass);
+	b32x Result = (Scene->Elements[Y][X].Type == Element_Grass);
 	return Result;
 }
 
@@ -163,7 +112,7 @@ internal u32x CountOccupantsIn3x3(test_scene* Scene, u32 CenterX, u32 CenterY)
 }
 
 
-internal void PlaceRandomInUnoccupied(test_scene* Scene, test_scene_element Element, u32 Count)
+internal void PlaceRandomInUnoccupied(test_scene* Scene, test_scene_element_type Element, u32 Count)
 {
 	u32 Placed = 0;
 
@@ -174,7 +123,7 @@ internal void PlaceRandomInUnoccupied(test_scene* Scene, test_scene_element Elem
 
 		if (CountOccupantsIn3x3(Scene, X, Y) == 0)
 		{
-			Scene->Elements[Y][X] = Element;
+			Scene->Elements[Y][X].Type = Element;
 			++Placed;
 		}
 	}
@@ -184,6 +133,10 @@ internal void PlaceRandomInUnoccupied(test_scene* Scene, test_scene_element Elem
 internal b32x PlaceRectangularWall(test_scene* Scene, u32 MinX, u32 MinY, u32 MaxX, u32 MaxY)
 {
 	b32x Placed = true;
+
+	cube_uv_layout WallUV = EncodeCubeUVLayout(0, 0,
+	                                           2, 2, 2, 2,
+											   0, 0);
 
 	for (u32 Pass = 0; Placed && (Pass <= 1); ++Pass)
 	{
@@ -199,18 +152,50 @@ internal b32x PlaceRectangularWall(test_scene* Scene, u32 MinX, u32 MinY, u32 Ma
 			}
 			else
 			{
-				test_scene_element ElemType = Element_Wall;
+				Scene->Elements[MinY][X].Type = Element_Wall;
+				Scene->Elements[MaxY][X].Type = Element_Wall;
 
 				if (X == MinX)
 				{
-					ElemType = Element_WallStart;
+					Scene->Elements[MinY][X].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           1, 1, 3, 1,
+																			   0, 0);
+					Scene->Elements[MaxY][X].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           1, 3, 1, 1,
+																			   0, 0);
 				}
 				else if (X == MaxX)
 				{
-					ElemType = Element_WallEnd;
+					Scene->Elements[MinY][X].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           1, 3, 3, 3,
+																			   0, 0);
+					Scene->Elements[MaxY][X].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           3, 1, 3, 3,
+																			   0, 0);
 				}
-
-				Scene->Elements[MinY][X] = Scene->Elements[MaxY][X] = ElemType;
+				else if (X == (MinX + 1))
+				{
+					Scene->Elements[MinY][X].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           2, 3, 2, 2,
+																			   0, 0);
+					Scene->Elements[MaxY][X].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           2, 2, 2, 1,
+																			   0, 0);
+				}
+				else if (X == (MaxX - 1))
+				{
+					Scene->Elements[MinY][X].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           2, 1, 2, 2,
+																			   0, 0);
+					Scene->Elements[MaxY][X].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           2, 2, 2, 3,
+																			   0, 0);
+				}
+				else
+				{
+					Scene->Elements[MinY][X].CubeUVLayout = WallUV;
+					Scene->Elements[MaxY][X].CubeUVLayout = WallUV;
+				}
 			}
 		}
 
@@ -226,8 +211,32 @@ internal b32x PlaceRectangularWall(test_scene* Scene, u32 MinX, u32 MinY, u32 Ma
 			}
 			else
 			{
-				Scene->Elements[Y][MinX] = Scene->Elements[Y][MaxX] =
-				Element_Wall;
+				Scene->Elements[Y][MinX].Type = Element_Wall;
+				Scene->Elements[Y][MaxX].Type = Element_Wall;
+
+				if (Y == (MinY + 1))
+				{
+					Scene->Elements[Y][MinX].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           1, 2, 2, 2,
+																			   0, 0);
+					Scene->Elements[Y][MaxX].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           2, 2, 3, 2,
+																			   0, 0);
+				}
+				else if (Y == (MaxY - 1))
+				{
+					Scene->Elements[Y][MinX].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           3, 2, 2, 2,
+																			   0, 0);
+					Scene->Elements[Y][MaxX].CubeUVLayout = EncodeCubeUVLayout(0, 0,
+					                                                           2, 2, 1, 2,
+																			   0, 0);
+				}
+				else
+				{
+					Scene->Elements[Y][MinX].CubeUVLayout = WallUV;
+					Scene->Elements[Y][MaxX].CubeUVLayout = WallUV;
+				}
 			}
 		}
 	}
@@ -279,9 +288,7 @@ internal void PushSimpleScene(render_group* Group, test_scene* Scene)
 			f32 Z = 0.4f*((f32)rand() / (f32)RAND_MAX);
 			f32 R = 0.5f + 0.5f*((f32)rand() / (f32)RAND_MAX);
 
-			if (   (Elem == Element_Wall)
-				|| (Elem == Element_WallStart)
-				|| (Elem == Element_WallEnd))
+			if (Elem.Type == Element_Wall)
 			{
 				Z = 0.4f;
 				R = 1.0f;
@@ -295,24 +302,14 @@ internal void PushSimpleScene(render_group* Group, test_scene* Scene)
 
 			v3 GroundP = P + V3(0, 0, ZRadius);
 
-			if(Elem == Element_Tree)
+			if (Elem.Type == Element_Tree)
 			{
 				PushUpright(Group, Scene->TreeTexture, GroundP, V2(2.0f, 2.5f));
 			}
-			else if(Elem == Element_Wall)
+			else if (Elem.Type == Element_Wall)
 			{
 				PushCube(Group, Scene->WallTexture, GroundP + V3(0, 0, WallRadius),
-				         V3(0.5f, 0.5f, WallRadius), Color, &WallUV);
-			}
-			else if(Elem == Element_WallStart)
-			{
-				PushCube(Group, Scene->WallTexture, GroundP + V3(0, 0, WallRadius),
-				         V3(0.5f, 0.5f, WallRadius), Color, &WallStartUV);
-			}
-			else if(Elem == Element_WallEnd)
-			{
-				PushCube(Group, Scene->WallTexture, GroundP + V3(0, 0, WallRadius),
-				         V3(0.5f, 0.5f, WallRadius), Color, &WallEndUV);
+				         V3(0.5f, 0.5f, WallRadius), Color, Elem.CubeUVLayout);
 			}
 			else
 			{

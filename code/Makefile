@@ -43,11 +43,11 @@ package:
 	mkdir -p ./Contents/Resources/art
 	mkdir -p ./Contents/Resources/sound
 	mkdir -p ./Contents/code
-	cp $(HANDMADE_ASSETS_PATH)/test1_v1.hha ./Contents/Resources/data/test1_v1.hha
-	cp $(HANDMADE_ASSETS_PATH)/test2_v1.hha ./Contents/Resources/data/test2_v1.hha
-	cp $(HANDMADE_ASSETS_PATH)/test3_v1.hha ./Contents/Resources/data/test3_v1.hha
-	cp $(HANDMADE_ASSETS_PATH)/testfonts_v1.hha ./Contents/Resources/data/testfonts_v1.hha
-	cp $(HANDMADE_ASSETS_PATH)/intro_art_v1.hha ./Contents/Resources/data/intro_art_v1.hha
+	cp $(HANDMADE_ASSETS_PATH)/test1_v2.hha ./Contents/Resources/data/test1_v2.hha
+	cp $(HANDMADE_ASSETS_PATH)/test2_v2.hha ./Contents/Resources/data/test2_v2.hha
+	cp $(HANDMADE_ASSETS_PATH)/test3_v2.hha ./Contents/Resources/data/test3_v2.hha
+	cp $(HANDMADE_ASSETS_PATH)/testfonts_v2.hha ./Contents/Resources/data/testfonts_v2.hha
+	cp $(HANDMADE_ASSETS_PATH)/intro_art_v2.hha ./Contents/Resources/data/intro_art_v2.hha
 	@if [ -f $(HANDMADE_ASSETS_PATH)/local.hha ]; then \
 		cp $(HANDMADE_ASSETS_PATH)/local.hha ./Contents/Resources/data/local.hha; \
 	else \
@@ -113,5 +113,5 @@ HandmadeRendererTest:	osx_renderer_test.mm libhandmade_opengl.dylib
 	#cp osx_tabview.info.plist HandmadeTabView.app/Contents/Info.plist
 
 clean:
-	rm -rf *.o $(BINARIES) Handmade.app HandmadeTabView.app HandmadeRendererTest.app *.dSYM
+	rm -rf *.o $(BINARIES) Contents Handmade.app HandmadeTabView.app HandmadeRendererTest.app *.dSYM
 

@@ -500,7 +500,9 @@ LoadGlyphBitmap(loaded_font *Font, u32 CodePoint, hha_asset *Asset)
         }
 
         Asset->Bitmap.AlignPercentage[0] = (1.0f) / (r32)Result.Width;
-        Asset->Bitmap.AlignPercentage[1] = (1.0f + (MaxY - (BoundHeight - Font->TextMetric.tmDescent))) / (r32)Result.Height;
+        Asset->Bitmap.AlignPercentage[1] =
+			(1.0f + (MaxY - (BoundHeight - Font->TextMetric.tmDescent)))
+				/ (r32)Result.Height;
 
         KerningChange = (r32)(MinX - PreStepX);
     }

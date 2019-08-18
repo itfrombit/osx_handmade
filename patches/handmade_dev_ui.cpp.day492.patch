@@ -1,0 +1,11 @@
+--- cpp/code/handmade_dev_ui.cpp	2019-08-18 14:19:34.000000000 -0700
++++ handmade_dev_ui.cpp	2019-08-18 14:19:31.000000000 -0700
+@@ -530,7 +530,7 @@
+ internal void
+ EditableBoolean(dev_ui_layout *Layout, dev_id ID, char *LabelText, b32 *Value)
+ {
+-    if(Button(Layout, ID, *Value ? "*" : "-"))
++    if(Button(Layout, ID, *Value ? (char*)"*" : (char*)"-"))
+     {
+         *Value = !*Value;
+         Layout->EditOccurred = true;

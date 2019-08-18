@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 486.
+This repository works with Casey's source code from Day 492.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -18,6 +18,21 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 
 # Recent Update Notes
+
+## Day 492 Note:
+
+I added a new patch to fix a compile error in handmade_dev_ui.cpp. clang
+complains about passing string literals to the Button() function which
+expects a char pointer. For now, the patch just casts the string literals to
+character pointers.
+
+You can apply the patch by running:
+
+    sh fix_handmade_hero_source.sh
+
+Also, don't forget to regenerate your .hha files to fix the font glyph alignment
+bug.
+
 
 ## Day 472 Note:
 

@@ -262,31 +262,13 @@ typedef struct osx_game_data
 
 	char SourceGameCodeDLFullPath[FILENAME_MAX];
 
-	//umm							FrameTempArenaSize;
-	//memory_arena				FrameTempArena;
-
-	umm							CurrentSortMemorySize;
-	void*						SortMemory;
-
-	umm							CurrentClipMemorySize;
-	void*						ClipMemory;
-
-	texture_op					TextureQueueMemory[512];
-	//texture_op					TextureQueueMemory[256];
-	u32							TextureOpCount;
-	renderer_texture_queue		TextureQueue;
-	u32							MaxQuadCountPerFrame;
-	//u32							MaxTextureCount;
+	platform_renderer_limits	Limits;
 	platform_renderer*			Renderer;
-
-
-	game_offscreen_buffer		RenderBuffer;
 
 	game_input					Input[2];
 	game_input*					NewInput;
 	game_input*					OldInput;
 
-	//osx_state					OSXState;
 	osx_game_code				Game;
 
 	osx_sound_output			SoundOutput;
@@ -296,8 +278,6 @@ typedef struct osx_game_data
 
 	osx_thread_startup			LowPriorityStartups[2];
 	platform_work_queue			LowPriorityQueue;
-
-	//texture_op_queue			TextureOpQueue;
 
 	u32							MonitorRefreshHz;
 	f32							GameUpdateHz;
@@ -321,6 +301,20 @@ typedef struct osx_game_data
 
 	u8							KeyboardState[255];
 	u8							OldKeyboardState[255];
+
+
+	// Software Renderer:
+	//game_offscreen_buffer		RenderBuffer;
+
+	// Old stuff to delete:
+	//umm						CurrentSortMemorySize;
+	//void*						SortMemory;
+
+	//umm						CurrentClipMemorySize;
+	//void*						ClipMemory;
+
+	//texture_op				TextureQueueMemory[512];
+	//u32						TextureOpCount;
 } osx_game_data;
 
 

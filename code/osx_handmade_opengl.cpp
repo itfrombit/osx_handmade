@@ -142,12 +142,6 @@ internal void PlatformOpenGLSetVSync(open_gl* Renderer, b32x VSyncEnabled)
 }
 
 
-RENDERER_PROCESS_TEXTURE_QUEUE(OSXOpenGLProcessTextureQueue)
-{
-	OpenGLManageTextures((open_gl*)Renderer, TextureQueue);
-}
-
-
 RENDERER_BEGIN_FRAME(OSXOpenGLBeginFrame)
 {
 	[GlobalGLContext makeCurrentContext];
@@ -174,31 +168,33 @@ RENDERER_END_FRAME(OSXOpenGLEndFrame)
 #endif
 }
 
-internal open_gl* OSXInitOpenGL(u32 MaxQuadCountPerFrame, u32 MaxTextureCount,
-                                u32 MaxSpecialTextureCount)
+internal open_gl* OSXInitOpenGL(platform_renderer_limits* Limits)
 {
 	open_gl* OpenGL = (open_gl*)OSXRendererAlloc(sizeof(open_gl));
 
-	OpenGL->Header.ProcessTextureQueue = OSXOpenGLProcessTextureQueue;
+	InitTextureQueue(&OpenGL->Header.TextureQueue,
+	                 Limits->TextureTransferBufferSize,
+	                 OSXRendererAlloc(Limits->TextureTransferBufferSize));
+
 	OpenGL->Header.BeginFrame = OSXOpenGLBeginFrame;
 	OpenGL->Header.EndFrame = OSXOpenGLEndFrame;
 
-	u32 MaxVertexCount = MaxQuadCountPerFrame * 4;
-	u32 MaxIndexCount = MaxQuadCountPerFrame * 6;
-	OpenGL->MaxTextureCount = MaxTextureCount;
+	u32 MaxVertexCount = Limits->MaxQuadCountPerFrame * 4;
+	u32 MaxIndexCount = Limits->MaxQuadCountPerFrame * 6;
+	OpenGL->MaxTextureCount = Limits->MaxTextureCount;
 	OpenGL->MaxVertexCount = MaxVertexCount;
 	OpenGL->MaxIndexCount = MaxIndexCount;
-	OpenGL->MaxSpecialTextureCount = MaxSpecialTextureCount;
+	OpenGL->MaxSpecialTextureCount = Limits->MaxSpecialTextureCount;
 
 	// NOTE(casey): This is wayyyyyy overkill because you would not render all your quads
 	// as separate textures, so this wastes a ton of memory.  At some point we may want
 	// to restrict the number of these you could draw with separate textures.
-	OpenGL->MaxQuadTextureCount = MaxQuadCountPerFrame;
+	OpenGL->MaxQuadTextureCount = Limits->MaxQuadCountPerFrame;
 
 	OpenGL->VertexArray = (textured_vertex*)OSXRendererAlloc(MaxVertexCount * sizeof(textured_vertex));
 	OpenGL->IndexArray = (u16*)OSXRendererAlloc(MaxIndexCount * sizeof(u16));
 	OpenGL->BitmapArray = (renderer_texture*)OSXRendererAlloc(OpenGL->MaxQuadTextureCount * sizeof(renderer_texture));
-	OpenGL->SpecialTextureHandles = (GLuint*)OSXRendererAlloc(MaxSpecialTextureCount * sizeof(GLuint));
+	OpenGL->SpecialTextureHandles = (GLuint*)OSXRendererAlloc(Limits->MaxSpecialTextureCount * sizeof(GLuint));
 
 	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)
@@ -288,9 +284,7 @@ extern "C"
 OSX_LOAD_RENDERER_ENTRY()
 {
 	OSXInitOpenGLView(Window);
-	platform_renderer* Result = (platform_renderer*)OSXInitOpenGL(MaxQuadCountPerFrame,
-	                                                              MaxTextureCount,
-																  MaxSpecialTextureCount);
+	platform_renderer* Result = (platform_renderer*)OSXInitOpenGL(Limits);
 
 	return Result;
 }

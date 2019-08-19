@@ -95,18 +95,15 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	OSXState->MemorySentinel.Prev = &OSXState->MemorySentinel;
 	OSXState->MemorySentinel.Next = &OSXState->MemorySentinel;
 
-	GameData->TextureQueue = {};
-	InitTextureQueue(&GameData->TextureQueue, sizeof(GameData->TextureQueueMemory),
-	                 GameData->TextureQueueMemory);
-
-
-	GameData->MaxQuadCountPerFrame = (1 << 18);
+	//GameData->MaxQuadCountPerFrame = (1 << 18);
 	//GameData->MaxTextureCount = 256;
-	GameData->Renderer = OSXInitDefaultRenderer(Window,
-	                                            GameData->MaxQuadCountPerFrame,
-												HANDMADE_NORMAL_TEXTURE_COUNT,
-												HANDMADE_SPECIAL_TEXTURE_COUNT);
 
+	GameData->Limits.MaxQuadCountPerFrame = (1 << 18); //GameData->MaxQuadCountPerFrame;
+	GameData->Limits.MaxTextureCount = HANDMADE_NORMAL_TEXTURE_COUNT;
+	GameData->Limits.MaxSpecialTextureCount = HANDMADE_SPECIAL_TEXTURE_COUNT;
+	GameData->Limits.TextureTransferBufferSize = HANDMADE_TEXTURE_TRANSFER_BUFFER_SIZE;
+
+	GameData->Renderer = OSXInitDefaultRenderer(Window, &GameData->Limits);
 
 	///////////////////////////////////////////////////////////////////
 	// Worker Threads
@@ -243,7 +240,7 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	GameMemory.PlatformAPI.DEBUGGetMemoryStats = OSXGetMemoryStats;
 #endif
 
-	GameMemory.TextureQueue = &GameData->TextureQueue;
+	GameMemory.TextureQueue = &GameData->Renderer->TextureQueue;
 
 	Platform = GameMemory.PlatformAPI;
 
@@ -837,7 +834,6 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Frame Display");
 
-	GameData->Renderer->ProcessTextureQueue(GameData->Renderer, &GameData->TextureQueue);
 	GameData->Renderer->EndFrame(GameData->Renderer, Frame);
 
 	END_BLOCK();

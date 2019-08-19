@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 493.
+This repository works with Casey's source code from Day 498.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -18,6 +18,14 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 
 # Recent Update Notes
+
+## Day 498 Note:
+
+After you do a clean compile and run the game for the first time,
+you have to import and save the textures using the new DevUI
+command button (hit F10 to display the DevUI, F9 to dismiss it when
+finished).
+
 
 ## Day 493 Note:
 

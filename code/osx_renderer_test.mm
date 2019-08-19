@@ -379,6 +379,7 @@ internal renderer_texture LoadBMP(renderer_texture_queue* TextureOpQueue,
                                   char* FileName, u16 TextureIndex)
 {
 	loaded_bitmap Result = {};
+	renderer_texture Texture = {};
 
 	entire_file ReadResult = ReadEntireFile(FileName);
 
@@ -421,41 +422,45 @@ internal renderer_texture LoadBMP(renderer_texture_queue* TextureOpQueue,
 		int32 BlueShiftDown  = (int32)BlueScan.Index;
 		int32 AlphaShiftDown = (int32)AlphaScan.Index;
 
-		uint32* SourceDest = Pixels;
+		texture_op* Op = BeginTextureOp(TextureOpQueue, Result.Width, Result.Height);
 
-		for(int32 Y = 0; Y < Header->Height; ++Y)
+		if (Op)
 		{
-			for(int32 X = 0; X < Header->Width; ++X)
+			Texture = ReferToTexture(TextureIndex, Result.Width, Result.Height);
+			Op->Texture = Texture;
+
+			u32* Source = Pixels;
+			u32* Dest = (u32*)Op->Data;
+
+			for(int32 Y = 0; Y < Header->Height; ++Y)
 			{
-				uint32 C = *SourceDest;
+				for(int32 X = 0; X < Header->Width; ++X)
+				{
+					u32 C = *Source++;
 
-				v4 Texel = {(real32)((C & RedMask)   >> RedShiftDown),
-							(real32)((C & GreenMask) >> GreenShiftDown),
-							(real32)((C & BlueMask)  >> BlueShiftDown),
-							(real32)((C & AlphaMask) >> AlphaShiftDown)};
+					v4 Texel = {(r32)((C & RedMask)   >> RedShiftDown),
+								(r32)((C & GreenMask) >> GreenShiftDown),
+								(r32)((C & BlueMask)  >> BlueShiftDown),
+								(r32)((C & AlphaMask) >> AlphaShiftDown)};
 
-				Texel = SRGB255ToLinear1(Texel);
-#if 1
-				Texel.rgb *= Texel.a;
-#endif
-				Texel = Linear1ToSRGB255(Texel);
+					Texel = SRGB255ToLinear1(Texel);
+					Texel.rgb *= Texel.a;
+					Texel = Linear1ToSRGB255(Texel);
 
-				*SourceDest++ = (((uint32)(Texel.a + 0.5f) << 24) |
-							 ((uint32)(Texel.r + 0.5f) << 16) |
-							 ((uint32)(Texel.g + 0.5f) << 8) |
-							 ((uint32)(Texel.b + 0.5f) << 0));
+					*Dest++ = (((u32)(Texel.a + 0.5f) << 24) |
+							   ((u32)(Texel.r + 0.5f) << 16) |
+							   ((u32)(Texel.g + 0.5f) << 8) |
+							   ((u32)(Texel.b + 0.5f) << 0));
+				}
 			}
+
+			CompleteTextureOp(TextureOpQueue, Op);
+		}
+		else
+		{
+			printf("ERROR: Out of texture transfer operations.\n");
 		}
 	}
-
-	Result.Pitch = Result.Width * 4;
-
-	renderer_texture Texture = ReferToTexture(TextureIndex, Result.Width, Result.Height);
-
-	texture_op CubeOp = {};
-	CubeOp.Update.Data = Result.Memory;
-	CubeOp.Update.Texture = Texture;
-	AddOp(TextureOpQueue, &CubeOp);
 
 	return Texture;
 }
@@ -580,19 +585,14 @@ int main(int argc, const char* argv[])
 	///////////////////////////////////////////////////////////////////
 	// Sample Renderer Scene Setup
 	//
-	u32 MaxQuadCountPerFrame = (1 << 18);
-	u32 MaxTextureCount = 256;
-	platform_renderer* Renderer = OSXInitDefaultRenderer(OSXAppContext.Window,
-	                                                     MaxQuadCountPerFrame,
-														 MaxTextureCount,
-														 0);
-
-	texture_op TextureQueueMemory[256];
-	renderer_texture_queue TextureQueue = {};
-	InitTextureQueue(&TextureQueue, sizeof(TextureQueueMemory), TextureQueueMemory);
+	platform_renderer_limits Limits = {};
+	Limits.MaxQuadCountPerFrame = (1 << 18);
+	Limits.MaxTextureCount = 256;
+	Limits.TextureTransferBufferSize = (16 * 1024 * 1024);
+	platform_renderer* Renderer = OSXInitDefaultRenderer(OSXAppContext.Window, &Limits);
 
 	test_scene Scene = {};
-	InitTestScene(&TextureQueue, &Scene);
+	InitTestScene(&Renderer->TextureQueue, &Scene);
 
 	camera Camera = GetStandardCamera();
 
@@ -635,7 +635,6 @@ int main(int argc, const char* argv[])
 			Camera.Orbit = tCameraShift;
 		}
 
-		Renderer->ProcessTextureQueue(Renderer, &TextureQueue);
 		game_render_commands* Frame = Renderer->BeginFrame(Renderer, DrawWidth, DrawHeight, DrawRegion);
 
 		Frame->Settings.RequestVSync = false;

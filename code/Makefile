@@ -31,6 +31,10 @@ default: clean libhandmade.dylib handmade package
 
 # 'quick' only rebuilds the local debugging 'handmade' executable. Does not update the Handmade.app bundle!
 quick: libhandmade.dylib handmade
+	cp handmade ./Contents/MacOS/Handmade
+	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
+	cp handmade ./Handmade.app/Contents/MacOS/Handmade
+	cp libhandmade.dylib ./Handmade.app/Contents/MacOS/libhandmade.dylib
 
 BINARIES = libhandmade.dylib libhandmade_opengl.dylib handmade osx_asset_builder test_png hhaedit HandmadeTabView HandmadeRendererTest
 
@@ -79,7 +83,7 @@ hhaedit:	$(HANDMADE_CODE_PATH)/hhaedit.cpp
 #handmade_optimized.o:	$(HANDMADE_CODE_PATH)/handmade_optimized.cpp
 #	$(CXX) -O3 -Wall $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -c $<
 
-libhandmade.dylib: $(HANDMADE_CODE_PATH)/handmade.cpp $(HANDMADE_CODE_PATH)/handmade.h
+libhandmade.dylib: $(HANDMADE_CODE_PATH)/handmade.cpp $(HANDMADE_CODE_PATH)/handmade.h $(HANDMADE_CODE_PATH)/handmade_dev_ui.cpp
 	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -dynamiclib -o $@ $(HANDMADE_CODE_PATH)/handmade.cpp
 
 
@@ -113,5 +117,5 @@ HandmadeRendererTest:	osx_renderer_test.mm libhandmade_opengl.dylib
 	#cp osx_tabview.info.plist HandmadeTabView.app/Contents/Info.plist
 
 clean:
-	rm -rf *.o $(BINARIES) Contents Handmade.app HandmadeTabView.app HandmadeRendererTest.app *.dSYM
+	rm -rf *.o *.dylib $(BINARIES) Contents Handmade.app HandmadeTabView.app HandmadeRendererTest.app *.dSYM
 

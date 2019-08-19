@@ -128,6 +128,8 @@ struct osx_state
 
 	char AppFilename[FILENAME_MAX];
 	char* OnePastLastAppFilenameSlash;
+
+	u32 TempDLNumber;
 };
 
 
@@ -192,13 +194,13 @@ void* OSXSimpleAllocateMemory(umm Size);
 
 void OSXGetAppFilename(osx_state *State);
 
-void OSXBuildAppPathFilename(osx_state *State, char *Filename,
+void OSXBuildAppPathFilename(osx_state *State, const char *Filename,
                              int DestCount, char *Dest);
 
 time_t OSXGetLastWriteTime(const char* Filename);
 float OSXGetSecondsElapsed(u64 Then, u64 Now);
 
-osx_game_code OSXLoadGameCode(const char* SourceDLName);
+osx_game_code OSXLoadGameCode(osx_state* State, const char* SourceDLName);
 void OSXUnloadGameCode(osx_game_code* GameCode);
 
 

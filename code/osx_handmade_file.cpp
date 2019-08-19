@@ -4,29 +4,17 @@
 // Jeff Buck
 // Copyright 2014-2016. All Rights Reserved.
 //
+#include <copyfile.h>
 
-static void
-CatStrings(size_t SourceACount, char *SourceA,
-           size_t SourceBCount, char *SourceB,
-           size_t DestCount, char *Dest)
+
+int
+OSXCopyFile(const char* From, const char* To)
 {
-    // TODO(casey): Dest bounds checking!
+	copyfile_state_t s = copyfile_state_alloc();
+	int Result = copyfile(From, To, s, COPYFILE_ALL);
+	copyfile_state_free(s);
 
-    for(int Index = 0;
-        Index < SourceACount;
-        ++Index)
-    {
-        *Dest++ = *SourceA++;
-    }
-
-    for(int Index = 0;
-        Index < SourceBCount;
-        ++Index)
-    {
-        *Dest++ = *SourceB++;
-    }
-
-    *Dest++ = 0;
+	return Result;
 }
 
 
@@ -62,12 +50,33 @@ OSXGetAppFilename(osx_state *State)
 
 
 void
-OSXBuildAppPathFilename(osx_state *State, char *Filename,
-                          int DestCount, char *Dest)
+OSXBuildAppPathFilename(osx_state *State, const char *Filename, u32 Unique,
+                        int DestCount, char *Dest)
 {
-    CatStrings(State->OnePastLastAppFilenameSlash - State->AppFilename, State->AppFilename,
-               StringLength(Filename), Filename,
-               DestCount, Dest);
+	string A =
+	{
+		(umm)(State->OnePastLastAppFilenameSlash - State->AppFilename),
+		(u8*)State->AppFilename
+	};
+
+	string B = WrapZ((char*)Filename);
+
+	if (Unique == 0)
+	{
+		FormatString(DestCount, Dest, "%S%S", A, B);
+	}
+	else
+	{
+		FormatString(DestCount, Dest, "%S%d_%S", A, Unique, B);
+	}
+}
+
+
+void
+OSXBuildAppPathFilename(osx_state *State, const char *Filename,
+                        int DestCount, char *Dest)
+{
+	OSXBuildAppPathFilename(State, Filename, 0, DestCount, Dest);
 }
 
 

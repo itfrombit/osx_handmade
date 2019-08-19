@@ -155,7 +155,7 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 							GameData->SourceGameCodeDLFullPath);
 
 	// NOTE(jeff): We don't have to create a temp file
-	GameData->Game = OSXLoadGameCode(GameData->SourceGameCodeDLFullPath);
+	GameData->Game = OSXLoadGameCode(OSXState, GameData->SourceGameCodeDLFullPath);
 
 	DEBUGSetEventRecording(GameData->Game.IsValid);
 
@@ -814,7 +814,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 			 !GameData->Game.IsValid && (LoadTryIndex < 100);
 			 ++LoadTryIndex)
 		{
-			GameData->Game = OSXLoadGameCode(GameData->SourceGameCodeDLFullPath);
+			GameData->Game = OSXLoadGameCode(OSXState, GameData->SourceGameCodeDLFullPath);
 			usleep(100);
 		}
 

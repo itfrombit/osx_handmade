@@ -76,7 +76,11 @@ PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory)
 	Block->Block.Size = Size;
 	Block->TotalAllocatedSize = TotalSize;
 	Block->Block.Flags = Flags;
-	Block->LoopingFlags = OSXIsInLoop(&GlobalOSXState) ? OSXMem_AllocatedDuringLooping : 0;
+	Block->LoopingFlags = 0;
+	if (OSXIsInLoop(&GlobalOSXState) && !(Flags & PlatformMemory_NotRestored))
+	{
+		Block->LoopingFlags = OSXMem_AllocatedDuringLooping;
+	}
 
 	BeginTicketMutex(&GlobalOSXState.MemoryMutex);
 	Block->Prev = Sentinel->Prev;
@@ -109,7 +113,7 @@ PLATFORM_DEALLOCATE_MEMORY(OSXDeallocateMemory)
 	{
 		osx_memory_block* OSXBlock = (osx_memory_block*)Block;
 
-		if (OSXIsInLoop(&GlobalOSXState))
+		if (OSXIsInLoop(&GlobalOSXState) && !(OSXBlock->Block.Flags & PlatformMemory_NotRestored))
 		{
 			OSXBlock->LoopingFlags = OSXMem_FreedDuringLooping;
 		}

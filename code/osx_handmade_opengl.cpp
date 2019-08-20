@@ -33,7 +33,6 @@ typedef void type_glDrawBuffers(GLsizei n, const GLenum* bufs);
 
 typedef void type_glVertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer);
 
-typedef void type_glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 typedef void type_glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex);
 
 global gl_tex_image_2d_multisample *glTexImage2DMultisample;
@@ -51,30 +50,12 @@ typedef void type_glDebugMessageCallbackARB(GLDEBUGPROC *callback, const void *u
 OpenGLGlobalFunction(glDebugMessageCallbackARB);
 OpenGLGlobalFunction(glGetStringi);
 
-#if 0
-global gl_attach_shader *glAttachShader;
-global gl_compile_shader *glCompileShader;
-global gl_create_program *glCreateProgram;
-global gl_create_shader *glCreateShader;
-global gl_link_program *glLinkProgram;
-global gl_shader_source *glShaderSource;
-global gl_use_program *glUseProgram;
-global gl_get_program_info_log *glGetProgramInfoLog;
-global gl_get_shader_info_log *glGetShaderInfoLog;
-global gl_validate_program *glValidateProgram;
-global gl_get_program_iv *glGetProgramiv;
-#endif
-
 OpenGLGlobalFunction(glBindVertexArray);
 OpenGLGlobalFunction(glGenVertexArrays);
 OpenGLGlobalFunction(glDeleteFramebuffers);
 OpenGLGlobalFunction(glVertexAttribIPointer);
 
-OpenGLGlobalFunction(glTexStorage3D);
 OpenGLGlobalFunction(glDrawElementsBaseVertex);
-
-//OpenGLGlobalFunction(glDrawBuffers);
-
 
 
 static NSOpenGLContext* GlobalGLContext;
@@ -217,22 +198,7 @@ internal open_gl* OSXInitOpenGL(platform_renderer_limits* Limits)
 		OSXGetOpenGLFunction(Image, glDeleteFramebuffers);
 		OSXGetOpenGLFunction(Image, glVertexAttribIPointer);
 
-		OSXGetOpenGLFunction(Image, glTexStorage3D);
 		OSXGetOpenGLFunction(Image, glDrawElementsBaseVertex);
-
-#if 0
-        glAttachShader = (gl_attach_shader *)dlsym("glAttachShader");
-        glCompileShader = (gl_compile_shader *)dlsym("glCompileShader");
-        glCreateProgram = (gl_create_program *)dlsym("glCreateProgram");
-        glCreateShader = (gl_create_shader *)dlsym("glCreateShader");
-        glLinkProgram = (gl_link_program *)dlsym("glLinkProgram");
-        glShaderSource = (gl_shader_source *)dlsym("glShaderSource");
-        glUseProgram = (gl_use_program *)dlsym("glUseProgram");
-        glGetProgramInfoLog = (gl_get_program_info_log *)dlsym("glGetProgramInfoLog");
-        glGetShaderInfoLog = (gl_get_shader_info_log *)dlsym("glGetShaderInfoLog");
-        glValidateProgram = (gl_validate_program *)dlsym("glValidateProgram");
-        glGetProgramiv = (gl_get_program_iv *)dlsym("glGetProgramiv");
-#endif
 
 		if (glBindFramebuffer)
 		{

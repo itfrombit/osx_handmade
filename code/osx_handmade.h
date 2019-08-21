@@ -28,24 +28,6 @@
 #include <IOKit/hid/IOHIDLib.h>
 
 
-struct osx_offscreen_buffer
-{
-	// NOTE: Pixels are always 32-bits wide. BB GG RR XX
-	void* Memory;
-	int Width;
-	int Height;
-	int Pitch;
-	int BytesPerPixel;
-};
-
-
-struct osx_window_dimension
-{
-	int Width;
-	int Height;
-};
-
-
 struct osx_game_code
 {
 	void* GameCodeDL;
@@ -164,9 +146,6 @@ rdtsc()
 
 
 #if HANDMADE_INTERNAL
-DEBUG_PLATFORM_FREE_FILE_MEMORY(DEBUGPlatformFreeFileMemory);
-DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile);
-DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile);
 DEBUG_PLATFORM_EXECUTE_SYSTEM_COMMAND(DEBUGExecuteSystemCommand);
 DEBUG_PLATFORM_GET_PROCESS_STATE(DEBUGGetProcessState);
 DEBUG_PLATFORM_GET_MEMORY_STATS(OSXGetMemoryStats);
@@ -302,6 +281,7 @@ typedef struct osx_game_data
 	u8							KeyboardState[255];
 	u8							OldKeyboardState[255];
 
+	v2u							RenderDim;
 
 	// Software Renderer:
 	//game_offscreen_buffer		RenderBuffer;

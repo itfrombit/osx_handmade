@@ -81,6 +81,8 @@ OSXBuildAppPathFilename(osx_state *State, const char *Filename,
 
 
 #if HANDMADE_INTERNAL
+
+#if 0
 DEBUG_PLATFORM_FREE_FILE_MEMORY(DEBUGPlatformFreeFileMemory)
 {
 	if (Memory)
@@ -183,6 +185,8 @@ DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile)
 
 	return Result;
 }
+#endif
+
 #endif
 
 

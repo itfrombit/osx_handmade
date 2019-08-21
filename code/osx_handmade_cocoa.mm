@@ -40,7 +40,8 @@
 	r32 WidthAdd = (WindowRect.size.width - ContentRect.size.width);
 	r32 HeightAdd = (WindowRect.size.height - ContentRect.size.height);
 
-	r32 NewCy = (GlobalRenderHeight * (frameSize.width - WidthAdd)) / GlobalRenderWidth;
+	//r32 NewCy = (GlobalRenderHeight * (frameSize.width - WidthAdd)) / GlobalRenderWidth;
+	r32 NewCy = (GlobalAspectRatio.Height * (frameSize.width - WidthAdd)) / GlobalAspectRatio.Width;
 
 	frameSize.height = NewCy + HeightAdd;
 
@@ -139,10 +140,10 @@ OSXCocoaContext OSXInitCocoaContext(NSString* AppName, float WindowWidth, float 
 	// Create the main application window
 	NSRect ScreenRect = [[NSScreen mainScreen] frame];
 
-	NSRect InitialFrame = NSMakeRect((ScreenRect.size.width - GlobalRenderWidth) * 0.5,
-									(ScreenRect.size.height - GlobalRenderHeight) * 0.5,
-									GlobalRenderWidth,
-									GlobalRenderHeight);
+	NSRect InitialFrame = NSMakeRect((ScreenRect.size.width - WindowWidth) * 0.5,
+									(ScreenRect.size.height - WindowHeight) * 0.5,
+									WindowWidth,
+									WindowHeight);
 
 	NSWindow* Window = [[NSWindow alloc] initWithContentRect:InitialFrame
 									styleMask:NSWindowStyleMaskTitled

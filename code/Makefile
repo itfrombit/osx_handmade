@@ -30,7 +30,7 @@ DYNAMIC_COMPILE_COMMAND=$(DYNAMIC_COMPILE_PATH)/dynamic_compile.sh
 default: clean libhandmade.dylib handmade package
 
 # 'quick' only rebuilds the local debugging 'handmade' executable. Does not update the Handmade.app bundle!
-quick: libhandmade.dylib handmade
+quick: quick_clean libhandmade.dylib handmade
 	cp handmade ./Contents/MacOS/Handmade
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
 	cp handmade ./Handmade.app/Contents/MacOS/Handmade
@@ -115,6 +115,9 @@ HandmadeRendererTest:	osx_renderer_test.mm libhandmade_opengl.dylib
 	mv HandmadeRendererTest HandmadeRendererTest.app/Contents/MacOS/HandmadeRendererTest
 	cp libhandmade_opengl.dylib HandmadeRendererTest.app/Contents/Resources
 	#cp osx_tabview.info.plist HandmadeTabView.app/Contents/Info.plist
+
+quick_clean:
+	rm -f handmade libhandmade.dylib
 
 clean:
 	rm -rf *.o *.dylib $(BINARIES) Contents Handmade.app HandmadeTabView.app HandmadeRendererTest.app *.dSYM

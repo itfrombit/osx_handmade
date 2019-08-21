@@ -24,6 +24,11 @@
 #include <libkern/OSAtomic.h> // for OSMemoryBarrier
 #include <pthread.h>
 
+extern "C"
+{
+	__attribute__((visibility("default"))) unsigned long NvOptimusEnablement = 1;
+	__attribute__((visibility("default"))) int AmdPowerXpressRequestHighPerformance = 1;
+}
 
 // Let the command line override
 #ifndef HANDMADE_USE_VSYNC
@@ -55,28 +60,31 @@ platform_api Platform;
 
 osx_state GlobalOSXState;
 global b32 GlobalSoftwareRendering;
+global GLuint OpenGLDefaultInternalTextureFormat;
 
 global b32 GlobalRunning = 1;
 global b32 GlobalPause;
+global v2 GlobalAspectRatio = {16.0, 9.0};
 
-global GLuint OpenGLDefaultInternalTextureFormat;
+v2 DefaultWindowDimension =
+{
+	//192.0, 108.0
+	//480.0, 270.0
+	960.0, 540.0
+	//1280.0, 720.0
+	//1279.0, 719.0
+	//1920,0, 1080.0
+	//2560.0, 1440.0
+};
 
-global r32 GlobalAspectRatio;
 
-//const r32 GlobalRenderWidth = 2560.0f;
-//const r32 GlobalRenderHeight = 1600.0f;
-
-//const r32 GlobalRenderWidth = 2560.0f;
-//const r32 GlobalRenderHeight = 1440.0f;
-
-//const r32 GlobalRenderWidth = 1920.0f;
-//const r32 GlobalRenderHeight = 1080.0f;
+#if 0
+const r32 DefaultWindowWidth = 960;
+const r32 DefaultWindowHeight = 540;
 
 const r32 GlobalRenderWidth = 960;
 const r32 GlobalRenderHeight = 540;
-
-//const r32 GlobalRenderWidth = 480;
-//const r32 GlobalRenderHeight = 270;
+#endif
 
 #import "handmade_renderer.cpp"
 
@@ -215,7 +223,9 @@ int main(int argc, const char* argv[])
 	{
 
 	NSString* AppName = @"Handmade Hero";
-	OSXCocoaContext OSXAppContext = OSXInitCocoaContext(AppName, GlobalRenderWidth, GlobalRenderHeight);
+	OSXCocoaContext OSXAppContext = OSXInitCocoaContext(AppName,
+			DefaultWindowDimension.Width,
+			DefaultWindowDimension.Height);
 
 	OSXCreateSimpleMainMenu(AppName);
 

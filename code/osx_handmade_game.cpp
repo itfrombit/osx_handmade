@@ -231,10 +231,6 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	GameMemory.PlatformAPI.DeallocateMemory = OSXDeallocateMemory;
 
 #if HANDMADE_INTERNAL
-	GameMemory.PlatformAPI.DEBUGFreeFileMemory = DEBUGPlatformFreeFileMemory;
-	GameMemory.PlatformAPI.DEBUGReadEntireFile = DEBUGPlatformReadEntireFile;
-	GameMemory.PlatformAPI.DEBUGWriteEntireFile = DEBUGPlatformWriteEntireFile;
-
 	GameMemory.PlatformAPI.DEBUGExecuteSystemCommand = DEBUGExecuteSystemCommand;
 	GameMemory.PlatformAPI.DEBUGGetProcessState = DEBUGGetProcessState;
 	GameMemory.PlatformAPI.DEBUGGetMemoryStats = OSXGetMemoryStats;
@@ -692,15 +688,26 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Input Processing");
 
-	rectangle2i DrawRegion = AspectRatioFit(WindowFrame.size.width,
-	                                        WindowFrame.size.height,
-											WindowFrame.size.width,
-											WindowFrame.size.height);
+	GameData->RenderDim =
+	{
+		//192, 108
+		//480, 270
+		960, 540
+		//1280, 720
+		//1279, 719
+		//1920, 1080
+	};
+
+	v2u Dimension = { (u32)WindowFrame.size.width, (u32)WindowFrame.size.height };
+
+	rectangle2i DrawRegion = AspectRatioFit(GameData->RenderDim.Width, GameData->RenderDim.Height,
+	                                        Dimension.Width, Dimension.Height);
 
 	game_render_commands* Frame = GameData->Renderer->BeginFrame(GameData->Renderer,
-	                                         WindowFrame.size.width,
-											 WindowFrame.size.height,
+	                                         Dimension.Width,
+											 Dimension.Height,
 											 DrawRegion);
+	Frame->Settings.RenderDim = GameData->RenderDim;
 
 	OSXUpdateMouseInput(MouseData->MouseInWindowFlag, MouseData->MouseLocation, MouseData->MouseButtonMask,
 	                    GameData, DrawRegion);

@@ -236,20 +236,6 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 			WildCard = "tags/*.hht";
 		} break;
 
-#if 0
-		case PlatformFileType_PNG:
-		{
-			Stem = "art/";
-			WildCard = "art/*.png";
-		} break;
-
-		case PlatformFileType_WAV:
-		{
-			Stem = "sound/";
-			WildCard = "sound/*.wav";
-		} break;
-#endif
-
 		InvalidDefaultCase;
 	}
 

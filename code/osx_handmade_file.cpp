@@ -189,6 +189,22 @@ DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile)
 
 #endif
 
+#if 0
+internal platform_file_info*
+OSXAllocateFileInfo(platform_file_group* FileGroup, struct stat* FileStat)
+{
+	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
+
+	platform_file_info* Info = PushStruct(&OSXFileGroup->Memory, platform_file_info);
+	Info->Next = FileGroup->FirstFileInfo;
+	Info->FileDate = FileStat->st_mtimespec.tv_sec;
+	Info->FileSize = FileStat->st_size;
+	FileGroup->FirstFileInfo = Info;
+	++FileGroup->FileCount;
+
+	return Info;
+}
+#endif
 
 PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 {
@@ -214,6 +230,13 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 			WildCard = "data/*.hhs";
 		} break;
 
+		case PlatformFileType_HHT:
+		{
+			Stem = "tags/";
+			WildCard = "tags/*.hht";
+		} break;
+
+#if 0
 		case PlatformFileType_PNG:
 		{
 			Stem = "art/";
@@ -225,6 +248,7 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 			Stem = "sound/";
 			WildCard = "sound/*.wav";
 		} break;
+#endif
 
 		InvalidDefaultCase;
 	}
@@ -279,7 +303,6 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 				BaseNameEnd = Scan;
 			}
 
-
 			u32 BaseNameSize = (u32)(BaseNameEnd - BaseNameBegin);
 			Info->BaseName = PushAndNullTerminate(&OSXFileGroup->Memory, BaseNameSize, (char*)BaseNameBegin);
 
@@ -308,6 +331,25 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_END(OSXGetAllFilesOfTypeEnd)
 	{
 		Clear(&OSXFileGroup->Memory);
 	}
+}
+
+
+internal PLATFORM_GET_FILE_BY_PATH(OSXGetFileByPath)
+{
+	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
+
+	struct stat FileStat;
+	int StatStatus = stat(Path, &FileStat);
+	assert(StatStatus == 0);
+
+	platform_file_info* Info = PushStruct(&OSXFileGroup->Memory, platform_file_info);
+	Info->Next = FileGroup->FirstFileInfo;
+	Info->FileDate = FileStat.st_mtimespec.tv_sec;
+	Info->FileSize = FileStat.st_size;
+	FileGroup->FirstFileInfo = Info;
+	++FileGroup->FileCount;
+
+	return Info;
 }
 
 

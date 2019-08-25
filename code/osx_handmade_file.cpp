@@ -323,19 +323,25 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_END(OSXGetAllFilesOfTypeEnd)
 internal PLATFORM_GET_FILE_BY_PATH(OSXGetFileByPath)
 {
 	osx_platform_file_group* OSXFileGroup = (osx_platform_file_group*)FileGroup->Platform;
+	platform_file_info* Result = 0;
 
 	struct stat FileStat;
 	int StatStatus = stat(Path, &FileStat);
-	assert(StatStatus == 0);
 
-	platform_file_info* Info = PushStruct(&OSXFileGroup->Memory, platform_file_info);
-	Info->Next = FileGroup->FirstFileInfo;
-	Info->FileDate = FileStat.st_mtimespec.tv_sec;
-	Info->FileSize = FileStat.st_size;
-	FileGroup->FirstFileInfo = Info;
-	++FileGroup->FileCount;
+	if ((StatStatus == 0) || (ModeFlags & OpenFile_Write))
+	{
+		Result = PushStruct(&OSXFileGroup->Memory, platform_file_info);
+		Result->Next = FileGroup->FirstFileInfo;
+		Result->FileDate = FileStat.st_mtimespec.tv_sec;
+		Result->FileSize = FileStat.st_size;
+		FileGroup->FirstFileInfo = Result;
+		++FileGroup->FileCount;
 
-	return Info;
+		Result->BaseName = Path;
+		Result->Platform = Path;
+	}
+
+	return Result;
 }
 
 

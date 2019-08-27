@@ -225,6 +225,7 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	GameMemory.PlatformAPI.GetFileByPath = OSXGetFileByPath;
 	GameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
 	GameMemory.PlatformAPI.WriteDataToFile = OSXWriteDataToFile;
+	GameMemory.PlatformAPI.AtomicReplaceFileContents = OSXAtomicReplaceFileContents;
 	GameMemory.PlatformAPI.FileError = OSXFileError;
 	GameMemory.PlatformAPI.CloseFile = OSXCloseFile;
 
@@ -693,10 +694,10 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	{
 		//192, 108
 		//480, 270
-		960, 540
+		//960, 540
 		//1280, 720
 		//1279, 719
-		//1920, 1080
+		1920, 1080
 	};
 
 	v2u Dimension = { (u32)WindowFrame.size.width, (u32)WindowFrame.size.height };

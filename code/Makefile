@@ -2,6 +2,7 @@ CXX	= clang
 
 HANDMADE_CODE_PATH = ../cpp/code
 HANDMADE_ASSETS_PATH = ../data
+HANDMADE_TAGS_PATH = ../tags
 HANDMADE_ART_PATH = ../art
 HANDMADE_SOUND_PATH = ../sound
 
@@ -43,23 +44,25 @@ all: clean libhandmade.dylib handmade package osx_asset_builder test_png hhaedit
 package:
 	# The 'local' bundle for convenient debugging with lldb
 	mkdir -p ./Contents/MacOS
+	mkdir -p ./Contents/Resources
 	mkdir -p ./Contents/Resources/data
-	mkdir -p ./Contents/Resources/art
-	mkdir -p ./Contents/Resources/sound
-	mkdir -p ./Contents/code
-	cp $(HANDMADE_ASSETS_PATH)/test1_v2.hha ./Contents/Resources/data/test1_v2.hha
-	cp $(HANDMADE_ASSETS_PATH)/test2_v2.hha ./Contents/Resources/data/test2_v2.hha
-	cp $(HANDMADE_ASSETS_PATH)/test3_v2.hha ./Contents/Resources/data/test3_v2.hha
+	cp -R ../tags ./Contents/Resources
+	cp -R ../sources ./Contents/Resources
+	#mkdir -p ./Contents/Resources/art
+	#mkdir -p ./Contents/Resources/sound
+	#cp $(HANDMADE_ASSETS_PATH)/test1_v2.hha ./Contents/Resources/data/test1_v2.hha
+	#cp $(HANDMADE_ASSETS_PATH)/test2_v2.hha ./Contents/Resources/data/test2_v2.hha
+	#cp $(HANDMADE_ASSETS_PATH)/test3_v2.hha ./Contents/Resources/data/test3_v2.hha
 	cp $(HANDMADE_ASSETS_PATH)/testfonts_v2.hha ./Contents/Resources/data/testfonts_v2.hha
-	cp $(HANDMADE_ASSETS_PATH)/intro_art_v2.hha ./Contents/Resources/data/intro_art_v2.hha
-	@if [ -f $(HANDMADE_ASSETS_PATH)/local.hha ]; then \
-		cp $(HANDMADE_ASSETS_PATH)/local.hha ./Contents/Resources/data/local.hha; \
-	else \
-		echo ""; \
-		echo "WARNING: no local.hha exists!!"; \
-		echo ""; \
-	fi
-	cp $(HANDMADE_ART_PATH)/*.png ./Contents/Resources/art
+	#cp $(HANDMADE_ASSETS_PATH)/intro_art_v2.hha ./Contents/Resources/data/intro_art_v2.hha
+	#@if [ -f $(HANDMADE_ASSETS_PATH)/local.hha ]; then \
+	#	cp $(HANDMADE_ASSETS_PATH)/local.hha ./Contents/Resources/data/local.hha; \
+	#else \
+	#	echo ""; \
+	#	echo "WARNING: no local.hha exists!!"; \
+	#	echo ""; \
+	#fi
+	#cp $(HANDMADE_ART_PATH)/*.png ./Contents/Resources/art
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
 	cp libhandmade_opengl.dylib ./Contents/Resources
 	# The "official" app bundle

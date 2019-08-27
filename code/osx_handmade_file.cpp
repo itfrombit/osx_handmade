@@ -337,8 +337,8 @@ internal PLATFORM_GET_FILE_BY_PATH(OSXGetFileByPath)
 		FileGroup->FirstFileInfo = Result;
 		++FileGroup->FileCount;
 
-		Result->BaseName = Path;
-		Result->Platform = Path;
+		Result->BaseName = PushStringZ(&OSXFileGroup->Memory, Path);
+		Result->Platform = PushStringZ(&OSXFileGroup->Memory, Path);
 	}
 
 	return Result;
@@ -364,7 +364,7 @@ PLATFORM_OPEN_FILE(OSXOpenFile)
 
 	const char* Filename = (const char*)Info->Platform;
 
-	int OSXFileHandle = open(Filename, FileOpenFlags);
+	int OSXFileHandle = open(Filename, FileOpenFlags, 0755);
 	Result.NoErrors = (OSXFileHandle != -1);
 	*(int*)&Result.Platform = OSXFileHandle;
 
@@ -374,7 +374,8 @@ PLATFORM_OPEN_FILE(OSXOpenFile)
 	}
 	else
 	{
-		printf("Error opening asset file %s\n", Filename);
+		printf("Error opening asset file |%s|: %d\n", Filename, errno);
+		perror(NULL);
 	}
 
 	return Result;
@@ -431,6 +432,12 @@ PLATFORM_WRITE_DATA_TO_FILE(OSXWriteDataToFile)
 	{
 		printf("OSXWriteDataToFile had pre-existing file errors\n");
 	}
+}
+
+
+PLATFORM_ATOMIC_REPLACE_FILE_CONTENTS(OSXAtomicReplaceFileContents)
+{
+	NotImplemented;
 }
 
 

@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 514.
+This repository works with Casey's source code from Day 516.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -18,6 +18,17 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 
 # Recent Update Notes
+
+## Day 516 Note:
+
+Make sure you move the /sources directory tree to the root directory
+of this repository before running make.
+
+A full build triggers an asset import when running the game for the
+first time. Asset importing is slow. If you are just making code
+changes and don't need to reimport assets between builds, then
+'make quick' is the target you want.
+
 
 ## Day 498 Note:
 

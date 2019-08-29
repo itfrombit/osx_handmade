@@ -437,7 +437,59 @@ PLATFORM_WRITE_DATA_TO_FILE(OSXWriteDataToFile)
 
 PLATFORM_ATOMIC_REPLACE_FILE_CONTENTS(OSXAtomicReplaceFileContents)
 {
-	NotImplemented;
+	b32 Result = false;
+
+	char* ExistingFilename = (char*)Info->Platform;
+	char* LastSlash = ExistingFilename;
+	for (char* Scan = ExistingFilename; *Scan; ++Scan)
+	{
+		if (*Scan == '/')
+		{
+			LastSlash = Scan;
+		}
+	}
+
+	char TempFilename[FILENAME_MAX + 1];
+	*LastSlash = 0; // Temporarily null-terminate the path
+	snprintf(TempFilename, sizeof(TempFilename), "%s/hh_XXXXXXXX", ExistingFilename);
+	*LastSlash = '/';
+
+	int OSXTempFileHandle = mkstemp(TempFilename);
+
+	printf("AtomicReplaceFileContents: ExistingFilename = %s\n", ExistingFilename);
+	printf("AtomicReplaceFileContents: TempFilename = %s\n", TempFilename);
+
+	if (OSXTempFileHandle > 0)
+	{
+		u64 BytesWritten = pwrite(OSXTempFileHandle, Source, Size, 0);
+		close(OSXTempFileHandle);
+
+		if (BytesWritten == Size)
+		{
+			//printf("Wrote file: %s wrote %ld bytes.\n", TempFilename, BytesWritten);
+
+			// renamex_np atomically swaps the files
+			if (renamex_np(TempFilename, ExistingFilename, RENAME_SWAP) == 0)
+			{
+				printf("AtomicReplaceFileContents: rename succeeded.\n");
+				Result = true;
+			}
+			else
+			{
+				printf("AtomicReplaceFileContents: rename(%s, %s) failed: %d.\n",
+						TempFilename, ExistingFilename, errno);
+			}
+		}
+		else
+		{
+			printf("AtomicReplaceFileContents write to temp file %s failed: %d.\n", TempFilename, errno);
+		}
+
+		// Delete the temp file in either case
+		unlink(TempFilename);
+	}
+
+	return Result;
 }
 
 

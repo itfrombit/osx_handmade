@@ -364,7 +364,7 @@ PLATFORM_OPEN_FILE(OSXOpenFile)
 
 	const char* Filename = (const char*)Info->Platform;
 
-	int OSXFileHandle = open(Filename, FileOpenFlags, 0755);
+	int OSXFileHandle = open(Filename, FileOpenFlags, 0600);
 	Result.NoErrors = (OSXFileHandle != -1);
 	*(int*)&Result.Platform = OSXFileHandle;
 
@@ -400,6 +400,9 @@ PLATFORM_READ_DATA_FROM_FILE(OSXReadDataFromFile)
 		}
 		else
 		{
+			printf("OSXReadDataFromFile: Requested read of %llu bytes. Actual read of %llu bytes.\n",
+					Size, BytesRead);
+
 			OSXFileError(Handle, "Read file failed.");
 		}
 	}
@@ -425,6 +428,9 @@ PLATFORM_WRITE_DATA_TO_FILE(OSXWriteDataToFile)
 		}
 		else
 		{
+			printf("OSXWriteDataToFile: Requested read of %llu bytes. Actual read of %llu bytes.\n",
+					Size, BytesWritten);
+
 			OSXFileError(Handle, "Write file failed.");
 		}
 	}

@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 526.
+This repository works with Casey's source code from Day 532.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -18,6 +18,26 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 
 # Recent Update Notes
+
+## Day 532 Note:
+
+I wrote a native OS X version of hhfont using Core Text. It is not
+required, as you can just use the font images and hht file that Casey
+generated. I was mostly interested in learning about some of the
+details of Core Text that I hadn't used before.
+
+If you do want to generate your own font images and hht files,
+you can compile and run the utility like this:
+
+    make osx_hhfont
+
+If you run `osx_hhfont` with no command line options, you will see
+some usage details. Once you generate the .hht file and the png
+images, copy the .hht file and the .png files into the appropriate
+tags and sources directories.
+
+`osx_hhfont` also has a handy debugging mode to ASCII print a single
+code point or glyph. See the usage for details.
 
 ## Day 526 Note:
 

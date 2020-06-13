@@ -28,6 +28,7 @@ DYNAMIC_COMPILE_PATH=$(shell pwd)
 DYNAMIC_COMPILE_COMMAND=$(DYNAMIC_COMPILE_PATH)/dynamic_compile.sh
 
 
+#default:	osx_hhfont
 default: clean libhandmade.dylib handmade package
 
 # 'quick' only rebuilds the local debugging 'handmade' executable. Does not update the Handmade.app bundle!
@@ -48,25 +49,19 @@ package:
 	mkdir -p ./Contents/Resources/data
 	cp -R ../tags ./Contents/Resources
 	cp -R ../sources ./Contents/Resources
-	#mkdir -p ./Contents/Resources/art
-	#mkdir -p ./Contents/Resources/sound
-	#cp $(HANDMADE_ASSETS_PATH)/test1_v2.hha ./Contents/Resources/data/test1_v2.hha
-	#cp $(HANDMADE_ASSETS_PATH)/test2_v2.hha ./Contents/Resources/data/test2_v2.hha
-	#cp $(HANDMADE_ASSETS_PATH)/test3_v2.hha ./Contents/Resources/data/test3_v2.hha
-	cp $(HANDMADE_ASSETS_PATH)/testfonts_v2.hha ./Contents/Resources/data/testfonts_v2.hha
+	# Uncomment the following 4 lines to use our own generated fonts
+	#cp osx_fonts/* ./Contents/Resources/sources/base_game/fonts
+	#mkdir -p ./Contents/Resources/tags/fonts
+	#cp LiberationMono.hht ./Contents/Resources/tags/fonts/
+	#cp Monaco.hht ./Contents/Resources/tags/fonts/
+	#
+	#cp $(HANDMADE_ASSETS_PATH)/testfonts_v2.hha ./Contents/Resources/data/testfonts_v2.hha
 	#cp $(HANDMADE_ASSETS_PATH)/intro_art_v2.hha ./Contents/Resources/data/intro_art_v2.hha
-	#@if [ -f $(HANDMADE_ASSETS_PATH)/local.hha ]; then \
-	#	cp $(HANDMADE_ASSETS_PATH)/local.hha ./Contents/Resources/data/local.hha; \
-	#else \
-	#	echo ""; \
-	#	echo "WARNING: no local.hha exists!!"; \
-	#	echo ""; \
-	#fi
 	#cp $(HANDMADE_ART_PATH)/*.png ./Contents/Resources/art
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
 	cp libhandmade_opengl.dylib ./Contents/Resources
 	# The "official" app bundle
-	rm -rf ../build/Handmade.app
+	#rm -rf ../build/Handmade.app
 	mkdir Handmade.app
 	cp -R ./Contents ./Handmade.app/
 	cp handmade ./Handmade.app/Contents/MacOS/Handmade
@@ -82,6 +77,8 @@ test_png:	$(HANDMADE_CODE_PATH)/test_png.cpp
 hhaedit:	$(HANDMADE_CODE_PATH)/hhaedit.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
 
+osx_hhfont:	osx_hhfont.cpp
+	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -framework Foundation -framework CoreGraphics -framework CoreText -o $@ $^
 
 #handmade_optimized.o:	$(HANDMADE_CODE_PATH)/handmade_optimized.cpp
 #	$(CXX) -O3 -Wall $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -c $<
@@ -123,5 +120,5 @@ quick_clean:
 	rm -f handmade libhandmade.dylib
 
 clean:
-	rm -rf *.o *.dylib $(BINARIES) Contents Handmade.app HandmadeTabView.app HandmadeRendererTest.app *.dSYM
+	rm -rf *.o *.dylib $(BINARIES) Contents Handmade.app HandmadeTabView.app HandmadeRendererTest.app osx_hhfont *.dSYM
 

@@ -1,5 +1,8 @@
 // osx_hhfont.cpp
 
+#undef HANDMADE_INTERNAL
+#define HANDMADE_INTERNAL 0
+
 #include "handmade_platform.h"
 #include "handmade_intrinsics.h"
 #include "handmade_math.h"

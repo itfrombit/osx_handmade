@@ -64,7 +64,7 @@ global GLuint OpenGLDefaultInternalTextureFormat;
 
 global b32 GlobalRunning = 1;
 global b32 GlobalPause;
-global v2 GlobalAspectRatio = {16.0, 9.0};
+//global v2 GlobalAspectRatio = {16.0, 9.0};
 
 v2 DefaultWindowDimension =
 {

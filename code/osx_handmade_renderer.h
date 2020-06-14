@@ -35,7 +35,7 @@ void* OSXRendererAlloc(umm Size)
 
 	if (P == MAP_FAILED)
 	{
-		printf("OSXRendererAlloc: mmap error: %d  %s", errno, strerror(errno));
+		printf("OSXRendererAlloc: mmap error: %d  %s.  Requested size = %lu\n", errno, strerror(errno), Size);
 	}
 
 	Assert(P);

@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 532.
+This repository works with Casey's source code from Day 537.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -207,47 +207,31 @@ Once you clone or update this repository, copy (or clone, if you are
 using Casey's Github repository) Casey's .cpp
 and .h source files to the cpp/code subdirectory of this repository.
 
-Also, copy over the test, test2, and test3 asset folders, and the
-intro_art.hha file to the data subdirectory of this repository.
+Also, copy over the sources and tags asset folders.
 
-Your file/directory structure should look like this:
+Your directory structure should look like this:
 
     .                      // root directory of this repository
 	code/Makefile          // and the rest of the OS X platform code
 	code/osx_handmade.cpp  // and the rest of the OS X platform code
 	cpp/code/handmade.cpp  // and the rest of Casey's code
-	data/intro_art.hha             // prebuilt art pack from the SendOwl site
-	data/test/test_background.bmp  // and the rest of test assets
-	data/test2/grass00.bmp         // and the rest of test2 assets
-	data/test3/bloop_00.wav        // and the rest of test3 assets
-	fonts/LiberationMono-Regular.ttf
-	fonts/LiberationSans-Regular.ttf
-	patches/                // patches to Casey's HH source code
-	xcode/                  // Xcode project files
+	patches/               // patches to Casey's HH source code
+	sources/               // artwork and sounds
+	tags/                  // descriptions and instructions for asset import
+	xcode/                 // Xcode project files
 
 
-Before you build the application for the first time, you need to
-create the packed asset files. To do this, run
-
-    make osx_asset_builder
-
-from the code directory and then execute the osx_asset_builder
-command line program. This will create the .hha files in the
-data subdirectory of this repository. This is where the Makefile
-looks for them when building the Handmade Hero app package. You only
-need to re-run the osx_asset_builder if the art assets change or if
-you decide to use a different font.
-
-If you already have packed asset files, you can just copy them to the data
-subdirectory and skip building and running the osx_asset_builder.
-
-From then on, you can just run 'make' from the code
+The first time you compile, just run 'make' from the code
 directory (Note: not the cpp/code directory!) to build the application bundle.
+Note that a full 'make' will cause an entire asset import on the subsequent
+game startup, which is slow. And it's extra slow in debug mode, so doing
+the asset import in release mode is recommended.
 
 Once you have done a full build and have created the application
 bundles, you can run 'make quick' to just recompile the dynamic library and
-the executable. Most of the build time when running the default 'make'
-is spent copying over the large asset files, so 'make quick' avoids that step.
+the executable (the code parts). Most of the build time when running the default 'make'
+is spent copying over the large asset files, so 'make quick' avoids that step
+and also avoids a full asset import on game startup.
 
 You can then either run 'handmade' directly, or 'open Handmade.app'.
 The advantage of running 'handmade' directly is that debug console output

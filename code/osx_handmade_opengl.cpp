@@ -126,7 +126,7 @@ internal void PlatformOpenGLSetVSync(open_gl* Renderer, b32x VSyncEnabled)
 RENDERER_BEGIN_FRAME(OSXOpenGLBeginFrame)
 {
 	[GlobalGLContext makeCurrentContext];
-	game_render_commands* Result = OpenGLBeginFrame((open_gl*)Renderer, WindowWidth, WindowHeight, DrawRegion);
+	game_render_commands* Result = OpenGLBeginFrame((open_gl*)Renderer, OSWindowDim, RenderDim, DrawRegion);
 
 	return Result;
 }
@@ -175,7 +175,15 @@ internal open_gl* OSXInitOpenGL(platform_renderer_limits* Limits)
 	OpenGL->VertexArray = (textured_vertex*)OSXRendererAlloc(MaxVertexCount * sizeof(textured_vertex));
 	OpenGL->IndexArray = (u16*)OSXRendererAlloc(MaxIndexCount * sizeof(u16));
 	OpenGL->BitmapArray = (renderer_texture*)OSXRendererAlloc(OpenGL->MaxQuadTextureCount * sizeof(renderer_texture));
-	OpenGL->SpecialTextureHandles = (GLuint*)OSXRendererAlloc(Limits->MaxSpecialTextureCount * sizeof(GLuint));
+
+	if (Limits->MaxSpecialTextureCount)
+	{
+		OpenGL->SpecialTextureHandles = (GLuint*)OSXRendererAlloc(Limits->MaxSpecialTextureCount * sizeof(GLuint));
+	}
+	else
+	{
+		OpenGL->SpecialTextureHandles = NULL;
+	}
 
 	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)

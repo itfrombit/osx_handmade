@@ -605,6 +605,8 @@ int main(int argc, const char* argv[])
 	//
 	GlobalRunning = true;
 
+	v2u RenderDim = {960, 540};
+
 	while (GlobalRunning)
 	{
 		OSXProcessMinimalPendingMessages();
@@ -615,7 +617,7 @@ int main(int argc, const char* argv[])
 		float DrawWidth = ContentViewFrame.size.width;
 		float DrawHeight = ContentViewFrame.size.height;
 
-		rectangle2i DrawRegion = AspectRatioFit(16, 9, DrawWidth, DrawHeight);
+		rectangle2i DrawRegion = AspectRatioFit(RenderDim.Width, RenderDim.Height, DrawWidth, DrawHeight);
 
 		///////////////////////////////////////////////////////////////
 		// Sample Renderer Scene
@@ -635,7 +637,7 @@ int main(int argc, const char* argv[])
 			Camera.Orbit = tCameraShift;
 		}
 
-		game_render_commands* Frame = Renderer->BeginFrame(Renderer, DrawWidth, DrawHeight, DrawRegion);
+		game_render_commands* Frame = Renderer->BeginFrame(Renderer, V2U(DrawWidth, DrawHeight), RenderDim, DrawRegion);
 
 		Frame->Settings.RequestVSync = false;
 		Frame->Settings.LightingDisabled = true;

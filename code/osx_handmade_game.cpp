@@ -706,9 +706,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	                                        Dimension.Width, Dimension.Height);
 
 	game_render_commands* Frame = GameData->Renderer->BeginFrame(GameData->Renderer,
-	                                         Dimension.Width,
-											 Dimension.Height,
-											 DrawRegion);
+	                                         Dimension, GameData->RenderDim, DrawRegion);
 	Frame->Settings.RenderDim = GameData->RenderDim;
 
 	OSXUpdateMouseInput(MouseData->MouseInWindowFlag, MouseData->MouseLocation, MouseData->MouseButtonMask,

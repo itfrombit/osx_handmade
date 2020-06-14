@@ -2,6 +2,8 @@
 ///////////////////////////////////////////////////////////////////////
 // Application Delegate
 
+static v2 GlobalAspectRatio = {16.0, 9.0};
+
 @interface HandmadeAppDelegate : NSObject<NSApplicationDelegate, NSWindowDelegate>
 @end
 

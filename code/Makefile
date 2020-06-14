@@ -1,7 +1,7 @@
 CXX	= clang
 
 HANDMADE_CODE_PATH = ../cpp/code
-HANDMADE_ASSETS_PATH = ../data
+HANDMADE_SOURCES_PATH = ../sources
 HANDMADE_TAGS_PATH = ../tags
 HANDMADE_ART_PATH = ../art
 HANDMADE_SOUND_PATH = ../sound
@@ -50,9 +50,9 @@ package:
 	cp -R ../tags ./Contents/Resources
 	cp -R ../sources ./Contents/Resources
 	# Uncomment the following 4 lines to use our own generated fonts
-	#cp osx_fonts/* ./Contents/Resources/sources/base_game/fonts
-	#mkdir -p ./Contents/Resources/tags/fonts
-	#cp LiberationMono.hht ./Contents/Resources/tags/fonts/
+	# cp osx_fonts/liberation_mono* ./Contents/Resources/sources/base_game/fonts
+	# mkdir -p ./Contents/Resources/tags/fonts
+	# cp LiberationMono.hht ./Contents/Resources/tags/fonts/
 	#cp Monaco.hht ./Contents/Resources/tags/fonts/
 	#
 	#cp $(HANDMADE_ASSETS_PATH)/testfonts_v2.hha ./Contents/Resources/data/testfonts_v2.hha
@@ -107,11 +107,11 @@ HandmadeRendererTest:	osx_renderer_test.mm libhandmade_opengl.dylib
 	rm -rf ./HandmadeRendererTest.app
 	mkdir -p ./HandmadeRendererTest.app/Contents/MacOS
 	mkdir -p ./HandmadeRendererTest.app/Contents/Resources
-	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_cube_grass.bmp ./HandmadeRendererTest.app/Contents/Resources
-	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_cube_wall.bmp ./HandmadeRendererTest.app/Contents/Resources
-	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_sprite_tree.bmp ./HandmadeRendererTest.app/Contents/Resources
-	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_sprite_head.bmp ./HandmadeRendererTest.app/Contents/Resources
-	cp $(HANDMADE_ASSETS_PATH)/renderer_test/test_cover_grass.bmp ./HandmadeRendererTest.app/Contents/Resources
+	cp $(HANDMADE_SOURCES_PATH)/renderer_test/test_cube_grass.bmp ./HandmadeRendererTest.app/Contents/Resources
+	cp $(HANDMADE_SOURCES_PATH)/renderer_test/test_cube_wall.bmp ./HandmadeRendererTest.app/Contents/Resources
+	cp $(HANDMADE_SOURCES_PATH)/renderer_test/test_sprite_tree.bmp ./HandmadeRendererTest.app/Contents/Resources
+	cp $(HANDMADE_SOURCES_PATH)/renderer_test/test_sprite_head.bmp ./HandmadeRendererTest.app/Contents/Resources
+	cp $(HANDMADE_SOURCES_PATH)/renderer_test/test_cover_grass.bmp ./HandmadeRendererTest.app/Contents/Resources
 	mv HandmadeRendererTest HandmadeRendererTest.app/Contents/MacOS/HandmadeRendererTest
 	cp libhandmade_opengl.dylib HandmadeRendererTest.app/Contents/Resources
 	#cp osx_tabview.info.plist HandmadeTabView.app/Contents/Info.plist

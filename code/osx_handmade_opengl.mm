@@ -10,6 +10,7 @@
 #import "handmade_math.h"
 #import "handmade_shared.h"
 #import "handmade_renderer.h"
+#import "handmade_image.h"
 
 #import "handmade_renderer_opengl.h"
 
@@ -20,6 +21,7 @@ NSOpenGLView* OSXInitOpenGLView(NSWindow* Window);
 #import "osx_handmade_opengl.cpp"
 
 #import "handmade_renderer_opengl.cpp"
+#import "handmade_image.cpp"
 
 
 ///////////////////////////////////////////////////////////////////////

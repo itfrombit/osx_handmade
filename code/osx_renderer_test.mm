@@ -422,7 +422,7 @@ internal renderer_texture LoadBMP(renderer_texture_queue* TextureOpQueue,
 		int32 BlueShiftDown  = (int32)BlueScan.Index;
 		int32 AlphaShiftDown = (int32)AlphaScan.Index;
 
-		texture_op* Op = BeginTextureOp(TextureOpQueue, Result.Width, Result.Height);
+		texture_op* Op = BeginTextureOp(TextureOpQueue, Result.Width * Result.Height * 4);
 
 		if (Op)
 		{

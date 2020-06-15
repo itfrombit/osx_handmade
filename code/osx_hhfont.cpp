@@ -9,9 +9,11 @@
 #include "handmade_shared.h"
 #include "handmade_memory.h"
 #include "handmade_stream.h"
+#include "handmade_image.h"
 #include "handmade_png.h"
 #include "handmade_file_formats.h"
 #include "handmade_stream.cpp"
+#include "handmade_image.cpp"
 #include "handmade_png.cpp"
 #include "handmade_file_formats.cpp"
 

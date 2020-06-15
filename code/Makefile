@@ -77,6 +77,9 @@ test_png:	$(HANDMADE_CODE_PATH)/test_png.cpp
 hhaedit:	$(HANDMADE_CODE_PATH)/hhaedit.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
 
+hhsphere:	$(HANDMADE_CODE_PATH)/hhsphere.cpp
+	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
+
 osx_hhfont:	osx_hhfont.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -framework Foundation -framework CoreGraphics -framework CoreText -o $@ $^
 

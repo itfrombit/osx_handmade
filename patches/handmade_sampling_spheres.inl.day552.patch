@@ -1,0 +1,17 @@
+--- cpp/code/handmade_sampling_spheres.inl	2020-06-15 13:00:51.000000000 -0700
++++ handmade_sampling_spheres.inl	2020-06-15 13:00:45.000000000 -0700
+@@ -9,7 +9,7 @@
+     f32 CubeSideWeight[LIGHT_SAMPLING_TOTAL_RAYS_PER_SPHERE][6];
+ };
+ 
+-global alignas(16) f32 LightSamplingSphereFloatTable[] =
++alignas(16) global f32 LightSamplingSphereFloatTable[] =
+ {
+     0.200641f, 0.200641f, 0.200641f, 0.200641f,  -0.732799f, -0.732799f, -0.732799f, -0.732799f,  0.650192f, 0.650192f, 0.650192f, 0.650192f,
+     0.139531f, 0.139531f, 0.139531f, 0.139531f,  0.142273f, 0.142273f, 0.142273f, 0.142273f,  -0.979944f, -0.979944f, -0.979944f, -0.979944f,
+@@ -1452,4 +1452,4 @@
+     0.000000f, 0.000000f, 0.000000f, 0.000000f, 0.000000f, 0.000000f,
+     0.000000f, 0.000000f, 0.000000f, 0.000000f, 0.000000f, 0.000000f,
+ };
+-global alignas(16) light_sampling_sphere *LightSamplingSphereTable = (light_sampling_sphere *)LightSamplingSphereFloatTable;
++alignas(16) global light_sampling_sphere *LightSamplingSphereTable = (light_sampling_sphere *)LightSamplingSphereFloatTable;

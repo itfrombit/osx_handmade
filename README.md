@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 546.
+This repository works with Casey's source code from Day 552.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -18,6 +18,18 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 
 # Recent Update Notes
+
+## Day 552 Note:
+
+Somewhere between Day 551 and 552, the PushX macros were fixed
+so I removed that patch. However, we are zero sum on patches
+for the day as I had to add a new patch to fix two misplaced
+`alignas` decorators in handmade_sampling_spheres.inl.
+
+As usual, you can apply patches by running:
+
+    sh fix_handmade_hero_source.sh
+
 
 ## Day 541 Note:
 

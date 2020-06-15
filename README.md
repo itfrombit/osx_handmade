@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for OS X.
 
-This repository works with Casey's source code from Day 540.
+This repository works with Casey's source code from Day 541.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -18,6 +18,17 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 
 # Recent Update Notes
+
+## Day 541 Note:
+
+I added a new patch to fix a few compile errors in the PushX
+macros madness in handmade_memory.h. I'm not sure how the Visual
+Studio compiler let those slide, but clang said no way.
+
+You can apply the patch by running:
+
+    sh fix_handmade_hero_source.sh
+
 
 ## Day 532 Note:
 

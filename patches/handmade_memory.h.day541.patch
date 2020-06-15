@@ -1,0 +1,21 @@
+--- cpp/code/handmade_memory.h	2020-06-14 20:49:47.000000000 -0700
++++ handmade_memory.h	2020-06-14 20:49:42.000000000 -0700
+@@ -132,14 +132,14 @@
+ #define INTERNAL_MEMORY_PASS 
+ #endif
+ 
+-#define PushStruct(Arena, type, ...) (type *)PushSize_(DEBUG_MEMORY_NAME("PushStruct") Arena, sizeof(type), __VA_ARGS__)
+-#define PushArray(Arena, Count, type, ...) (type *)PushSize_(DEBUG_MEMORY_NAME("PushArray") Arena, (Count)*sizeof(type), __VA_ARGS__)
+-#define PushSize(Arena, Size, ...) PushSize_(DEBUG_MEMORY_NAME("PushSize") Arena, Size, __VA_ARGS__)
++#define PushStruct(Arena, type, ...) (type *)PushSize_(DEBUG_MEMORY_NAME("PushStruct") Arena, sizeof(type), ## __VA_ARGS__)
++#define PushArray(Arena, Count, type, ...) (type *)PushSize_(DEBUG_MEMORY_NAME("PushArray") Arena, (Count)*sizeof(type), ## __VA_ARGS__)
++#define PushSize(Arena, Size, ...) PushSize_(DEBUG_MEMORY_NAME("PushSize") Arena, Size, ## __VA_ARGS__)
+ #define PushCopy(...) PushCopy_(DEBUG_MEMORY_NAME("PushCopy") __VA_ARGS__)
+ #define PushStringZ(...) PushStringZ_(DEBUG_MEMORY_NAME("PushStringZ") __VA_ARGS__)
+ #define PushString(...) PushString_(DEBUG_MEMORY_NAME("PushString") __VA_ARGS__)
+ #define PushBuffer(...) PushBuffer_(DEBUG_MEMORY_NAME("PushBuffer") __VA_ARGS__)
+-#define PushAndNullTerminate(...) PushAndNullTerminate_(DEBUG_MEMORY_NAME("PushAndNullTerminate") ## __VA_ARGS__)
++#define PushAndNullTerminate(...) PushAndNullTerminate_(DEBUG_MEMORY_NAME("PushAndNullTerminate") __VA_ARGS__)
+ #define BootstrapPushStruct(type, Member, ...) (type *)BootstrapPushSize_(DEBUG_MEMORY_NAME("BootstrapPushSize") sizeof(type), OffsetOf(type, Member), ## __VA_ARGS__)
+ 
+ inline memory_index

@@ -75,6 +75,46 @@ void OSXSetPixelFormat()
 #endif
 
 
+PLATFORM_ERROR_MESSAGE(OSXErrorMessage)
+{
+	// Type: PlatformError_Fatal | PlatformError_Warning
+	// Message
+	char* Caption = "Handmade Hero Warning";
+	CFOptionFlags Flags = kCFUserNotificationCautionAlertLevel;
+
+	if (Type == PlatformError_Fatal)
+	{
+		Caption = "Handmade Hero Fatal Error";
+		Flags = kCFUserNotificationStopAlertLevel;
+	}
+
+	CFStringRef CaptionRef = CFStringCreateWithCString(NULL, Caption, strlen(Caption));
+	CFStringRef MessageRef = CFStringCreateWithCString(NULL, Message, strlen(Message));
+
+	CFOptionFlags ResponseFlags;
+
+	CFUserNotificationDisplayAlert(0,      // timeout: 0 = never
+	                               Flags,
+								   NULL,   // iconURL: NULL = derive from above flag
+								   NULL,   // soundURL
+								   NULL,   // localizationURL
+								   CaptionRef,
+								   MessageRef,
+								   NULL,   // defaultButtonTitle
+								   NULL,   // alterateButtonTitle
+								   NULL,   // otherButtonTitle
+								   &ResponseFlags);
+
+	CFRelease(CaptionRef);
+	CFRelease(MessageRef);
+
+	if (Type == PlatformError_Fatal)
+	{
+		exit(1);
+	}
+}
+
+
 ///////////////////////////////////////////////////////////////////////
 // Game Code
 //
@@ -89,7 +129,6 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	{
 		return;
 	}
-
 
 	osx_state* OSXState = &GlobalOSXState;
 	OSXState->MemorySentinel.Prev = &OSXState->MemorySentinel;
@@ -231,6 +270,7 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 
 	GameMemory.PlatformAPI.AllocateMemory = OSXAllocateMemory;
 	GameMemory.PlatformAPI.DeallocateMemory = OSXDeallocateMemory;
+	GameMemory.PlatformAPI.ErrorMessage = OSXErrorMessage;
 
 #if HANDMADE_INTERNAL
 	GameMemory.PlatformAPI.DEBUGExecuteSystemCommand = DEBUGExecuteSystemCommand;
@@ -784,6 +824,11 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	//
 	//
 
+	{DEBUG_DATA_BLOCK("Renderer");
+		DEBUG_VALUE(GameData->Renderer->TotalFramebufferMemory);
+		DEBUG_VALUE(GameData->Renderer->TotalTextureMemory);
+		DEBUG_VALUE(GameData->Renderer->UsedMultisampleCount);
+	}
 
 #if HANDMADE_INTERNAL
 	BEGIN_BLOCK("Debug Collation");

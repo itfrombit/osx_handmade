@@ -6,7 +6,7 @@ HANDMADE_TAGS_PATH = ../tags
 HANDMADE_ART_PATH = ../art
 HANDMADE_SOUND_PATH = ../sound
 
-HANDMADE_FLAGS = -DHANDMADE_PROFILE=1 -DHANDMADE_INTERNAL=1 -DHANDMADE_SLOW=1 -DHANDMADE_OSX=1
+HANDMADE_FLAGS = -DHANDMADE_USE_VSYNC=0 -DHANDMADE_PROFILE=1 -DHANDMADE_INTERNAL=1 -DHANDMADE_SLOW=1 -DHANDMADE_OSX=1
 
 HANDMADE_COMPILER_FLAGS = -fno-exceptions -fno-rtti
 
@@ -32,11 +32,13 @@ DYNAMIC_COMPILE_COMMAND=$(DYNAMIC_COMPILE_PATH)/dynamic_compile.sh
 default: clean libhandmade.dylib handmade package
 
 # 'quick' only rebuilds the local debugging 'handmade' executable. Does not update the Handmade.app bundle!
-quick: quick_clean libhandmade.dylib handmade
+quick: quick_clean libhandmade.dylib libhandmade_opengl.dylib handmade
 	cp handmade ./Contents/MacOS/Handmade
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
+	cp libhandmade_opengl.dylib ./Contents/MacOS/libhandmade_opengl.dylib
 	cp handmade ./Handmade.app/Contents/MacOS/Handmade
 	cp libhandmade.dylib ./Handmade.app/Contents/MacOS/libhandmade.dylib
+	cp libhandmade_opengl.dylib ./Handmade.app/Contents/MacOS/libhandmade_opengl.dylib
 
 BINARIES = libhandmade.dylib libhandmade_opengl.dylib handmade osx_asset_builder test_png hhaedit HandmadeTabView HandmadeRendererTest
 
@@ -120,7 +122,7 @@ HandmadeRendererTest:	osx_renderer_test.mm libhandmade_opengl.dylib
 	#cp osx_tabview.info.plist HandmadeTabView.app/Contents/Info.plist
 
 quick_clean:
-	rm -f handmade libhandmade.dylib
+	rm -f handmade libhandmade.dylib libhandmade_opengl.dylib
 
 clean:
 	rm -rf *.o *.dylib $(BINARIES) Contents Handmade.app HandmadeTabView.app HandmadeRendererTest.app osx_hhfont *.dSYM

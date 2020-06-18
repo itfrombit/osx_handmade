@@ -137,7 +137,7 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	//GameData->MaxQuadCountPerFrame = (1 << 18);
 	//GameData->MaxTextureCount = 256;
 
-	GameData->Limits.MaxQuadCountPerFrame = (1 << 18); //GameData->MaxQuadCountPerFrame;
+	GameData->Limits.MaxQuadCountPerFrame = (1 << 20); //GameData->MaxQuadCountPerFrame;
 	GameData->Limits.MaxTextureCount = HANDMADE_NORMAL_TEXTURE_COUNT;
 	GameData->Limits.MaxSpecialTextureCount = HANDMADE_SPECIAL_TEXTURE_COUNT;
 	GameData->Limits.TextureTransferBufferSize = HANDMADE_TEXTURE_TRANSFER_BUFFER_SIZE;

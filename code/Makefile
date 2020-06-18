@@ -35,10 +35,10 @@ default: clean libhandmade.dylib handmade package
 quick: quick_clean libhandmade.dylib libhandmade_opengl.dylib handmade
 	cp handmade ./Contents/MacOS/Handmade
 	cp libhandmade.dylib ./Contents/MacOS/libhandmade.dylib
-	cp libhandmade_opengl.dylib ./Contents/MacOS/libhandmade_opengl.dylib
+	cp libhandmade_opengl.dylib ./Contents/Resources/libhandmade_opengl.dylib
 	cp handmade ./Handmade.app/Contents/MacOS/Handmade
 	cp libhandmade.dylib ./Handmade.app/Contents/MacOS/libhandmade.dylib
-	cp libhandmade_opengl.dylib ./Handmade.app/Contents/MacOS/libhandmade_opengl.dylib
+	cp libhandmade_opengl.dylib ./Handmade.app/Contents/Resources/libhandmade_opengl.dylib
 
 BINARIES = libhandmade.dylib libhandmade_opengl.dylib handmade osx_asset_builder test_png hhaedit HandmadeTabView HandmadeRendererTest
 

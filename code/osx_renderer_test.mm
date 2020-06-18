@@ -640,7 +640,7 @@ int main(int argc, const char* argv[])
 		game_render_commands* Frame = Renderer->BeginFrame(Renderer, V2U(DrawWidth, DrawHeight), RenderDim, DrawRegion);
 
 		Frame->Settings.RequestVSync = false;
-		Frame->Settings.LightingDisabled = true;
+		Frame->Settings.LightingDisabled = false;
 
 		v4 BackgroundColor = V4(0.15f, 0.15f, 0.15f, 0.0f);
 		render_group Group = BeginRenderGroup(0, Frame, Render_Default, BackgroundColor);

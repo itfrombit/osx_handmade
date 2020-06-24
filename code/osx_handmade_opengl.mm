@@ -9,6 +9,7 @@
 #import "handmade_intrinsics.h"
 #import "handmade_math.h"
 #import "handmade_shared.h"
+#import "handmade_light_atlas.h"
 #import "handmade_renderer.h"
 #import "handmade_image.h"
 
@@ -23,6 +24,7 @@ NSOpenGLContext* OSXInitOpenGLView(NSWindow* Window);
 
 #import "handmade_renderer_opengl.cpp"
 #import "handmade_image.cpp"
+#import "handmade_light_atlas.cpp"
 
 
 ///////////////////////////////////////////////////////////////////////

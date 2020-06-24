@@ -48,6 +48,7 @@ extern "C"
 #import "handmade_math.h"
 
 #import "handmade_shared.h"
+#import "handmade_light_atlas.h"
 #import "handmade_memory.h"
 #import "handmade_renderer.h"
 

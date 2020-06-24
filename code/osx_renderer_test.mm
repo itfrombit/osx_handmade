@@ -14,6 +14,7 @@
 #include "handmade_intrinsics.h"
 #include "handmade_math.h"
 #include "handmade_shared.h"
+#include "handmade_light_atlas.h"
 #include "handmade_renderer.h"
 #include "handmade_camera.h"
 

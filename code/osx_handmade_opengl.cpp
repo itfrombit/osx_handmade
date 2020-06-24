@@ -143,6 +143,18 @@ internal open_gl* OSXInitOpenGL(platform_renderer_limits* Limits)
 		OpenGL->SpecialTextureHandles = NULL;
 	}
 
+
+	v3s LightAtlasVoxelDim = V3S(LIGHT_LOOKUP_VOXEL_DIM, LIGHT_LOOKUP_VOXEL_DIM, LIGHT_LOOKUP_VOXEL_DIM);
+
+	u32 LIGHT_COLOR_LOOKUP_SQUARE_DIM = (8+2);
+	v2u LightAtlasTileDim = V2U(LIGHT_COLOR_LOOKUP_SQUARE_DIM, LIGHT_COLOR_LOOKUP_SQUARE_DIM);
+	OpenGL->DiffuseLightAtlas = MakeLightAtlas(LightAtlasVoxelDim, LightAtlasTileDim);
+	SetLightAtlasTexels(&OpenGL->DiffuseLightAtlas,
+	                    OSXRendererAlloc(GetLightAtlasSize(&OpenGL->DiffuseLightAtlas)));
+	OpenGL->SpecularLightAtlas = MakeLightAtlas(LightAtlasVoxelDim, LightAtlasTileDim);
+	SetLightAtlasTexels(&OpenGL->SpecularLightAtlas,
+	                    OSXRendererAlloc(GetLightAtlasSize(&OpenGL->SpecularLightAtlas)));
+
 	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)
 	{

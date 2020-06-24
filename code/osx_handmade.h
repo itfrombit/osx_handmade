@@ -301,6 +301,7 @@ typedef struct osx_game_data
 	u32							MonitorRefreshHz;
 	f32							GameUpdateHz;
 
+	b32x						RendererWasReloaded;
 	u32							ExpectedFramesPerUpdate;
 
 	u32							TargetFramesPerSecond;

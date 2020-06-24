@@ -332,6 +332,7 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	//
 	OSXSetupSound(GameData);
 
+	GameData->RendererWasReloaded = false;
 	GameData->ExpectedFramesPerUpdate = 1;
 	GameData->TargetSecondsPerFrame = (f32)GameData->ExpectedFramesPerUpdate / (f32)GameData->GameUpdateHz;
 
@@ -909,12 +910,19 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	if (GameData->RendererCode.IsValid)
 	{
+		if (GameData->RendererWasReloaded)
+		{
+			++Frame->Settings.Version;
+			GameData->RendererWasReloaded = false;
+		}
+
 		GameData->RendererFunctions.EndFrame(GameData->Renderer, Frame);
 	}
 
 	if (OSXCheckForCodeChange(&GameData->RendererCode))
 	{
 		OSXReloadCode(OSXState, &GameData->RendererCode);
+		GameData->RendererWasReloaded = true;
 	}
 
 

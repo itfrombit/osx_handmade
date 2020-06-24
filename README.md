@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for macOS.
 
-This repository works with Casey's source code from Day 575.
+This repository works with Casey's source code from Day 576.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -19,7 +19,15 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 # Recent Update Notes
 
-## Day 575 Note
+## Day 576 Notes:
+
+Shaders now get recompiled upon a hot-reload. If you know you are
+only changing the renderer (and not the game code), you can just
+`make libhandmade_opengl.dylib` to quickly rebuild just the
+renderer code.
+
+
+## Day 575 Note:
 
 Hot loading of the renderer is now supported.
 

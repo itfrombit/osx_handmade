@@ -560,7 +560,6 @@ entire_file ReadEntireFile(char* FileName)
 }
 
 
-
 int main(int argc, const char* argv[])
 {
 	#pragma unused(argc)
@@ -589,7 +588,23 @@ int main(int argc, const char* argv[])
 	Limits.MaxQuadCountPerFrame = (1 << 18);
 	Limits.MaxTextureCount = 256;
 	Limits.TextureTransferBufferSize = (16 * 1024 * 1024);
-	platform_renderer* Renderer = OSXInitDefaultRenderer(OSXAppContext.Window, &Limits);
+
+	void* DL = dlopen("libhandmade_opengl.dylib", RTLD_LAZY | RTLD_GLOBAL);
+	osx_load_renderer* OSXLoadOpenGLRenderer = (osx_load_renderer*)dlsym(DL, OSXRendererFunctionTableNames[0]);
+	renderer_begin_frame* OSXBeginFrame = (renderer_begin_frame*)dlsym(DL, OSXRendererFunctionTableNames[1]);
+	renderer_end_frame* OSXEndFrame = (renderer_end_frame*)dlsym(DL, OSXRendererFunctionTableNames[2]);
+
+	if (   !OSXLoadOpenGLRenderer
+		|| !OSXBeginFrame
+		|| !OSXEndFrame)
+	{
+		OSXMessageBox(@"Missing Game Renderer",
+			@"Please make sure libhandmade_opengl.dylib is present in the application bundle.");
+		exit(1);
+	}
+
+	platform_renderer* Renderer = OSXLoadOpenGLRenderer(OSXAppContext.Window, &Limits);
+
 
 	test_scene Scene = {};
 	InitTestScene(&Renderer->TextureQueue, &Scene);
@@ -637,7 +652,7 @@ int main(int argc, const char* argv[])
 			Camera.Orbit = tCameraShift;
 		}
 
-		game_render_commands* Frame = Renderer->BeginFrame(Renderer, V2U(DrawWidth, DrawHeight), RenderDim, DrawRegion);
+		game_render_commands* Frame = OSXBeginFrame(Renderer, V2U(DrawWidth, DrawHeight), RenderDim, DrawRegion);
 
 		Frame->Settings.RequestVSync = false;
 		Frame->Settings.LightingDisabled = false;
@@ -651,7 +666,7 @@ int main(int argc, const char* argv[])
 
 		EndRenderGroup(&Group);
 
-		Renderer->EndFrame(Renderer, Frame);
+		OSXEndFrame(Renderer, Frame);
 		//
 		// End of Sample Renderer Scene
 		///////////////////////////////////////////////////////////////

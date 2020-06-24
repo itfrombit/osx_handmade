@@ -12,12 +12,13 @@
 #import "handmade_renderer.h"
 #import "handmade_image.h"
 
+#import "osx_handmade_opengl.h"
 #import "handmade_renderer_opengl.h"
 
 #import "osx_handmade_cocoa.h"
 #import "osx_handmade_renderer.h"
 
-NSOpenGLView* OSXInitOpenGLView(NSWindow* Window);
+NSOpenGLContext* OSXInitOpenGLView(NSWindow* Window);
 #import "osx_handmade_opengl.cpp"
 
 #import "handmade_renderer_opengl.cpp"
@@ -46,20 +47,22 @@ NSOpenGLView* OSXInitOpenGLView(NSWindow* Window);
 	[[self openGLContext] makeCurrentContext];
 }
 
+NSOpenGLContext* InternalGLContext;
+
 - (void)reshape
 {
 	[super reshape];
 
 	NSRect bounds = [self bounds];
-	[GlobalGLContext makeCurrentContext];
-	[GlobalGLContext update];
+	[InternalGLContext makeCurrentContext];
+	[InternalGLContext update];
 	glViewport(0, 0, bounds.size.width, bounds.size.height);
 }
 
 @end
 
 
-NSOpenGLView* OSXInitOpenGLView(NSWindow* Window)
+NSOpenGLContext* OSXInitOpenGLView(NSWindow* Window)
 {
 	NSView* CV = [Window contentView];
 
@@ -75,12 +78,14 @@ NSOpenGLView* OSXInitOpenGLView(NSWindow* Window)
         0
     };
 	NSOpenGLPixelFormat* PixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:openGLAttributes];
-    GlobalGLContext = [[NSOpenGLContext alloc] initWithFormat:PixelFormat shareContext:NULL];
+    NSOpenGLContext* GLContext = [[NSOpenGLContext alloc] initWithFormat:PixelFormat shareContext:NULL];
+
+	InternalGLContext = GLContext;
 
 	HandmadeView* GLView = [[HandmadeView alloc] init];
 	[GLView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 	[GLView setPixelFormat:PixelFormat];
-	[GLView setOpenGLContext:GlobalGLContext];
+	[GLView setOpenGLContext:GLContext];
 	[GLView setFrame:[CV bounds]];
 
 	[CV addSubview:GLView];
@@ -94,12 +99,12 @@ NSOpenGLView* OSXInitOpenGLView(NSWindow* Window)
 #else
     GLint swapInt = 0;
 #endif
-	[GlobalGLContext setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
+	[GLContext setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
 
-	[GlobalGLContext setView:[Window contentView]];
-	[GlobalGLContext makeCurrentContext];
+	[GLContext setView:[Window contentView]];
+	[GLContext makeCurrentContext];
 
-	return GLView;
+	return GLContext;
 }
 
 

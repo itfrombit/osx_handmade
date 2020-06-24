@@ -2,7 +2,7 @@
 // osx_main.mm
 //
 // Jeff Buck
-// Copyright 2014-2016. All Rights Reserved.
+// Copyright 2014-2020. All Rights Reserved.
 //
 
 #include <Cocoa/Cocoa.h>
@@ -52,9 +52,9 @@ extern "C"
 #import "handmade_renderer.h"
 
 #import "osx_handmade_events.h"
+#import "osx_handmade_renderer.h"
 #import "osx_handmade.h"
 #import "osx_handmade_cocoa.h"
-#import "osx_handmade_renderer.h"
 
 platform_api Platform;
 

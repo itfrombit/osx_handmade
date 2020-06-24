@@ -2,31 +2,21 @@
 typedef OSX_LOAD_RENDERER(osx_load_renderer);
 #define OSX_LOAD_RENDERER_ENTRY() OSX_LOAD_RENDERER(OSXLoadRenderer)
 
-internal osx_load_renderer* OSXLoadRendererDylib(const char* Filename)
+
+struct osx_renderer_function_table
 {
-	void* lib = dlopen(Filename, RTLD_LAZY | RTLD_GLOBAL);
-	osx_load_renderer* Result = (osx_load_renderer*)dlsym(lib, "OSXLoadRenderer");
+	osx_load_renderer* LoadRenderer;
+	renderer_begin_frame* BeginFrame;
+	renderer_end_frame* EndFrame;
+};
 
-	return Result;
-}
 
-
-internal platform_renderer* OSXInitDefaultRenderer(NSWindow* Window,
-                                                   platform_renderer_limits* Limits)
+global char* OSXRendererFunctionTableNames[] =
 {
-	osx_load_renderer* OSXLoadOpenGLRenderer = OSXLoadRendererDylib("libhandmade_opengl.dylib");
-
-	if (!OSXLoadOpenGLRenderer)
-	{
-		OSXMessageBox(@"Missing Game Renderer",
-			@"Please make sure osxhandmade_opengl.dylib is present in the application bundle.");
-		exit(1);
-	}
-
-	platform_renderer* Renderer = OSXLoadOpenGLRenderer(Window, Limits);
-
-	return Renderer;
-}
+	"OSXLoadRenderer",
+	"OSXBeginFrame",
+	"OSXEndFrame",
+};
 
 
 void* OSXRendererAlloc(umm Size)
@@ -42,4 +32,5 @@ void* OSXRendererAlloc(umm Size)
 
 	return P;
 }
+
 

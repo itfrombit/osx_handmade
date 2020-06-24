@@ -28,21 +28,53 @@
 #include <IOKit/hid/IOHIDLib.h>
 
 
-struct osx_game_code
+////////////////////////////////////////////////////////////////////////
+// Hot code reloading
+//
+
+//#define OSX_LOADED_CODE_ENTRY_POINT(name) b32x (void* DL, void* FunctionTable)
+//typedef OSX_LOADED_CODE_ENTRY_POINT(osx_loaded_code_entry_point);
+
+
+struct osx_loaded_code
 {
-	void* GameCodeDL;
+    b32x IsValid;
+	u32 TempDLNumber;
+
+	const char* TransientDLName;
+	const char* DLFullPath;
+	const char* LockFullPath;
+
+	void* DL;
 	time_t DLLastWriteTime;
 
-    // IMPORTANT(casey): Either of the callbacks can be 0!  You must
-    // check before calling.
-	game_update_and_render* UpdateAndRender;
-    game_get_sound_samples* GetSoundSamples;
-	debug_game_frame_end* DEBUGFrameEnd;
-
-    bool32 IsValid;
+	u32 FunctionCount;
+	char** FunctionNames;
+	void** Functions;
 };
 
 
+struct osx_game_function_table
+{
+    // IMPORTANT(casey): The callbacks can be 0! You must check before calling
+	// (or check the IsValid in osx_loaded_code).
+	game_update_and_render* UpdateAndRender;
+    game_get_sound_samples* GetSoundSamples;
+	debug_game_frame_end* DEBUGFrameEnd;
+};
+
+
+global char* OSXGameFunctionTableNames[] =
+{
+	"GameUpdateAndRender",
+	"GameGetSoundSamples",
+	"DEBUGGameFrameEnd",
+};
+
+
+////////////////////////////////////////////////////////////////////////
+// Audio
+//
 struct osx_sound_output
 {
 	game_sound_output_buffer SoundBuffer;
@@ -66,11 +98,9 @@ void OSXInitCoreAudio(osx_sound_output* SoundOutput);
 void OSXStopCoreAudio(osx_sound_output* SoundOutput);
 
 
-struct osx_replay_buffer
-{
-	char Filename[FILENAME_MAX];
-};
-
+////////////////////////////////////////////////////////////////////////
+// Memory Blocks
+//
 enum osx_memory_block_flag
 {
 	OSXMem_AllocatedDuringLooping = 0x1,
@@ -97,6 +127,15 @@ struct osx_saved_memory_block
 };
 
 
+////////////////////////////////////////////////////////////////////////
+// Replay
+//
+struct osx_replay_buffer
+{
+	char Filename[FILENAME_MAX];
+};
+
+
 struct osx_state
 {
 	ticket_mutex MemoryMutex;
@@ -110,8 +149,6 @@ struct osx_state
 
 	char AppFilename[FILENAME_MAX];
 	char* OnePastLastAppFilenameSlash;
-
-	u32 TempDLNumber;
 };
 
 
@@ -179,9 +216,6 @@ void OSXBuildAppPathFilename(osx_state *State, const char *Filename,
 time_t OSXGetLastWriteTime(const char* Filename);
 float OSXGetSecondsElapsed(u64 Then, u64 Now);
 
-osx_game_code OSXLoadGameCode(osx_state* State, const char* SourceDLName);
-void OSXUnloadGameCode(osx_game_code* GameCode);
-
 
 void OSXGetInputFileLocation(osx_state* State, bool32 InputStream, int SlotIndex, int DestCount, char* Dest);
 void OSXBeginRecordingInput(osx_state* State, int InputRecordingIndex);
@@ -240,6 +274,8 @@ typedef struct osx_game_data
 	u8							HIDButtons[MAX_HID_BUTTONS];
 
 	char SourceGameCodeDLFullPath[FILENAME_MAX];
+	char RendererCodeDLFullPath[FILENAME_MAX];
+	char CodeLockFullPath[FILENAME_MAX];
 
 	platform_renderer_limits	Limits;
 	platform_renderer*			Renderer;
@@ -248,7 +284,11 @@ typedef struct osx_game_data
 	game_input*					NewInput;
 	game_input*					OldInput;
 
-	osx_game_code				Game;
+	osx_game_function_table		GameFunctions;
+	osx_loaded_code				GameCode;
+
+	osx_renderer_function_table	RendererFunctions;
+	osx_loaded_code				RendererCode;
 
 	osx_sound_output			SoundOutput;
 

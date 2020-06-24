@@ -1,23 +1,34 @@
 osx_handmade
 ============
 
-A port of Handmade Hero (http://handmadehero.org) for OS X.
+A port of Handmade Hero (http://handmadehero.org) for macOS.
 
-This repository works with Casey's source code from Day 560.
+This repository works with Casey's source code from Day 575.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
 section first.
 
-This OS X platform layer code does not need to be updated for
+This macOS platform layer code does not need to be updated for
 every episode of Handmade Hero, although I do test each day's code
-on OS X. If you see "missing" days in this OS X repository, it just
-means that the most recent version of the OS X platform layer will
-work. For example, day 405 of the OS X platform layer
+on macOS. If you see "missing" days in this macOS repository, it just
+means that the most recent version of the macOS platform layer will
+work. For example, day 405 of the macOS platform layer
 will work with Casey's Handmade Hero days 405 through 409.
 
 
 # Recent Update Notes
+
+## Day 575 Note
+
+Hot loading of the renderer is now supported.
+
+The default make target is now `make quick`, which recompiles
+all of the code, but does not rebuild the application bundle.
+This will prevent re-importing the asset libraries on startup.
+
+If you want to rebuild the application bundles and force a
+re-import of the asset libraries, you now run `make full`.
 
 
 ## Day 552 Note:
@@ -45,7 +56,7 @@ You can apply the patch by running:
 
 ## Day 532 Note:
 
-I wrote a native OS X version of hhfont using Core Text. It is not
+I wrote a native macOS version of hhfont using Core Text. It is not
 required, as you can just use the font images and hht file that Casey
 generated. I was mostly interested in learning about some of the
 details of Core Text that I hadn't used before.
@@ -125,10 +136,10 @@ bug.
 If you want to run the HandmadeRendererTest with textures, you will
 have to recreate the sample textures that Casey created on stream
 and put them in the ./data/renderer_test directory. I recreated
-them with Gimp on OS X, but I didn't want to redistribute Casey's
+them with Gimp on macOS, but I didn't want to redistribute Casey's
 original artwork.
 
-WARNING: The popular native graphics editing packages on OS X
+WARNING: The popular native graphics editing packages on macOS
 (Acorn, Pixelmator, Affinity Photo, Preview, etc.) either do not
 export bitmaps at all, or do not write bitmaps in the
 .bmp format that the Handmade Hero code expects. The y-axis is
@@ -138,7 +149,7 @@ downloading and using Gimp to create the .bmp files.
 
 ## Day 471 Note:
 
-I added an OS X version of the HandmadeRendererTest application.
+I added an macOS version of the HandmadeRendererTest application.
 You can build this by running:
 
     make HandmadeRendererTest
@@ -166,7 +177,7 @@ the application bundle if you want this functionality at runtime.
 
 ## Day 466 Note:
 
-I added an OS X version of the TabView utility. You can build this
+I added an macOS version of the TabView utility. You can build this
 by running:
 
     make HandmadeTabView
@@ -202,7 +213,7 @@ expand/collapse all nodes of a dump tree in the currently active window.
 
 ## 2018-08-17 Note:
 
-While the code compiles as-is on OS X, you must first apply a patch to
+While the code compiles as-is on macOS, you must first apply a patch to
 Casey's Handmade Hero source code to get the game to render properly. You can
 apply the patch by running:
 
@@ -211,7 +222,7 @@ apply the patch by running:
 This patches a problem in handmade_opengl.cpp:
 
 - Casey's final implementation for multisample depth peeling on Day 388
-causes undesirable artifacts on Mac OS X. Instead of averaging the Min and Max
+causes undesirable artifacts on macOS. Instead of averaging the Min and Max
 Depth values, I reverted to using the MaxDepth value in the shader with a
 threshold of 0.02. This still produces some minor artifacts, but it is a big
 improvement over the averaging method. I'll continue to look into this.
@@ -219,7 +230,7 @@ improvement over the averaging method. I'll continue to look into this.
 
 Note on using joysticks: Casey added a Clutch control on Day 443. He
 uses an XBox controller's Left or Right "Trigger" buttons for the Clutch
-control. I currently have this mapped to HID Button 6 on OS X, which on a
+control. I currently have this mapped to HID Button 6 on macOS, which on a
 Logitech Dual Action controller, corresponds to the top right shoulder
 button. Your mileage may vary with other controllers. Let me know if you
 have problems.
@@ -236,8 +247,8 @@ Also, copy over the sources and tags asset folders.
 Your directory structure should look like this:
 
     .                      // root directory of this repository
-	code/Makefile          // and the rest of the OS X platform code
-	code/osx_handmade.cpp  // and the rest of the OS X platform code
+	code/Makefile          // and the rest of the macOS platform code
+	code/osx_handmade.cpp  // and the rest of the macOS platform code
 	cpp/code/handmade.cpp  // and the rest of Casey's code
 	patches/               // patches to Casey's HH source code
 	sources/               // artwork and sounds
@@ -245,15 +256,15 @@ Your directory structure should look like this:
 	xcode/                 // Xcode project files
 
 
-The first time you compile, just run 'make' from the code
+The first time you compile, run 'make full' from the code
 directory (Note: not the cpp/code directory!) to build the application bundle.
-Note that a full 'make' will cause an entire asset import on the subsequent
+Note that a 'make full' will cause an entire asset import on the subsequent
 game startup, which is slow. And it's extra slow in debug mode, so doing
 the asset import in release mode is recommended.
 
 Once you have done a full build and have created the application
-bundles, you can run 'make quick' to just recompile the dynamic library and
-the executable (the code parts). Most of the build time when running the default 'make'
+bundles, you can run 'make' to just recompile the dynamic libraries and
+the executable (the code parts). Most of the build time when running a 'make full'
 is spent copying over the large asset files, so 'make quick' avoids that step
 and also avoids a full asset import on game startup.
 
@@ -268,10 +279,10 @@ I typically run the game from the command line like this:
 
 I also use lldb to debug. lldb has a 'gui' command that will
 display a source code and variable view while debugging. It's not great,
-but it's almost always better than using Xcode, and is sometimes better than
-using the plain command line mode in lldb.
+but it's sometimes better than using the plain command line mode in lldb.
+You can also debug using Xcode.
 
-Hot-loading is supported, so you can just run 'make quick' again (or have your
+Hot-loading is supported, so you can just run 'make' again (or have your
 favorite editor do it) while the application is running to build and
 reload the newest code.
 

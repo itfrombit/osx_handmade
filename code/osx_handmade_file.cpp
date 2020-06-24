@@ -50,8 +50,8 @@ OSXGetAppFilename(osx_state *State)
 
 
 void
-OSXBuildAppPathFilename(osx_state *State, const char *Filename, u32 Unique,
-                        int DestCount, char *Dest)
+OSXBuildAppPathFilename(osx_state* State, const char* Filename, u32 Unique,
+                        int DestCount, char* Dest)
 {
 	string A =
 	{
@@ -73,8 +73,8 @@ OSXBuildAppPathFilename(osx_state *State, const char *Filename, u32 Unique,
 
 
 void
-OSXBuildAppPathFilename(osx_state *State, const char *Filename,
-                        int DestCount, char *Dest)
+OSXBuildAppPathFilename(osx_state* State, const char* Filename,
+                        int DestCount, char* Dest)
 {
 	OSXBuildAppPathFilename(State, Filename, 0, DestCount, Dest);
 }

@@ -142,7 +142,33 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	GameData->Limits.MaxSpecialTextureCount = HANDMADE_SPECIAL_TEXTURE_COUNT;
 	GameData->Limits.TextureTransferBufferSize = HANDMADE_TEXTURE_TRANSFER_BUFFER_SIZE;
 
-	GameData->Renderer = OSXInitDefaultRenderer(Window, &GameData->Limits);
+	OSXGetAppFilename(OSXState);
+
+	OSXBuildAppPathFilename(OSXState, (char*)"lock.tmp",
+							sizeof(GameData->CodeLockFullPath),
+							GameData->CodeLockFullPath);
+
+	OSXBuildAppPathFilename(OSXState, (char*)"libhandmade_opengl.dylib",
+							sizeof(GameData->RendererCodeDLFullPath),
+							GameData->RendererCodeDLFullPath);
+
+	GameData->RendererFunctions = {};
+	GameData->RendererCode = {};
+	GameData->RendererCode.TransientDLName = "libhandmade_renderer_temp.dylib";
+	GameData->RendererCode.DLFullPath = GameData->RendererCodeDLFullPath;
+	GameData->RendererCode.LockFullPath = GameData->CodeLockFullPath;
+	GameData->RendererCode.FunctionCount = ArrayCount(OSXRendererFunctionTableNames);
+	GameData->RendererCode.FunctionNames = OSXRendererFunctionTableNames;
+	GameData->RendererCode.Functions = (void**)&GameData->RendererFunctions;
+
+	OSXLoadCode(OSXState, &GameData->RendererCode);
+
+	if (!GameData->RendererCode.IsValid)
+	{
+		OSXErrorMessage(PlatformError_Fatal, "Unable to load renderer.");
+	}
+
+	GameData->Renderer = GameData->RendererFunctions.LoadRenderer(Window, &GameData->Limits);
 
 	///////////////////////////////////////////////////////////////////
 	// Worker Threads
@@ -180,20 +206,24 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	mach_timebase_info(&timebase);
 	GameData->MachTimebaseConversionFactor = (double)timebase.numer / (double)timebase.denom;
 
-
 	///////////////////////////////////////////////////////////////////
 	// Get the game shared library paths
 	//
-	OSXGetAppFilename(OSXState);
-
 	OSXBuildAppPathFilename(OSXState, (char*)"libhandmade.dylib",
 							sizeof(GameData->SourceGameCodeDLFullPath),
 							GameData->SourceGameCodeDLFullPath);
 
-	// NOTE(jeff): We don't have to create a temp file
-	GameData->Game = OSXLoadGameCode(OSXState, GameData->SourceGameCodeDLFullPath);
+	GameData->GameFunctions = {};
+	GameData->GameCode = {};
+	GameData->GameCode.TransientDLName = "libhandmade_game_temp.dylib";
+	GameData->GameCode.DLFullPath = GameData->SourceGameCodeDLFullPath;
+	GameData->GameCode.LockFullPath = GameData->CodeLockFullPath;
+	GameData->GameCode.FunctionCount = ArrayCount(OSXGameFunctionTableNames);
+	GameData->GameCode.FunctionNames = OSXGameFunctionTableNames;
+	GameData->GameCode.Functions = (void**)&GameData->GameFunctions;
+	OSXLoadCode(OSXState, &GameData->GameCode);
 
-	DEBUGSetEventRecording(GameData->Game.IsValid);
+	DEBUGSetEventRecording(GameData->GameCode.IsValid);
 
 	///////////////////////////////////////////////////////////////////
 	// Set up memory
@@ -666,14 +696,14 @@ void OSXUpdateAudio(osx_game_data* GameData)
 	// TODO(jeff): Move this into the sound render code
 	//GameData->SoundOutput.Frequency = 440.0 + (15 * GameData->hidY);
 
-	if (GameData->Game.GetSoundSamples)
+	if (GameData->GameFunctions.GetSoundSamples)
 	{
 		// Sample Count is SamplesPerSecond / GameRefreshRate
 		//GameData->SoundOutput.SoundBuffer.SampleCount = 1600; // (48000samples/sec) / (30fps)
 		// ^^^ calculate this. We might be running at 30 or 60 fps
 		GameData->SoundOutput.SoundBuffer.SampleCount = GameData->SoundOutput.SoundBuffer.SamplesPerSecond / GameData->TargetFramesPerSecond;
 
-		GameData->Game.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
+		GameData->GameFunctions.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
 
 		int16* CurrentSample = GameData->SoundOutput.SoundBuffer.Samples;
 		for (int i = 0; i < GameData->SoundOutput.SoundBuffer.SampleCount; ++i)
@@ -695,7 +725,7 @@ void OSXUpdateAudio(osx_game_data* GameData)
 		{
 			firstTime = false;
 
-			GameData->Game.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
+			GameData->GameFunctions.GetSoundSamples(&GameMemory, &GameData->SoundOutput.SoundBuffer);
 
 			int16* CurrentSample = GameData->SoundOutput.SoundBuffer.Samples;
 			for (int i = 0; i < GameData->SoundOutput.SoundBuffer.SampleCount; ++i)
@@ -745,9 +775,14 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 	rectangle2i DrawRegion = AspectRatioFit(GameData->RenderDim.Width, GameData->RenderDim.Height,
 	                                        Dimension.Width, Dimension.Height);
 
-	game_render_commands* Frame = GameData->Renderer->BeginFrame(GameData->Renderer,
-	                                         Dimension, GameData->RenderDim, DrawRegion);
-	Frame->Settings.RenderDim = GameData->RenderDim;
+	game_render_commands* Frame = 0;
+
+	if (GameData->RendererCode.IsValid)
+	{
+		Frame = GameData->RendererFunctions.BeginFrame(GameData->Renderer, Dimension,
+		                                               GameData->RenderDim, DrawRegion);
+		Frame->Settings.RenderDim = GameData->RenderDim;
+	}
 
 	OSXUpdateMouseInput(MouseData->MouseInWindowFlag, MouseData->MouseLocation, MouseData->MouseButtonMask,
 	                    GameData, DrawRegion);
@@ -762,7 +797,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Game Update");
 
-	if (!GlobalPause)
+	if (Frame && !GlobalPause)
 	{
 		if (OSXState->InputRecordingIndex)
 		{
@@ -793,9 +828,9 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 #endif
 		}
 
-		if (GameData->Game.UpdateAndRender)
+		if (GameData->GameFunctions.UpdateAndRender)
 		{
-			GameData->Game.UpdateAndRender(&GameMemory, GameData->NewInput, Frame);
+			GameData->GameFunctions.UpdateAndRender(&GameMemory, GameData->NewInput, Frame);
 
 			if (GameData->NewInput->QuitRequested)
 			{
@@ -833,13 +868,7 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 #if HANDMADE_INTERNAL
 	BEGIN_BLOCK("Debug Collation");
 
-	b32 ExecutableNeedsToBeReloaded = false;
-
-	time_t NewDLWriteTime = OSXGetLastWriteTime(GameData->SourceGameCodeDLFullPath);
-	if (NewDLWriteTime != GameData->Game.DLLastWriteTime)
-	{
-		ExecutableNeedsToBeReloaded = true;
-	}
+	b32 ExecutableNeedsToBeReloaded = OSXCheckForCodeChange(&GameData->GameCode);
 
 	GameMemory.ExecutableReloaded = false;
 
@@ -850,25 +879,17 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 		DEBUGSetEventRecording(false);
 	}
 
-	if (GameData->Game.DEBUGFrameEnd)
+	if (GameData->GameFunctions.DEBUGFrameEnd)
 	{
-		GameData->Game.DEBUGFrameEnd(&GameMemory, GameData->NewInput, Frame);
+		GameData->GameFunctions.DEBUGFrameEnd(&GameMemory, GameData->NewInput, Frame);
 	}
 
 	if (ExecutableNeedsToBeReloaded)
 	{
-		OSXUnloadGameCode(&GameData->Game);
-
-		for (u32 LoadTryIndex = 0;
-			 !GameData->Game.IsValid && (LoadTryIndex < 100);
-			 ++LoadTryIndex)
-		{
-			GameData->Game = OSXLoadGameCode(OSXState, GameData->SourceGameCodeDLFullPath);
-			usleep(100);
-		}
+		OSXReloadCode(OSXState, &GameData->GameCode);
 
 		GameMemory.ExecutableReloaded = true;
-		DEBUGSetEventRecording(GameData->Game.IsValid);
+		DEBUGSetEventRecording(GameData->GameCode.IsValid);
 	}
 
 
@@ -886,7 +907,16 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 
 	BEGIN_BLOCK("Frame Display");
 
-	GameData->Renderer->EndFrame(GameData->Renderer, Frame);
+	if (GameData->RendererCode.IsValid)
+	{
+		GameData->RendererFunctions.EndFrame(GameData->Renderer, Frame);
+	}
+
+	if (OSXCheckForCodeChange(&GameData->RendererCode))
+	{
+		OSXReloadCode(OSXState, &GameData->RendererCode);
+	}
+
 
 	END_BLOCK();
 }

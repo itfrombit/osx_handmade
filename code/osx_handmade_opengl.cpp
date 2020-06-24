@@ -1,51 +1,4 @@
-
-#define GL_BGRA_EXT			0x80E1
-#define GL_NUM_EXTENSIONS	0x821D
-
-typedef char GLchar;
-
-typedef void gl_tex_image_2d_multisample(GLenum target, GLsizei samples, GLenum internalformat,
-									GLsizei width, GLsizei height, GLboolean fixedsamplelocations);
-typedef void gl_bind_framebuffer(GLenum target, GLuint framebuffer);
-typedef void gl_gen_framebuffers(GLsizei n, GLuint *framebuffers);
-typedef void gl_framebuffer_texture_2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-typedef GLenum gl_check_framebuffer_status(GLenum target);
-typedef void gl_blit_framebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-typedef void gl_attach_shader(GLuint program, GLuint shader);
-typedef void gl_compile_shader(GLuint shader);
-typedef GLuint gl_create_program(void);
-typedef GLuint gl_create_shader(GLenum type);
-typedef void gl_link_program(GLuint program);
-typedef void gl_shader_source(GLuint shader, GLsizei count, GLchar **string, GLint *length);
-typedef void gl_use_program(GLuint program);
-typedef void gl_get_program_info_log(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
-typedef void gl_get_shader_info_log(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
-typedef void gl_validate_program(GLuint program);
-typedef void gl_get_program_iv(GLuint program, GLenum pname, GLint *params);
-
-typedef void type_glBindVertexArray(GLuint array);
-typedef void type_glGenVertexArrays(GLsizei n, GLuint *arrays);
-typedef GLubyte* type_glGetStringi(GLenum name, GLuint index);
-
-typedef void type_glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers);
-
-typedef void type_glDrawBuffers(GLsizei n, const GLenum* bufs);
-
-typedef void type_glVertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer);
-
-typedef void type_glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex);
-
-global gl_tex_image_2d_multisample *glTexImage2DMultisample;
-global gl_bind_framebuffer* glBindFramebuffer;
-global gl_gen_framebuffers* glGenFramebuffers;
-global gl_framebuffer_texture_2D* glFramebufferTexture2D;
-global gl_check_framebuffer_status* glCheckFramebufferStatus;
-global gl_blit_framebuffer *glBlitFramebuffer;
-
-#define GL_DEBUG_CALLBACK(Name) void Name(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam)
-typedef GL_DEBUG_CALLBACK(GLDEBUGPROC);
-typedef void type_glDebugMessageCallbackARB(GLDEBUGPROC *callback, const void *userParam);
-
+#if 0
 #define OpenGLGlobalFunction(Name) global type_##Name *Name;
 OpenGLGlobalFunction(glDebugMessageCallbackARB);
 OpenGLGlobalFunction(glGetStringi);
@@ -56,10 +9,13 @@ OpenGLGlobalFunction(glDeleteFramebuffers);
 OpenGLGlobalFunction(glVertexAttribIPointer);
 
 OpenGLGlobalFunction(glDrawElementsBaseVertex);
+#endif
 
 
-static NSOpenGLContext* GlobalGLContext;
-static b32x GlobalVSyncEnabled;
+// NOTE(jeff): This is a weak reference that is
+// updated during a hot reload. The "real" one
+// is kept in the OpenGL.Header.Platform
+extern NSOpenGLContext* GlobalGLContext;
 
 
 void OSXDebugInternalLogOpenGLErrors(const char* label)
@@ -114,31 +70,36 @@ void OSXDebugInternalLogOpenGLErrors(const char* label)
 
 internal void PlatformOpenGLSetVSync(open_gl* Renderer, b32x VSyncEnabled)
 {
-	Assert(GlobalGLContext);
+	NSOpenGLContext* GLContext = (NSOpenGLContext*)Renderer->Header.Platform;
+	Assert(GLContext);
 
     GLint SwapInterval = VSyncEnabled ? 1 : 0;
-	GlobalVSyncEnabled = VSyncEnabled;
 
-	[GlobalGLContext setValues:&SwapInterval forParameter:NSOpenGLCPSwapInterval];
+
+	[GLContext setValues:&SwapInterval forParameter:NSOpenGLCPSwapInterval];
 }
 
 
-RENDERER_BEGIN_FRAME(OSXOpenGLBeginFrame)
+extern "C" RENDERER_BEGIN_FRAME(OSXBeginFrame)
 {
-	[GlobalGLContext makeCurrentContext];
+	NSOpenGLContext* GLContext = (NSOpenGLContext*)Renderer->Platform;
+
+	[GLContext makeCurrentContext];
 	game_render_commands* Result = OpenGLBeginFrame((open_gl*)Renderer, OSWindowDim, RenderDim, DrawRegion);
 
 	return Result;
 }
 
 
-RENDERER_END_FRAME(OSXOpenGLEndFrame)
+extern "C" RENDERER_END_FRAME(OSXEndFrame)
 {
+
 	OpenGLEndFrame((open_gl*)Renderer, Frame);
 
 	// flushes and forces vsync
 	//
-	[GlobalGLContext flushBuffer];
+	NSOpenGLContext* GLContext = (NSOpenGLContext*)Renderer->Platform;
+	[GLContext flushBuffer];
 
 #if 0
 #if HANDMADE_USE_VSYNC
@@ -156,9 +117,6 @@ internal open_gl* OSXInitOpenGL(platform_renderer_limits* Limits)
 	InitTextureQueue(&OpenGL->Header.TextureQueue,
 	                 Limits->TextureTransferBufferSize,
 	                 OSXRendererAlloc(Limits->TextureTransferBufferSize));
-
-	OpenGL->Header.BeginFrame = OSXOpenGLBeginFrame;
-	OpenGL->Header.EndFrame = OSXOpenGLEndFrame;
 
 	u32 MaxVertexCount = Limits->MaxQuadCountPerFrame * 4;
 	u32 MaxIndexCount = Limits->MaxQuadCountPerFrame * 6;
@@ -188,52 +146,54 @@ internal open_gl* OSXInitOpenGL(platform_renderer_limits* Limits)
 	void* Image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
 	if (Image)
 	{
-#define OSXGetOpenGLFunction(Module, Name) Name = (type_##Name *)dlsym(Module, #Name)
+#define OSXGetOpenGLFunction(Module, Name) OpenGL->Name = (type_##Name *)dlsym(Module, #Name)
+
+        OSXGetOpenGLFunction(Image, glTexImage2DMultisample);
+		OSXGetOpenGLFunction(Image, glBindFramebuffer);
+		OSXGetOpenGLFunction(Image, glGenFramebuffers);
+		OSXGetOpenGLFunction(Image, glFramebufferTexture2D);
+		OSXGetOpenGLFunction(Image, glCheckFramebufferStatus);
+        OSXGetOpenGLFunction(Image, glBlitFramebuffer);
+        OSXGetOpenGLFunction(Image, glAttachShader);
+        OSXGetOpenGLFunction(Image, glCompileShader);
+        OSXGetOpenGLFunction(Image, glCreateProgram);
+        OSXGetOpenGLFunction(Image, glCreateShader);
+        OSXGetOpenGLFunction(Image, glLinkProgram);
+        OSXGetOpenGLFunction(Image, glShaderSource);
+        OSXGetOpenGLFunction(Image, glUseProgram);
+        OSXGetOpenGLFunction(Image, glGetProgramInfoLog);
+        OSXGetOpenGLFunction(Image, glGetShaderInfoLog);
+        OSXGetOpenGLFunction(Image, glValidateProgram);
+        OSXGetOpenGLFunction(Image, glGetProgramiv);
+        OSXGetOpenGLFunction(Image, glGetUniformLocation);
+        OSXGetOpenGLFunction(Image, glUniform4fv);
+        OSXGetOpenGLFunction(Image, glUniformMatrix4fv);
+        OSXGetOpenGLFunction(Image, glUniform1i);
+        OSXGetOpenGLFunction(Image, glUniform1f);
+        OSXGetOpenGLFunction(Image, glUniform2fv);
+        OSXGetOpenGLFunction(Image, glUniform3fv);
+        OSXGetOpenGLFunction(Image, glEnableVertexAttribArray);
+        OSXGetOpenGLFunction(Image, glDisableVertexAttribArray);
+        OSXGetOpenGLFunction(Image, glGetAttribLocation);
+        OSXGetOpenGLFunction(Image, glVertexAttribPointer);
+        OSXGetOpenGLFunction(Image, glVertexAttribIPointer);
         OSXGetOpenGLFunction(Image, glDebugMessageCallbackARB);
         OSXGetOpenGLFunction(Image, glBindVertexArray);
         OSXGetOpenGLFunction(Image, glGenVertexArrays);
+        OSXGetOpenGLFunction(Image, glBindBuffer);
+        OSXGetOpenGLFunction(Image, glGenBuffers);
+        OSXGetOpenGLFunction(Image, glBufferData);
+        OSXGetOpenGLFunction(Image, glActiveTexture);
         OSXGetOpenGLFunction(Image, glGetStringi);
+        OSXGetOpenGLFunction(Image, glDeleteProgram);
+        OSXGetOpenGLFunction(Image, glDeleteShader);
+        OSXGetOpenGLFunction(Image, glDeleteFramebuffers);
+        OSXGetOpenGLFunction(Image, glDrawBuffers);
+        OSXGetOpenGLFunction(Image, glTexImage3D);
+        OSXGetOpenGLFunction(Image, glTexSubImage3D);
+        OSXGetOpenGLFunction(Image, glDrawElementsBaseVertex);
 
-		opengl_info Info = OpenGLGetInfo(true);
-
-		glBindFramebuffer = (gl_bind_framebuffer*)dlsym(Image, "glBindFramebuffer");
-		glGenFramebuffers = (gl_gen_framebuffers*)dlsym(Image, "glGenFramebuffers");
-		glFramebufferTexture2D = (gl_framebuffer_texture_2D*)dlsym(Image, "glFramebufferTexture2D");
-		glCheckFramebufferStatus = (gl_check_framebuffer_status*)dlsym(Image, "glCheckFramebufferStatus");
-        glTexImage2DMultisample = (gl_tex_image_2d_multisample *)dlsym(Image, "glTexImage2DMultisample");
-        glBlitFramebuffer = (gl_blit_framebuffer *)dlsym(Image, "glBlitFramebuffer");
-
-		OSXGetOpenGLFunction(Image, glDeleteFramebuffers);
-		OSXGetOpenGLFunction(Image, glVertexAttribIPointer);
-
-		OSXGetOpenGLFunction(Image, glDrawElementsBaseVertex);
-
-		if (glBindFramebuffer)
-		{
-			printf("OpenGL extension functions loaded\n");
-		}
-		else
-		{
-			printf("Could not dynamically load glBindFramebuffer\n");
-		}
-
-		Assert(glBindFramebuffer);
-		Assert(glGenFramebuffers);
-		Assert(glFramebufferTexture2D);
-		Assert(glCheckFramebufferStatus);
-		Assert(glTexImage2DMultisample);
-		Assert(glBlitFramebuffer);
-        Assert(glAttachShader);
-        Assert(glCompileShader);
-        Assert(glCreateProgram);
-        Assert(glCreateShader);
-        Assert(glLinkProgram);
-        Assert(glShaderSource);
-        Assert(glUseProgram);
-        Assert(glGetProgramInfoLog);
-        Assert(glGetShaderInfoLog);
-        Assert(glValidateProgram);
-        Assert(glGetProgramiv);
+		opengl_info Info = OpenGLGetInfo(OpenGL, true);
 
 		//OpenGL.SupportsSRGBFramebuffer = true;
 		OpenGLInit(OpenGL, Info, OpenGL->SupportsSRGBFramebuffer);
@@ -257,8 +217,9 @@ extern "C"
 {
 OSX_LOAD_RENDERER_ENTRY()
 {
-	OSXInitOpenGLView(Window);
+	void* GLContext = OSXInitOpenGLView(Window);
 	platform_renderer* Result = (platform_renderer*)OSXInitOpenGL(Limits);
+	Result->Platform = GLContext;
 
 	return Result;
 }

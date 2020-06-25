@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for macOS.
 
-This repository works with Casey's source code from Day 587.
+This repository works with Casey's source code from Day 591.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -19,7 +19,24 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 # Recent Update Notes
 
-## Day 576 Notes:
+
+## Day 591 Note:
+
+Added a new target for `hhlightprof`. The debug `.dump` files are
+located in the ./Contents/Resources/debug directory of the
+application bundle that you are using.
+
+If you use the ./handmade development executable, then run
+`hhlightprof` like this:
+
+    hhlightprof ./Contents/Resources/debug/lightboxes.dump
+
+Or if using Handmade.app:
+
+    hhlightprof Handmade.app/Contents/Resources/debug/lightboxes.dump
+
+
+## Day 576 Note:
 
 Shaders now get recompiled upon a hot-reload. If you know you are
 only changing the renderer (and not the game code), you can just

@@ -72,6 +72,7 @@ package:
 	mkdir -p ./Contents/MacOS
 	mkdir -p ./Contents/Resources
 	mkdir -p ./Contents/Resources/data
+	mkdir -p ./Contents/Resources/debug
 	cp -R ../tags ./Contents/Resources
 	cp -R ../sources ./Contents/Resources
 	# Uncomment the following 4 lines to use our own generated fonts
@@ -103,6 +104,9 @@ hhaedit:	$(HANDMADE_CODE_PATH)/hhaedit.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
 
 hhsphere:	$(HANDMADE_CODE_PATH)/hhsphere.cpp
+	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
+
+hhlightprof:	$(HANDMADE_CODE_PATH)/hhlightprof.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
 
 osx_hhfont:	osx_hhfont.cpp

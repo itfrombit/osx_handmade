@@ -236,6 +236,12 @@ PLATFORM_GET_ALL_FILE_OF_TYPE_BEGIN(OSXGetAllFilesOfTypeBegin)
 			WildCard = "tags/*.hht";
 		} break;
 
+		case PlatformFileType_Dump:
+		{
+			Stem = "debug/";
+			WildCard = "debug/*.dump";
+		} break;
+
 		InvalidDefaultCase;
 	}
 
@@ -370,7 +376,10 @@ PLATFORM_OPEN_FILE(OSXOpenFile)
 
 	if (OSXFileHandle != -1)
 	{
-		printf("Loading asset %s\n", Filename);
+		if (ModeFlags & OpenFile_Read)
+		{
+			printf("Loading asset %s\n", Filename);
+		}
 	}
 	else
 	{

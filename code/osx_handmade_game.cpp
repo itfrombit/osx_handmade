@@ -291,6 +291,7 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	GameMemory.PlatformAPI.GetAllFilesOfTypeBegin = OSXGetAllFilesOfTypeBegin;
 	GameMemory.PlatformAPI.GetAllFilesOfTypeEnd = OSXGetAllFilesOfTypeEnd;
 	GameMemory.PlatformAPI.OpenFile = OSXOpenFile;
+	GameMemory.PlatformAPI.SetFileSize = OSXSetFileSize;
 	GameMemory.PlatformAPI.GetFileByPath = OSXGetFileByPath;
 	GameMemory.PlatformAPI.ReadDataFromFile = OSXReadDataFromFile;
 	GameMemory.PlatformAPI.WriteDataToFile = OSXWriteDataToFile;

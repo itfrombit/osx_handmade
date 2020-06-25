@@ -530,6 +530,19 @@ PLATFORM_FILE_ERROR(OSXFileError)
 }
 
 
+PLATFORM_SET_FILE_SIZE(OSXSetFileSize)
+{
+
+	if (PlatformNoFileErrors(Handle))
+	{
+		int OSXFileHandle = *(int*)&Handle->Platform;
+		if (ftruncate(OSXFileHandle, Size) != 0)
+		{
+			OSXFileError(Handle, "Unable to set the end of the file.\n");
+		}
+	}
+}
+
 
 time_t
 OSXGetLastWriteTime(const char* Filename)

@@ -19,6 +19,24 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 # Recent Update Notes
 
+## Day 593 Note:
+
+The `hhlightprof` doesn't currently compile under macOS due to the
+new Windows-specific `QueryPerformanceCounter` calls. I created a
+quick patch to fix the errors. The fix is not a great solution
+for high-precision timing and is subject to overflow for long
+elapsed time measures. For the non-critical and relatively short
+elapsed timing that we are doing, it should be good enough.
+
+You can apply the patch by running:
+
+    sh fix_handmade_hero_source.sh
+
+and then compiling with `make hhlightprof`. Once you have compiled
+and run Handmade Hero to generate the .dump files, change to the
+./Contents/Resources/debug directory of the application bundle
+you are using and run `hhlightprof` from that directory.
+
 
 ## Day 591 Note:
 

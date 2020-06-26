@@ -13,6 +13,9 @@
 #import "handmade_renderer.h"
 #import "handmade_image.h"
 
+#import "handmade_simd.h"
+#import "handmade_sampling_spheres.inl"
+
 #import "osx_handmade_opengl.h"
 #import "handmade_renderer_opengl.h"
 

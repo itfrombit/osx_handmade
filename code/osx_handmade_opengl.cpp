@@ -146,7 +146,7 @@ internal open_gl* OSXInitOpenGL(platform_renderer_limits* Limits)
 
 	v3s LightAtlasVoxelDim = V3S(LIGHT_LOOKUP_VOXEL_DIM_X, LIGHT_LOOKUP_VOXEL_DIM_Y, LIGHT_LOOKUP_VOXEL_DIM_Z);
 
-	u32 LIGHT_COLOR_LOOKUP_SQUARE_DIM = (8+2);
+	u32 LIGHT_COLOR_LOOKUP_SQUARE_DIM = (LIGHTING_OCTAHEDRAL_MAP_DIM+2);
 	v2u LightAtlasTileDim = V2U(LIGHT_COLOR_LOOKUP_SQUARE_DIM, LIGHT_COLOR_LOOKUP_SQUARE_DIM);
 	OpenGL->DiffuseLightAtlas = MakeLightAtlas(LightAtlasVoxelDim, LightAtlasTileDim);
 	SetLightAtlasTexels(&OpenGL->DiffuseLightAtlas,

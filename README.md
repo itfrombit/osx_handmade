@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for macOS.
 
-This repository works with Casey's source code from Day 595.
+This repository works with Casey's source code from Day 603.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)

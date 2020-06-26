@@ -1,0 +1,85 @@
+--- cpp/code/hhlightprof.cpp	2020-06-25 22:21:54.000000000 -0700
++++ hhlightprof.cpp	2020-06-25 22:21:51.000000000 -0700
+@@ -12,6 +12,12 @@
+ #undef HANDMADE_SLOW
+ #define HANDMADE_SLOW 0
+ 
++#ifdef HANDMADE_OSX
++#include <mach/mach.h>
++#include <mach/mach_time.h>
++#include <unistd.h>
++#endif
++
+ #include "handmade_platform.h"
+ #include "handmade_intrinsics.h"
+ #include "handmade_math.h"
+@@ -35,7 +41,9 @@
+ #include "handmade_lighting.h"
+ #include "handmade_config.h"
+ 
++#ifndef HANDMADE_OSX
+ #include <windows.h>
++#endif
+ #include <assert.h>
+ #include <stdio.h>
+ #include <string.h>
+@@ -134,6 +142,46 @@
+     return(Result);
+ }
+ 
++#ifdef HANDMADE_OSX
++typedef struct {
++	uint64_t QuadPart;
++} LARGE_INTEGER;
++
++
++void QueryPerformanceCounter(LARGE_INTEGER* Counter)
++{
++	*((uint64_t*)Counter) = mach_absolute_time();
++}
++
++// Dummy function to possibly avoid extra patches
++// while this file is getting changed frequently.
++void QueryPerformanceFrequency(LARGE_INTEGER* Counter)
++{
++	*((uint64_t*)Counter) = 0;
++}
++
++float OSXGetSecondsElapsed(u64 Then, u64 Now)
++{
++	// This can overflow if used for long elapsed times.
++	// Better to use 128-bit arithmetic to do the
++	// calculation.
++	static mach_timebase_info_data_t tb;
++
++	u64 Elapsed = Now - Then;
++
++	if (tb.denom == 0)
++	{
++		// First time we need to get the timebase
++		mach_timebase_info(&tb);
++	}
++
++	u64 Nanos = Elapsed * tb.numer / tb.denom;
++	float Result = (float)Nanos * 1.0E-9;
++
++	return Result;
++}
++#endif
++
+ internal void
+ ProfileRun(u32 RepeatCount)
+ {
+@@ -238,8 +286,12 @@
+         }
+         else
+         {
++#ifdef HANDMADE_OSX
++			float TotalSeconds = OSXGetSecondsElapsed(StartTime.QuadPart, EndTime.QuadPart);
++#else
+             double Diff = (double)(EndTime.QuadPart - StartTime.QuadPart);
+             double TotalSeconds = Diff / (double)Freq.QuadPart;
++#endif
+             fprintf(stdout, "Total Seconds Elapsed: %f\n", TotalSeconds);
+         }
+     }

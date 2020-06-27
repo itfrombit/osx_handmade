@@ -220,9 +220,10 @@ int main(int argc, const char* argv[])
 	#pragma unused(argc)
 	#pragma unused(argv)
 
+	SetDefaultFPBehavior();
+
 	@autoreleasepool
 	{
-
 	NSString* AppName = @"Handmade Hero";
 	OSXCocoaContext OSXAppContext = OSXInitCocoaContext(AppName,
 			DefaultWindowDimension.Width,

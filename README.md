@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for macOS.
 
-This repository works with Casey's source code from Day 607.
+This repository works with Casey's source code from Day 612.
 
 If you are compiling for the first time, you might want to
 skip down to the [Compiling and Running](#compiling-and-running)
@@ -18,6 +18,15 @@ will work with Casey's Handmade Hero days 405 through 409.
 
 
 # Recent Update Notes
+
+
+## Day 612 Note:
+
+Casey turned off the raycaster at the end of the stream to test some
+performance numbers, so you will see a dark world. If you want to
+turn the lights back on, comment out the `CostMetric = 0;` on line
+383 in handmade_lighting.cpp.
+
 
 ## Day 593 Note:
 

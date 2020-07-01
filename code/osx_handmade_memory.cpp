@@ -41,7 +41,6 @@ PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory)
 		ProtectOffset = PageSize + SizeRoundedUp;
 	}
 
-	//osx_memory_block* Block = (osx_memory_block*)malloc(TotalSize);
 	osx_memory_block* Block = (osx_memory_block*)mmap(0,
 									TotalSize,
 									PROT_READ | PROT_WRITE,
@@ -68,7 +67,6 @@ PLATFORM_ALLOCATE_MEMORY(OSXAllocateMemory)
 		{
 			printf("OSXAllocateMemory: Underflow mprotect error: %d  %s", errno, strerror(errno));
 		}
-		//Block = (osx_memory_block*)((u8*)Block + PageSize);
 	}
 
 	osx_memory_block* Sentinel = &GlobalOSXState.MemorySentinel;

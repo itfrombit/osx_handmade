@@ -1,0 +1,6 @@
+root = true
+
+[*.{c,cpp,h,m,mm,inl}]
+indent_style = space
+indent_size = 4
+

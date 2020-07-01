@@ -5,30 +5,23 @@ global debug_table GlobalDebugTable_;
 debug_table* GlobalDebugTable = &GlobalDebugTable_;
 #endif
 
-#if 0
-CGLPixelFormatAttribute GLPixelFormatAttribs[] =
-	{
-		kCGLPFAAccelerated,
-		kCGLPFADoubleBuffer,
-		(CGLPixelFormatAttribute)0
-	};
-#endif
 
 void OSXToggleGlobalPause()
 {
 	GlobalPause = !GlobalPause;
 }
 
+
 b32 OSXIsGameRunning()
 {
 	return GlobalRunning;
 }
 
+
 void OSXStopGame()
 {
 	GlobalRunning = 0;
 }
-
 
 
 void OSXSetupSound(osx_game_data* GameData)
@@ -39,7 +32,8 @@ void OSXSetupSound(osx_game_data* GameData)
 
 	u32 MaxPossibleOverrun = 8 * 2 * sizeof(int16);
 
-	GameData->SoundOutput.SoundBuffer.Samples = (int16*)mmap(0, GameData->SoundOutput.SoundBufferSize + MaxPossibleOverrun,
+	GameData->SoundOutput.SoundBuffer.Samples = (int16*)mmap(0,
+	                                        GameData->SoundOutput.SoundBufferSize + MaxPossibleOverrun,
 											PROT_READ|PROT_WRITE,
 											MAP_PRIVATE | MAP_ANON,
 											-1,
@@ -50,7 +44,8 @@ void OSXSetupSound(osx_game_data* GameData)
 	}
 	memset(GameData->SoundOutput.SoundBuffer.Samples, 0, GameData->SoundOutput.SoundBufferSize);
 
-	GameData->SoundOutput.CoreAudioBuffer = (int16*)mmap(0, GameData->SoundOutput.SoundBufferSize + MaxPossibleOverrun,
+	GameData->SoundOutput.CoreAudioBuffer = (int16*)mmap(0,
+	                                    GameData->SoundOutput.SoundBufferSize + MaxPossibleOverrun,
 										PROT_READ|PROT_WRITE,
 										MAP_PRIVATE | MAP_ANON,
 										-1,
@@ -66,13 +61,6 @@ void OSXSetupSound(osx_game_data* GameData)
 
 	OSXInitCoreAudio(&GameData->SoundOutput);
 }
-
-
-#if 0
-void OSXSetPixelFormat()
-{
-}
-#endif
 
 
 PLATFORM_ERROR_MESSAGE(OSXErrorMessage)
@@ -134,10 +122,7 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	OSXState->MemorySentinel.Prev = &OSXState->MemorySentinel;
 	OSXState->MemorySentinel.Next = &OSXState->MemorySentinel;
 
-	//GameData->MaxQuadCountPerFrame = (1 << 18);
-	//GameData->MaxTextureCount = 256;
-
-	GameData->Limits.MaxQuadCountPerFrame = (1 << 20); //GameData->MaxQuadCountPerFrame;
+	GameData->Limits.MaxQuadCountPerFrame = (1 << 20);
 	GameData->Limits.MaxTextureCount = HANDMADE_NORMAL_TEXTURE_COUNT;
 	GameData->Limits.MaxSpecialTextureCount = HANDMADE_SPECIAL_TEXTURE_COUNT;
 	GameData->Limits.TextureTransferBufferSize = HANDMADE_TEXTURE_TRANSFER_BUFFER_SIZE;
@@ -244,44 +229,6 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	GameMemory.DebugTable = GlobalDebugTable;
 #endif
 
-	//OSXState->TotalSize = 0;
-	//OSXState->GameMemoryBlock = 0;
-
-#if 0
-#ifndef HANDMADE_USE_VM_ALLOCATE
-	// NOTE(jeff): I switched to mmap as the default, so unless the above
-	// HANDMADE_USE_VM_ALLOCATE is defined in the build/make process,
-	// we'll use the mmap version.
-
-	GameData->OSXState.GameMemoryBlock = mmap(RequestedAddress, GameData->OSXState.TotalSize,
-												PROT_READ|PROT_WRITE,
-												AllocationFlags,
-												-1,
-												0);
-	if (GameData->OSXState.GameMemoryBlock == MAP_FAILED)
-	{
-		printf("mmap error: %d  %s", errno, strerror(errno));
-	}
-
-#else
-	kern_return_t result = vm_allocate((vm_map_t)mach_task_self(),
-										(vm_address_t*)&GameData->OSXState.GameMemoryBlock,
-										GameData->OSXState.TotalSize,
-										VM_FLAGS_ANYWHERE);
-	if (result != KERN_SUCCESS)
-	{
-		// TODO(jeff): Diagnostic
-		NSLog(@"Error allocating memory");
-	}
-#endif
-
-	GameData->GameMemory.PermanentStorage = GameData->OSXState.GameMemoryBlock;
-	GameData->GameMemory.TransientStorage = ((uint8*)GameData->GameMemory.PermanentStorage
-											+ GameData->GameMemory.PermanentStorageSize);
-	//GameData->GameMemory.DebugStorage = (u8*)GameData->GameMemory.TransientStorage
-	//										+ GameData->GameMemory.TransientStorageSize;
-#endif
-
 	GameMemory.HighPriorityQueue = &GameData->HighPriorityQueue;
 	GameMemory.LowPriorityQueue = &GameData->LowPriorityQueue;
 
@@ -342,28 +289,6 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 	GameData->SetupComplete = 1;
 }
 
-
-#if 0
-void OSXSetupGameRenderBuffer(osx_game_data* GameData, float Width, float Height, int BytesPerPixel)
-{
-	GameData->RenderBuffer.Width = Width;
-	GameData->RenderBuffer.Height = Height;
-
-	GameData->RenderBuffer.Pitch = Align16(GameData->RenderBuffer.Width * BytesPerPixel);
-	int BitmapMemorySize = (GameData->RenderBuffer.Pitch * GameData->RenderBuffer.Height);
-	GameData->RenderBuffer.Memory = mmap(0,
-								BitmapMemorySize,
-	                            PROT_READ | PROT_WRITE,
-	                            MAP_PRIVATE | MAP_ANON,
-	                            -1,
-	                            0);
-
-	if (GameData->RenderBuffer.Memory == MAP_FAILED)
-	{
-		printf("Render Buffer Memory mmap error: %d  %s", errno, strerror(errno));
-	}
-}
-#endif
 
 void OSXKeyProcessing(bool32 IsKeyDown, u32 KeyCode, u32 Key,
 					  int ShiftKeyFlag, int CommandKeyFlag, int ControlKeyFlag, int AlternateKeyFlag,
@@ -483,37 +408,6 @@ void OSXKeyProcessing(bool32 IsKeyDown, u32 KeyCode, u32 Key,
 
 		if (IsDown)
 		{
-#if 0
-			if (KeyCode == '+')
-			{
-				if (IsDown)
-				{
-				}
-			}
-			else if (KeyCode == kVK_ANSI_Equal)
-			{
-				if (ShiftKeyFlag)
-				{
-					OpenGL.DebugLightBufferIndex += 1;
-				}
-				else
-				{
-					OpenGL.DebugLightBufferTexIndex += 1;
-				}
-			}
-			else if (KeyCode == kVK_ANSI_Minus)
-			{
-				if (ShiftKeyFlag)
-				{
-					OpenGL.DebugLightBufferIndex -= 1;
-				}
-				else
-				{
-					OpenGL.DebugLightBufferTexIndex -= 1;
-				}
-			}
-#endif
-
 			if (KeyCode == kVK_F1)
 			{
 				Input->FKeyPressed[1] = true;
@@ -632,11 +526,6 @@ void OSXUpdateMouseInput(b32 MouseInWindowFlag, CGPoint MouseLocation, int Mouse
 	}
 	else
 	{
-#if 0
-		NewInput->MouseX = OldInput->MouseX;
-		NewInput->MouseY = OldInput->MouseY;
-		NewInput->MouseZ = OldInput->MouseZ;
-#endif
 		NewInput->ClipSpaceMouseP = OldInput->ClipSpaceMouseP;
 	}
 
@@ -822,12 +711,6 @@ void OSXProcessFrameAndRunGameLogic(osx_game_data* GameData, CGRect WindowFrame,
 			}
 
 			GameData->NewInput->ClipSpaceMouseP = Temp.ClipSpaceMouseP;
-
-#if 0
-			GameData->NewInput->MouseX = Temp.MouseX;
-			GameData->NewInput->MouseY = Temp.MouseY;
-			GameData->NewInput->MouseZ = Temp.MouseZ;
-#endif
 		}
 
 		if (GameData->GameFunctions.UpdateAndRender)

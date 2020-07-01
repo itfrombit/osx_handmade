@@ -52,20 +52,31 @@ quick_copy:
 
 quick: lock quick_clean libhandmade.dylib libhandmade_opengl.dylib handmade quick_copy unlock
 
-libhandmade.dylib: $(HANDMADE_CODE_PATH)/handmade.cpp $(HANDMADE_CODE_PATH)/handmade.h $(HANDMADE_CODE_PATH)/handmade_dev_ui.cpp
+
+clean_handmade_lib:
+	rm -f libhandmade.dylib
+
+libhandmade.dylib: clean_handmade_lib
 	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -dynamiclib -o $@ $(HANDMADE_CODE_PATH)/handmade.cpp
 
 
-libhandmade_opengl.dylib: osx_handmade_opengl.mm osx_handmade_opengl.cpp osx_handmade_renderer.h $(HANDMADE_CODE_PATH)/handmade_renderer_opengl.cpp
+clean_opengl_lib:
+	rm -f libhandmade_opengl.dylib
+
+libhandmade_opengl.dylib: clean_opengl_lib
 	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) -dynamiclib -framework Cocoa -framework QuartzCore -framework OpenGL -o $@ osx_handmade_opengl.mm
 
-handmade: osx_main.mm osx_handmade.h $(HANDMADE_CODE_PATH)/handmade_platform.h libhandmade_opengl.dylib
+
+clean_handmade_app:
+	rm -f ./handmade
+
+handmade: clean_handmade_app
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) -Wno-writable-strings -Wno-deprecated-declarations -Wno-null-dereference -Wno-c++11-compat-deprecated-writable-strings -Wno-unused-function -Wno-unused-variable -Wno-missing-braces $(CPP11_LD_FLAGS) $(OSX_LD_FLAGS) -o $@ osx_main.mm
 
 
-BINARIES = libhandmade.dylib libhandmade_opengl.dylib handmade osx_asset_builder test_png hhaedit HandmadeTabView HandmadeRendererTest
+BINARIES = libhandmade.dylib libhandmade_opengl.dylib handmade test_png hhaedit HandmadeTabView HandmadeRendererTest
 
-all: clean libhandmade.dylib handmade package osx_asset_builder test_png hhaedit HandmadeTabView HandmadeRendererTest
+all: clean libhandmade.dylib handmade package test_png hhaedit HandmadeTabView HandmadeRendererTest
 
 package:
 	# The 'local' bundle for convenient debugging with lldb
@@ -94,8 +105,8 @@ package:
 	#mv Handmade.app ../build
 
 
-osx_asset_builder:	osx_asset_builder.cpp
-	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
+#osx_asset_builder:	osx_asset_builder.cpp
+#	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
 
 test_png:	$(HANDMADE_CODE_PATH)/test_png.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^

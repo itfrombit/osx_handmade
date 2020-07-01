@@ -1,16 +1,3 @@
-#if 0
-#define OpenGLGlobalFunction(Name) global type_##Name *Name;
-OpenGLGlobalFunction(glDebugMessageCallbackARB);
-OpenGLGlobalFunction(glGetStringi);
-
-OpenGLGlobalFunction(glBindVertexArray);
-OpenGLGlobalFunction(glGenVertexArrays);
-OpenGLGlobalFunction(glDeleteFramebuffers);
-OpenGLGlobalFunction(glVertexAttribIPointer);
-
-OpenGLGlobalFunction(glDrawElementsBaseVertex);
-#endif
-
 
 // NOTE(jeff): This is a weak reference that is
 // updated during a hot reload. The "real" one

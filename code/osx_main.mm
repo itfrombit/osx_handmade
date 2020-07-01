@@ -35,11 +35,6 @@ extern "C"
 #define HANDMADE_USE_VSYNC 1
 #endif
 
-#if 0
-#define GL_GLEXT_LEGACY
-#import <OpenGL/OpenGL.h>
-#import <OpenGL/gl.h>
-#endif
 
 #define Maximum(A, B) ((A > B) ? (A) : (B))
 
@@ -100,7 +95,7 @@ const r32 GlobalRenderHeight = 540;
 #import "osx_handmade_playback.cpp"
 #import "osx_handmade_game.cpp"
 
-// Generic Cocoa boilerplate NSApplicationDelegate, NSWindow, NSOpenGLView classes
+// Generic Cocoa boilerplate NSApplicationDelegate, NSWindow, NSOpenGLView, MTKView classes
 #import "osx_handmade_cocoa.mm"
 
 

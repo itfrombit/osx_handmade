@@ -6,7 +6,7 @@ HANDMADE_TAGS_PATH = ../tags
 HANDMADE_ART_PATH = ../art
 HANDMADE_SOUND_PATH = ../sound
 
-HANDMADE_FLAGS = -DHANDMADE_USE_VSYNC=0 -DHANDMADE_PROFILE=1 -DHANDMADE_INTERNAL=1 -DHANDMADE_SLOW=1 -DHANDMADE_OSX=1
+HANDMADE_FLAGS = -DOSX_HANDMADE_USE_METAL=0 -DHANDMADE_USE_VSYNC=0 -DHANDMADE_PROFILE=1 -DHANDMADE_INTERNAL=1 -DHANDMADE_SLOW=1 -DHANDMADE_OSX=1
 
 HANDMADE_COMPILER_FLAGS = -fno-exceptions -fno-rtti
 
@@ -67,6 +67,13 @@ libhandmade_opengl.dylib: clean_opengl_lib
 	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) -dynamiclib -framework Cocoa -framework QuartzCore -framework OpenGL -o $@ osx_handmade_opengl.mm
 
 
+clean_metal_lib:
+	rm -f libhandmade_metal.dylib
+
+libhandmade_metal.dylib: clean_metal_lib
+	$(CXX) $(COPTS) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) $(CPP11_FLAGS) $(CPP11_LD_FLAGS) -I$(HANDMADE_CODE_PATH) -dynamiclib -framework Cocoa -framework Metal -framework MetalKit -o $@ osx_handmade_metal.mm
+
+
 clean_handmade_app:
 	rm -f ./handmade
 
@@ -118,7 +125,7 @@ hhsphere:	$(HANDMADE_CODE_PATH)/hhsphere.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
 
 hhlightprof:	$(HANDMADE_CODE_PATH)/hhlightprof.cpp
-	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -o $@ $^
+	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -mpopcnt -o $@ $^
 
 osx_hhfont:	osx_hhfont.cpp
 	$(CXX) $(COPTS) $(CPP11_FLAGS) -I$(HANDMADE_CODE_PATH) $(HANDMADE_COMPILER_FLAGS) $(HANDMADE_WARNING_FLAGS) -framework Foundation -framework CoreGraphics -framework CoreText -o $@ $^

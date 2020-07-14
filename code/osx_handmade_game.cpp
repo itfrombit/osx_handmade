@@ -133,9 +133,15 @@ void OSXSetupGameData(NSWindow* Window, osx_game_data* GameData)
 							sizeof(GameData->CodeLockFullPath),
 							GameData->CodeLockFullPath);
 
+#if OSX_HANDMADE_USE_METAL
+	OSXBuildAppPathFilename(OSXState, (char*)"libhandmade_metal.dylib",
+							sizeof(GameData->RendererCodeDLFullPath),
+							GameData->RendererCodeDLFullPath);
+#else
 	OSXBuildAppPathFilename(OSXState, (char*)"libhandmade_opengl.dylib",
 							sizeof(GameData->RendererCodeDLFullPath),
 							GameData->RendererCodeDLFullPath);
+#endif
 
 	GameData->RendererFunctions = {};
 	GameData->RendererCode = {};

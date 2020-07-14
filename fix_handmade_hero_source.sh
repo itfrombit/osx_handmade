@@ -1,5 +1,5 @@
 #!/bin/sh
 
-patch cpp/code/hhlightprof.cpp -i patches/hhlightprof.cpp.day595.patch
+patch cpp/code/hhlightprof.cpp -i patches/hhlightprof.cpp.day615.patch
 #patch cpp/code/handmade_renderer_opengl.cpp -i patches/handmade_renderer_opengl.cpp.day475.patch
 

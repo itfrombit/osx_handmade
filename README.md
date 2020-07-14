@@ -3,7 +3,7 @@ osx_handmade
 
 A port of Handmade Hero (http://handmadehero.org) for macOS.
 
-This repository works with Casey's source code from Day 614.
+This repository works with Casey's source code from Day 615.
 
 If you encounter any errors compiling or running on a particular
 day of the series, check out the [macOS Porting Notes](#macos-porting-notes)
@@ -125,6 +125,12 @@ on macOS:
 
 
 # macOS Porting Notes
+
+## Day 615 Note:
+
+Updated the patch to `hhlightprof` to replace the Microsoft-specific
+`__popcnt` with the more portable Intel `_mm_popcnt_u32` intrinsic.
+
 
 ## Day 612 Note:
 

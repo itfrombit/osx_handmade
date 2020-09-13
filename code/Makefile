@@ -31,7 +31,7 @@ DYNAMIC_COMPILE_COMMAND=$(DYNAMIC_COMPILE_PATH)/dynamic_compile.sh
 #default:	osx_hhfont
 default: quick
 
-full: clean libhandmade.dylib handmade package
+full: clean libhandmade.dylib libhandmade_opengl.dylib handmade package unlock
 
 # 'quick' only rebuilds the local debugging 'handmade' executable. Does not update the Handmade.app bundle!
 lock:
@@ -39,8 +39,8 @@ lock:
 	cp lock.tmp ./Handmade.app/Contents/MacOS/lock.tmp
 
 unlock:
-	rm lock.tmp
-	rm ./Handmade.app/Contents/MacOS/lock.tmp
+	rm -f lock.tmp
+	rm -f ./Handmade.app/Contents/MacOS/lock.tmp
 
 quick_copy:
 	cp handmade ./Contents/MacOS/Handmade

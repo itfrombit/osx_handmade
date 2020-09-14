@@ -66,10 +66,10 @@ v2 DefaultWindowDimension =
 {
 	//192.0, 108.0
 	//480.0, 270.0
-	//960.0, 540.0
+	960.0, 540.0
 	//1280.0, 720.0
 	//1279.0, 719.0
-	1920.0, 1080.0
+	//1920.0, 1080.0
 	//2560.0, 1440.0
 };
 
@@ -82,7 +82,7 @@ const r32 GlobalRenderWidth = 960;
 const r32 GlobalRenderHeight = 540;
 #endif
 
-#import "handmade_renderer.cpp"
+//#import "handmade_renderer.cpp"
 
 #import "osx_handmade_memory.cpp"
 #import "osx_handmade_debug.cpp"
@@ -257,7 +257,14 @@ int main(int argc, const char* argv[])
 
 		CGRect ContentViewFrame = [[OSXAppContext.Window contentView] frame];
 
-		OSXProcessFrameAndRunGameLogic(&GameData, ContentViewFrame, &MouseData);
+		CGFloat BackingScaleFactor = [OSXAppContext.Window backingScaleFactor];
+		//NSLog(@"BackingScaleFactor = %f", BackingScaleFactor);
+
+		CGRect ScaledFrame = ContentViewFrame;
+		ScaledFrame.size.width *= BackingScaleFactor;
+		ScaledFrame.size.height *= BackingScaleFactor;
+
+		OSXProcessFrameAndRunGameLogic(&GameData, ScaledFrame, &MouseData);
 
 		u64 EndCounter = mach_absolute_time();
 
